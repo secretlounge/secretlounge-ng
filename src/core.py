@@ -238,12 +238,12 @@ def promote_user(user, username2, rank):
 		return rp.Reply(rp.types.ERR_NO_USER)
 
 	if user2.rank >= rank: return
-	with db.modifyUser(id=user.id) as user2:
+	with db.modifyUser(id=user2.id) as user2:
 		user2.rank = rank
 	if rank >= RANKS.admin:
-		_push_system_message(rp.Reply(rp.types.PROMOTED_ADMIN), who=user)
+		_push_system_message(rp.Reply(rp.types.PROMOTED_ADMIN), who=user2)
 	elif rank >= RANKS.mod:
-		_push_system_message(rp.Reply(rp.types.PROMOTED_MOD), who=user)
+		_push_system_message(rp.Reply(rp.types.PROMOTED_MOD), who=user2)
 	logging.info("%s was promoted by %s to: %d", user2, user, rank)
 	return rp.Reply(rp.types.SUCCESS)
 
@@ -273,6 +273,7 @@ def warn_user(user, msid, delete=False):
 	if not cm.warned:
 		with db.modifyUser(id=cm.user_id) as user2:
 			d = user2.addWarning()
+			user2.karma -= KARMA_WARN_PENALTY
 		_push_system_message(rp.Reply(rp.types.GIVEN_COOLDOWN, duration=d, deleted=delete), who=user2, reply_to=msid)
 		cm.warned = True
 	else:

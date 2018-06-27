@@ -224,14 +224,18 @@ class MyReceiver(core.Receiver):
 	@staticmethod
 	def push_delete(msid):
 		logging.debug("push_delete(msid=%d)", msid)
+		tmp = ch.getMessage(msid)
+		except_who = None if tmp is None else tmp.user_id
 		for user in db.iterateUsers():
 			if not user.isJoined():
+				continue
+			if user == except_who:
 				continue
 			# FIXME: we don't have a way to abort messages that are currently in queue
 			id = ch.lookupMapping(user.id, msid=msid)
 			if id is None:
 				continue
-			def f():
+			def f(user=user, id=id):
 				bot.delete_message(user.id, id)
 			message_queue.put(QueueItem(user, f))
 
@@ -369,11 +373,11 @@ def relay(ev):
 
 	# relay message to all other users
 	logging.debug("relay(): msid=%d reply_msid=%r", msid, reply_msid)
-	for user in db.iterateUsers():
-		if not user.isJoined():
+	for user2 in db.iterateUsers():
+		if not user2.isJoined():
 			continue
-		if user == ev.from_user and not user.debugEnabled:
-			ch.saveMapping(user.id, msid, ev.message_id)
+		if user2 == user and not user.debugEnabled:
+			ch.saveMapping(user2.id, msid, ev.message_id)
 			continue
 
-		send_to_single(ev, msid, user, reply_msid)
+		send_to_single(ev, msid, user2, reply_msid)
