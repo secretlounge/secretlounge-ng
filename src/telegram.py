@@ -235,11 +235,11 @@ class MyReceiver(core.Receiver):
 	def push_delete(msid):
 		logging.debug("push_delete(msid=%d)", msid)
 		tmp = ch.getMessage(msid)
-		except_who = None if tmp is None else tmp.user_id
+		except_id = None if tmp is None else tmp.user_id
 		for user in db.iterateUsers():
 			if not user.isJoined():
 				continue
-			if user == except_who:
+			if user.id == except_id:
 				continue
 			# FIXME: we don't have a way to abort messages that are currently in queue
 			id = ch.lookupMapping(user.id, msid=msid)

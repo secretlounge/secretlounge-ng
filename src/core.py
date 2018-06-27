@@ -281,6 +281,7 @@ def warn_user(user, msid, delete=False):
 			return rp.Reply(rp.types.ERR_ALREADY_WARNED)
 	if delete:
 		_push_delete(msid)
+	logging.info("%s warned [%s]%s", user, user2.getObfuscatedId(), delete and " (message deleted)" or "")
 	return rp.Reply(rp.types.SUCCESS)
 
 @requireUser
