@@ -1,0 +1,2 @@
+pyTelegramBotAPI>=3.5.1
+pyYAML>=3.12

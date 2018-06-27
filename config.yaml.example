@@ -1,0 +1,11 @@
+# Telegram bot token
+bot_token: "BOT_TOKEN_HERE"
+
+# supported db types: json, sqlite
+# both take a single argument which is the database path
+database: [sqlite, "path/to/secretlounge.db"]
+
+# relay contacts
+allow_contacts: false
+# relay arbitrary documents (gifs always work)
+allow_documents: true
