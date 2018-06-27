@@ -197,9 +197,19 @@ def send_to_single(ev, msid, user, reply_msid):
 	if reply_msid is not None:
 		kwargs["reply_to"] = ch.lookupMapping(user.id, msid=reply_msid)
 
-	def f():
+	errmsgs = [b"bot was blocked by the user", b"user is deactivated", b"PEER_ID_INVALID"]
+
+	def f(ev=ev, msid=msid, user=user):
 		try:
 			ev2 = resend_message(user.id, ev, **kwargs)
+		except telebot.apihelper.ApiException as e:
+			if any(msg in e.result.text for msg in errmsgs):
+				logging.warning("Force leaving %s because bot is blocked", user)
+				with db.modifyUser(id=user.id) as user:
+					user.setLeft()
+			else:
+				logging.exception("Message send failed for user %s", user)
+			return
 		except Exception as e:
 			logging.exception("Message send failed for user %s", user)
 			return
