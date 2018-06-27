@@ -11,7 +11,7 @@ $ ./secretlounge-ng
 ```
 
 ## @BotFather Setup
-Message [https://t.me/BotFather](@BotFather) to configure your bot as follows:
+Message [@BotFather](https://t.me/BotFather) to configure your bot as follows:
 
 * `/setprivacy`: enabled
 * `/setjoingroups`: disabled
