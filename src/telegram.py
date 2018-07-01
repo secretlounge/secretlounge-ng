@@ -197,7 +197,7 @@ def send_to_single(ev, msid, user, reply_msid):
 	if reply_msid is not None:
 		kwargs["reply_to"] = ch.lookupMapping(user.id, msid=reply_msid)
 
-	errmsgs = [b"bot was blocked by the user", b"user is deactivated", b"PEER_ID_INVALID"]
+	errmsgs = ["bot was blocked by the user", "user is deactivated", "PEER_ID_INVALID"]
 
 	def f(ev=ev, msid=msid, user=user):
 		try:
