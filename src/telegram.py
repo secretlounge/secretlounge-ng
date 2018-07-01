@@ -132,9 +132,7 @@ def resend_message(chat_id, ev, reply_to=None):
 		kwargs["reply_to_message_id"] = reply_to
 
 	# re-send message based on content type
-	if ev.content_type == "_internal_reply": # hack!!
-		return bot.send_message(chat_id, rp.formatForTelegram(ev._reply), parse_mode="HTML", **kwargs)
-	elif ev.content_type == "text":
+	if ev.content_type == "text":
 		return bot.send_message(chat_id, ev.text, **kwargs)
 	elif ev.content_type == "photo":
 		photo = sorted(ev.photo, key=lambda e: e.width*e.height, reverse=True)[0]
@@ -170,12 +168,6 @@ def resend_message(chat_id, ev, reply_to=None):
 	else:
 		raise NotImplementedError("content_type = %s" % ev.content_type)
 
-def wrap_in_ev(m):
-	# FIXME: this is a terrible hack
-	ev = telebot.types.Message(None, None, None, None, "_internal_reply", [])
-	setattr(ev, "_reply", m)
-	return ev
-
 def calc_spam_score(ev):
 	if ev.content_type == "sticker":
 		return SCORE_STICKER
@@ -191,6 +183,14 @@ def calc_spam_score(ev):
 
 ####
 
+def send_to_single_inner(chat_id, ev, **kwargs):
+	if type(ev) == rp.Reply:
+		if "reply_to" in kwargs.keys():
+			kwargs = {"reply_to_message_id": reply_to}
+		return bot.send_message(chat_id, rp.formatForTelegram(ev), parse_mode="HTML", **kwargs)
+	else:
+		return resend_message(chat_id, ev, **kwargs)
+
 def send_to_single(ev, msid, user, reply_msid):
 	# set reply_to_message_id if applicable
 	kwargs = {}
@@ -201,12 +201,13 @@ def send_to_single(ev, msid, user, reply_msid):
 
 	def f(ev=ev, msid=msid, user=user):
 		try:
-			ev2 = resend_message(user.id, ev, **kwargs)
+			ev2 = send_to_single_inner(user.id, ev, **kwargs)
 		except telebot.apihelper.ApiException as e:
 			if any(msg in e.result.text for msg in errmsgs):
-				logging.warning("Force leaving %s because bot is blocked", user)
-				with db.modifyUser(id=user.id) as user:
-					user.setLeft()
+				if user.isJoined():
+					logging.warning("Force leaving %s because bot is blocked", user)
+					with db.modifyUser(id=user.id) as user:
+						user.setLeft()
 			else:
 				logging.exception("Message send failed for user %s", user)
 			return
@@ -221,7 +222,7 @@ class MyReceiver(core.Receiver):
 	@staticmethod
 	def push_reply(m, msid, who, except_who, reply_msid):
 		logging.debug("push_reply(m.type=%s, msid=%d)", rp.types.reverse[m.type], msid)
-		ev = wrap_in_ev(m)
+		ev = m # may be either telebot.Message or rp.Reply (!!)
 		if who is not None:
 			return send_to_single(ev, msid, who, reply_msid)
 
