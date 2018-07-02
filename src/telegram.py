@@ -2,6 +2,7 @@ import telebot
 import logging
 import time
 import re
+import json
 from queue import PriorityQueue
 
 import src.core as core
@@ -87,8 +88,17 @@ def send_answer(ev, m, reply_to=False):
 			send_answer(ev, m2)
 		return
 	kwargs = {"reply_to": ev.message_id} if reply_to else {}
-	def f():
-		send_to_single_inner(ev.chat.id, m, **kwargs)
+	def f(ev=ev, m=m):
+		while True:
+			try:
+				send_to_single_inner(ev.chat.id, m, **kwargs)
+			except telebot.apihelper.ApiException as e:
+				retry = check_telegram_exc(e, None)
+				if retry:
+					continue
+				return
+			break
+
 	try:
 		user = db.getUser(id=ev.from_user.id)
 	except KeyError as e:
@@ -202,23 +212,36 @@ def send_to_single(ev, msid, user, reply_msid):
 	if reply_msid is not None:
 		kwargs["reply_to"] = ch.lookupMapping(user.id, msid=reply_msid)
 
-	errmsgs = ["bot was blocked by the user", "user is deactivated", "PEER_ID_INVALID"]
-
 	def f(ev=ev, msid=msid, user=user):
-		try:
-			ev2 = send_to_single_inner(user.id, ev, **kwargs)
-		except telebot.apihelper.ApiException as e:
-			if any(msg in e.result.text for msg in errmsgs):
-				logging.warning("Force leaving %s because bot is blocked", user)
-				core.force_user_leave(user)
-			else:
-				logging.exception("Message send failed for user %s", user)
-			return
-		except Exception as e:
-			logging.exception("Message send failed for user %s", user)
-			return
+		while True:
+			try:
+				ev2 = send_to_single_inner(user.id, ev, **kwargs)
+			except telebot.apihelper.ApiException as e:
+				retry = check_telegram_exc(e, user)
+				if retry:
+					continue
+				return
+			break
 		ch.saveMapping(user.id, msid, ev2.message_id)
 	put_into_queue(user, msid, f)
+
+def check_telegram_exc(e, user):
+	errmsgs = ["bot was blocked by the user", "user is deactivated", "PEER_ID_INVALID"]
+	if any(msg in e.result.text for msg in errmsgs):
+		if user is not None:
+			logging.warning("Force leaving %s because bot is blocked", user)
+			core.force_user_leave(user)
+		return False
+
+	if "Too Many Requests" in e.result.text:
+		d = json.loads(e.result.text)["parameters"]["retry_after"]
+		d = min(d, 3) # supposedly this is in seconds, but you sometimes get 100 or even 2000
+		logging.warning("API rate limit hit, waiting for %ds", d)
+		time.sleep(d)
+		return True # retry
+
+	logging.exception("API exception")
+	return False
 
 ####
 
