@@ -58,7 +58,7 @@ class User():
 		alpha = "0123456789abcdefghijklmnopqrstuv"
 		return ''.join(alpha[n%32] for n in (value, value>>5, value>>10, value>>15))
 	def getObfuscatedKarma(self):
-		offset = round(self.karma * 0.2 + 2)
+		offset = round(abs(self.karma * 0.2) + 2)
 		return self.karma + randint(0, offset + 1) - offset
 	def getFormattedName(self):
 		if self.username is not None:
