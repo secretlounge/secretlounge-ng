@@ -231,7 +231,7 @@ class MyReceiver(core.Receiver):
 	@staticmethod
 	def reply(m, msid, who, except_who, reply_msid):
 		# `m` may be either telebot.Message or rp.Reply (!)
-		logging.debug("reply(m.type=%s, msid=%d)", rp.types.reverse[m.type], msid)
+		logging.debug("reply(m.type=%s, msid=%d, reply_msid=%r)", rp.types.reverse[m.type], msid, reply_msid)
 		if who is not None:
 			if not who.isJoined():
 				return logging.warning("Tried to send message to left user", stack_info=True)

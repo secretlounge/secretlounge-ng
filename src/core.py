@@ -349,5 +349,7 @@ def prepare_user_message(user, msg_score):
 # who is not None -> only to the user <who>
 # reply_to: msid the message is in reply to
 def _push_system_message(m, who=None, except_who=None, reply_to=None):
-	msid = ch.assignMessageId(CachedMessage())
+	msid = None
+	if who is None: # we only need an ID if multiple people can see the msg
+		msid = ch.assignMessageId(CachedMessage())
 	Sender.reply(m, msid, who, except_who, reply_to)
