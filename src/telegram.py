@@ -195,14 +195,12 @@ def send_to_single(ev, msid, user, reply_msid):
 	errmsgs = ["bot was blocked by the user", "user is deactivated", "PEER_ID_INVALID"]
 
 	def f(ev=ev, msid=msid, user=user):
-		# TODO: somehow abort if user is not joined anymore
 		try:
 			ev2 = send_to_single_inner(user.id, ev, **kwargs)
 		except telebot.apihelper.ApiException as e:
 			if any(msg in e.result.text for msg in errmsgs):
 				logging.warning("Force leaving %s because bot is blocked", user)
-				with db.modifyUser(id=user.id) as user:
-					user.setLeft()
+				core.force_user_leave(user)
 			else:
 				logging.exception("Message send failed for user %s", user)
 			return
@@ -248,6 +246,11 @@ class MyReceiver(core.Receiver):
 				bot.delete_message(user.id, id)
 			# queued message has msid=None here since this is a deletion, not a message being sent
 			message_queue.put(get_priority_for(user), QueueItem(user, None, f))
+	@staticmethod
+	def stop_for_user(user):
+		logging.debug("stop_for_user(%s)", user)
+		# FIXME: same race cond as above, but it doesn't matter as much here
+		message_queue.delete(lambda item, user_id=user.id: item.user_id == user_id)
 
 ####
 

@@ -124,6 +124,9 @@ def _push_reply(*args):
 def _push_delete(*args):
 	for r in _receivers:
 		r.push_delete(*args)
+def _stop_for_user(*args):
+	for r in _receivers:
+		r.stop_for_user(*args)
 
 ####
 
@@ -160,10 +163,14 @@ def user_join(c_user):
 
 	return ret
 
-@requireUser
-def user_leave(user):
+def force_user_leave(user):
 	with db.modifyUser(id=user.id) as user:
 		user.setLeft()
+	_stop_for_user(user)
+
+@requireUser
+def user_leave(user):
+	force_user_leave(user)
 	logging.info("%s left chat", user)
 
 	return rp.Reply(rp.types.CHAT_LEAVE)
