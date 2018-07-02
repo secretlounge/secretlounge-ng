@@ -117,7 +117,7 @@ format_strs = {
 		( cooldown and "yes, until {cooldown!t}" or "no" ),
 	types.USERS_INFO: "<b>{count}</b> <i>users</i>.",
 
-	types.PROGRAM_VERSION: "secretlounge-ng v{version} ~ http://example.com/",
+	types.PROGRAM_VERSION: "secretlounge-ng v{version} ~ https://github.com/sfan5/secretlounge-ng",
 	types.HELP_MODERATOR:
 		"<i>Moderators can use the following commands</i>:\n"+
 		"  /modhelp - show this text\n"+
