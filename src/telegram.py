@@ -13,7 +13,9 @@ bot = None
 db = None
 ch = None
 message_queue = None
+registered_commands = {}
 
+# settings regarding message relaying
 allow_documents = None
 
 def init(config, _db, _ch):
@@ -37,14 +39,13 @@ def init(config, _db, _ch):
 	types += ["audio", "document", "photo", "sticker", "video", "video_note", "voice"]
 
 	cmds = [
-		"start", "stop", "users", "info", "motd", "version",
-		"modhelp", "adminhelp", "modsay", "adminsay", "mod",
+		"start", "stop", "users", "info", "motd", "toggledebug", "togglekarma",
+		"version", "modhelp", "adminhelp", "modsay", "adminsay", "mod",
 		"admin", "warn", "delete", "blacklist"
 	]
-	for c in cmds: # maps /Abc to the function cmd_abc
-		handler(globals()["cmd_" + c.lower()], commands=[c])
-	handler(cmd_toggledebug, commands=["toggleDebug", "toggledebug"]) # FIXME: proper case-insensitiveness
-	handler(cmd_togglekarma, commands=["toggleKarma", "togglekarma"])
+	for c in cmds: # maps /<c> to the function cmd_<c>
+		c = c.lower()
+		registered_commands[c] = globals()["cmd_" + c]
 	handler(relay, content_types=types)
 
 def handler(func, *args, **kwargs):
@@ -379,11 +380,18 @@ def cmd_plusone(ev):
 
 
 def relay(ev):
+	# handle commands and karma giving
 	if ev.content_type == "text" and ev.text.startswith("/"):
-		return # drop unknown commands
+		pos = ev.text.find(" ") if " " in ev.text else len(ev.text)
+		c = ev.text[1:pos].lower()
+		if c in registered_commands.keys():
+			registered_commands[c](ev)
+		return
 	elif ev.content_type == "text" and ev.text.strip() == "+1":
 		return cmd_plusone(ev)
-	elif not allow_documents and ev.content_type == "document" and ev.document.mime_type not in ("image/gif", "video/mp4"):
+
+	# filter disallowed media types
+	if not allow_documents and ev.content_type == "document" and ev.document.mime_type not in ("image/gif", "video/mp4"):
 		return
 
 	msid = core.prepare_user_message(UserContainer(ev.from_user), calc_spam_score(ev))
