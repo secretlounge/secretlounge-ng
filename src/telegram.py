@@ -6,6 +6,7 @@ from queue import PriorityQueue
 
 import src.core as core
 import src.replies as rp
+from src.util import MutablePriorityQueue
 from src.globals import *
 
 bot = None
@@ -25,7 +26,7 @@ def init(config, _db, _ch):
 	bot = telebot.TeleBot(config["bot_token"], threaded=False)
 	db = _db
 	ch = _ch
-	message_queue = PriorityQueue()
+	message_queue = MutablePriorityQueue()
 
 	allow_contacts = config["allow_contacts"]
 	allow_documents = config["allow_documents"]
@@ -64,33 +65,25 @@ def run():
 			time.sleep(1)
 
 class QueueItem():
-	def __init__(self, user, func):
-		if user is None:
-			self.prio = 2**32 # very very very low priority
-		else:
-			self.prio = user.getMessagePriority()
+	def __init__(self, user, msid, func):
+		self.user_id = user.id
+		self.msid = msid
 		self.func = func
-	def __lt__(self, other):
-		return self.prio < other.prio
-	def __le__(self, other):
-		return self.prio <= other.prio
-	def __eq__(self, other):
-		return self.prio == other.prio
-	def __gt__(self, other):
-		return self.prio > other.prio
-	def __ge__(self, other):
-		return self.prio >= other.prio
 	def call(self):
 		try:
 			self.func()
 		except Exception as e:
 			logging.exception("Exception raised during queued message")
 
+def get_priority_for(user):
+	if user is None:
+		return 2**32 # lowest priority
+	return user.getMessagePriority()
+
 def send_thread():
 	while True:
 		item = message_queue.get()
 		item.call()
-		message_queue.task_done()
 
 class UserContainer():
 	def __init__(self, u):
@@ -120,7 +113,7 @@ def send_answer(ev, m, reply_to=False):
 			user = db.getUser(id=ev.from_user.id)
 		except KeyError as e:
 			user = None # happens on e.g. /start
-		message_queue.put(QueueItem(user, f))
+		message_queue.put(get_priority_for(user), QueueItem(user, None, f))
 
 def resend_message(chat_id, ev, reply_to=None):
 	if ev.forward_from is not None or ev.forward_from_chat is not None:
@@ -217,7 +210,7 @@ def send_to_single(ev, msid, user, reply_msid):
 			logging.exception("Message send failed for user %s", user)
 			return
 		ch.saveMapping(user.id, msid, ev2.message_id)
-	message_queue.put(QueueItem(user, f))
+	message_queue.put(get_priority_for(user), QueueItem(user, msid, f))
 
 @core.registerReceiver
 class MyReceiver(core.Receiver):
@@ -241,18 +234,20 @@ class MyReceiver(core.Receiver):
 		logging.debug("push_delete(msid=%d)", msid)
 		tmp = ch.getMessage(msid)
 		except_id = None if tmp is None else tmp.user_id
+		# FIXME: there's a hard to avoid race condition with currently being processed messages here
+		message_queue.delete(lambda item, msid=msid: item.msid == msid)
 		for user in db.iterateUsers():
 			if not user.isJoined():
 				continue
 			if user.id == except_id:
 				continue
-			# FIXME: we don't have a way to abort messages that are currently in queue
 			id = ch.lookupMapping(user.id, msid=msid)
 			if id is None:
 				continue
 			def f(user=user, id=id):
 				bot.delete_message(user.id, id)
-			message_queue.put(QueueItem(user, f))
+			# queued message has msid=None here since this is a deletion, not a message being sent
+			message_queue.put(get_priority_for(user), QueueItem(user, None, f))
 
 ####
 

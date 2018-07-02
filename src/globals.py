@@ -1,20 +1,6 @@
-# a few utilities
+from src.util import Enum
 
-class Enum():
-	def __init__(self, m, reverse=True):
-		assert len(set(m.values())) == len(m)
-		self._m = m
-		if reverse:
-			self.reverse = Enum({v: k for k, v in m.items()}, reverse=False)
-	def __getitem__(self, key):
-		return self._m[key]
-	def __getattr__(self, key):
-		return self[key]
-	def keys(self):
-		return self._m.keys()
-	def values(self):
-		return self._m.values()
-
+# a few utility functions
 def escape_html(s):
 	ret = ""
 	for c in s:
