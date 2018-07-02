@@ -187,6 +187,8 @@ def send_to_single_inner(chat_id, ev, **kwargs):
 	if type(ev) == rp.Reply:
 		if "reply_to" in kwargs.keys():
 			kwargs = {"reply_to_message_id": kwargs["reply_to"]}
+		else:
+			kwargs = {}
 		return bot.send_message(chat_id, rp.formatForTelegram(ev), parse_mode="HTML", **kwargs)
 	else:
 		return resend_message(chat_id, ev, **kwargs)
@@ -200,14 +202,14 @@ def send_to_single(ev, msid, user, reply_msid):
 	errmsgs = ["bot was blocked by the user", "user is deactivated", "PEER_ID_INVALID"]
 
 	def f(ev=ev, msid=msid, user=user):
+		# TODO: somehow abort if user is not joined anymore
 		try:
 			ev2 = send_to_single_inner(user.id, ev, **kwargs)
 		except telebot.apihelper.ApiException as e:
 			if any(msg in e.result.text for msg in errmsgs):
-				if user.isJoined():
-					logging.warning("Force leaving %s because bot is blocked", user)
-					with db.modifyUser(id=user.id) as user:
-						user.setLeft()
+				logging.warning("Force leaving %s because bot is blocked", user)
+				with db.modifyUser(id=user.id) as user:
+					user.setLeft()
 			else:
 				logging.exception("Message send failed for user %s", user)
 			return
@@ -224,6 +226,8 @@ class MyReceiver(core.Receiver):
 		logging.debug("push_reply(m.type=%s, msid=%d)", rp.types.reverse[m.type], msid)
 		ev = m # may be either telebot.Message or rp.Reply (!!)
 		if who is not None:
+			if not who.isJoined():
+				return logging.warning("Tried to send message to left user", stack_info=True)
 			return send_to_single(ev, msid, who, reply_msid)
 
 		for user in db.iterateUsers():
