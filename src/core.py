@@ -77,6 +77,8 @@ def requireRank(need_rank):
 
 ###
 
+# RAM cache for spam scores
+
 class ScoreKeeper():
 	def __init__(self):
 		self.lock = Lock()
@@ -102,31 +104,40 @@ class ScoreKeeper():
 
 ###
 
+# Event receiver template and Sender class that fwds to all registered event receivers
+
 class Receiver():
 	def __init__(self):
 		raise NotImplementedError()
 	@staticmethod
-	def push_reply(m, msid, who, except_who, reply_to):
+	def reply(m, msid, who, except_who, reply_to):
 		...
 	@staticmethod
-	def push_delete(msid):
+	def delete(msid):
+		...
+	@staticmethod
+	def stop_invoked(who):
 		...
 
-_receivers = []
+class Sender(Receiver): # flawless class hierachy I know...
+	receivers = []
+	@staticmethod
+	def reply(*args):
+		for r in Sender.receivers:
+			r.reply(*args)
+	@staticmethod
+	def delete(*args):
+		for r in Sender.receivers:
+			r.delete(*args)
+	@staticmethod
+	def stop_invoked(*args):
+		for r in Sender.receivers:
+			r.stop_invoked(*args)
+
 def registerReceiver(obj):
 	assert(issubclass(obj, Receiver))
-	_receivers.append(obj)
+	Sender.receivers.append(obj)
 	return obj
-
-def _push_reply(*args):
-	for r in _receivers:
-		r.push_reply(*args)
-def _push_delete(*args):
-	for r in _receivers:
-		r.push_delete(*args)
-def _stop_for_user(*args):
-	for r in _receivers:
-		r.stop_for_user(*args)
 
 ####
 
@@ -166,7 +177,7 @@ def user_join(c_user):
 def force_user_leave(user):
 	with db.modifyUser(id=user.id) as user:
 		user.setLeft()
-	_stop_for_user(user)
+	Sender.stop_invoked(user)
 
 @requireUser
 def user_leave(user):
@@ -287,7 +298,7 @@ def warn_user(user, msid, delete=False):
 		if not delete: # allow deleting already warned messages
 			return rp.Reply(rp.types.ERR_ALREADY_WARNED)
 	if delete:
-		_push_delete(msid)
+		Sender.delete(msid)
 	logging.info("%s warned [%s]%s", user, user2.getObfuscatedId(), delete and " (message deleted)" or "")
 	return rp.Reply(rp.types.SUCCESS)
 
@@ -302,7 +313,7 @@ def blacklist_user(user, msid, reason):
 		if user2.rank >= user.rank: return
 		user2.setBlacklisted(reason)
 	_push_system_message(rp.Reply(rp.types.ERR_BLACKLISTED, reason=reason), who=user2, reply_to=msid)
-	_push_delete(msid)
+	Sender.delete(msid)
 	logging.info("%s was blacklisted by %s for: %s", user2, user, reason)
 	return rp.Reply(rp.types.SUCCESS)
 
@@ -339,4 +350,4 @@ def prepare_user_message(user, msg_score):
 # reply_to: msid the message is in reply to
 def _push_system_message(m, who=None, except_who=None, reply_to=None):
 	msid = ch.assignMessageId(CachedMessage())
-	_push_reply(m, msid, who, except_who, reply_to)
+	Sender.reply(m, msid, who, except_who, reply_to)

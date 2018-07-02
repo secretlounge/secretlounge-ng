@@ -1,5 +1,6 @@
 import logging
 import threading
+import itertools
 from datetime import datetime, timedelta
 from time import sleep
 from threading import Lock
@@ -21,14 +22,13 @@ class CachedMessage():
 
 class Cache():
 	def __init__(self):
-		self.lock = Lock() # only protects `msgs` and `idmap`
+		self.lock = Lock()
+		self.counter = itertools.count()
 		self.msgs = {} # dict(msid -> CachedMessage)
 		self.idmap = {} # dict(uid -> dict(msid -> opaque))
-		self.msid = 0
 	def assignMessageId(self, cm):
-		ret = self.msid
-		self.msid += 1
 		with self.lock:
+			ret = next(self.counter)
 			self.msgs[ret] = cm
 		return ret
 	def getMessage(self, msid):

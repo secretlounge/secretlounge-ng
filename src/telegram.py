@@ -14,10 +14,10 @@ db = None
 ch = None
 message_queue = None
 
-allow_documents = True
+allow_documents = None
 
 def init(config, _db, _ch):
-	global bot, db, ch, message_queue
+	global bot, db, ch, message_queue, allow_documents
 	if config["bot_token"] == "":
 		logging.error("No telegram token specified.")
 		exit(1)
@@ -64,27 +64,6 @@ def run():
 			logging.warning("%s while polling Telegram, retrying.", type(e).__name__)
 			time.sleep(1)
 
-class QueueItem():
-	def __init__(self, user, msid, func):
-		self.user_id = user.id
-		self.msid = msid
-		self.func = func
-	def call(self):
-		try:
-			self.func()
-		except Exception as e:
-			logging.exception("Exception raised during queued message")
-
-def get_priority_for(user):
-	if user is None:
-		return 2**32 # lowest priority
-	return user.getMessagePriority()
-
-def send_thread():
-	while True:
-		item = message_queue.get()
-		item.call()
-
 class UserContainer():
 	def __init__(self, u):
 		self.id = u.id
@@ -102,18 +81,63 @@ def wrap_core(func, reply_to=False):
 def send_answer(ev, m, reply_to=False):
 	if m is None:
 		return
-	if type(m) == list:
+	elif type(m) == list:
 		for m2 in m:
 			send_answer(ev, m2)
+		return
+	kwargs = {"reply_to": ev.message_id} if reply_to else {}
+	def f():
+		send_to_single_inner(ev.chat.id, m, **kwargs)
+	try:
+		user = db.getUser(id=ev.from_user.id)
+	except KeyError as e:
+		user = None # happens on e.g. /start
+	put_into_queue(user, None, f)
+
+def calc_spam_score(ev):
+	if ev.content_type == "sticker":
+		return SCORE_STICKER
+	elif ev.content_type == "text":
+		pass
 	else:
-		kwargs = {"reply_to_message_id": ev.message_id} if reply_to else {}
-		def f():
-			bot.send_message(ev.chat.id, rp.formatForTelegram(m), parse_mode="HTML", **kwargs)
+		return SCORE_MESSAGE
+	s = SCORE_MESSAGE + len(ev.text) * SCORE_CHARACTER
+	regex = re.compile(r"(https?:\/\/|\b)[a-z0-9-_]+\.[a-z]{2,}", flags=re.I)
+	if re.search(regex, ev.text) is not None:
+		s += len(re.findall(regex, ev.text)) * SCORE_LINK
+	return s
+
+###
+
+# Message sending (queue-related)
+
+class QueueItem():
+	def __init__(self, user, msid, func):
+		self.user_id = user.id
+		self.msid = msid
+		self.func = func
+	def call(self):
 		try:
-			user = db.getUser(id=ev.from_user.id)
-		except KeyError as e:
-			user = None # happens on e.g. /start
-		message_queue.put(get_priority_for(user), QueueItem(user, None, f))
+			self.func()
+		except Exception as e:
+			logging.exception("Exception raised during queued message")
+
+def get_priority_for(user):
+	if user is None:
+		return 2**32 # lowest priority
+	return user.getMessagePriority()
+
+def put_into_queue(user, msid, f):
+	message_queue.put(get_priority_for(user), QueueItem(user, msid, f))
+
+def send_thread():
+	while True:
+		item = message_queue.get()
+		item.call()
+
+###
+
+# Message sending (functions)
 
 def resend_message(chat_id, ev, reply_to=None):
 	if ev.forward_from is not None or ev.forward_from_chat is not None:
@@ -161,21 +185,6 @@ def resend_message(chat_id, ev, reply_to=None):
 	else:
 		raise NotImplementedError("content_type = %s" % ev.content_type)
 
-def calc_spam_score(ev):
-	if ev.content_type == "sticker":
-		return SCORE_STICKER
-	elif ev.content_type == "text":
-		pass
-	else:
-		return SCORE_MESSAGE
-	s = SCORE_MESSAGE + len(ev.text) * SCORE_CHARACTER
-	regex = re.compile(r"(https?:\/\/|\b)[a-z0-9-_]+\.[a-z]{2,}", flags=re.I)
-	if re.search(regex, ev.text) is not None:
-		s += len(re.findall(regex, ev.text)) * SCORE_LINK
-	return s
-
-####
-
 def send_to_single_inner(chat_id, ev, **kwargs):
 	if type(ev) == rp.Reply:
 		if "reply_to" in kwargs.keys():
@@ -208,28 +217,34 @@ def send_to_single(ev, msid, user, reply_msid):
 			logging.exception("Message send failed for user %s", user)
 			return
 		ch.saveMapping(user.id, msid, ev2.message_id)
-	message_queue.put(get_priority_for(user), QueueItem(user, msid, f))
+	put_into_queue(user, msid, f)
+
+####
+
+# Event receiver: handles all things the core decides to do "on its own",
+# e.g. karma notifications, deleting messages.
+# This does *not* include direct replies to commands or relaying messages.
 
 @core.registerReceiver
 class MyReceiver(core.Receiver):
 	@staticmethod
-	def push_reply(m, msid, who, except_who, reply_msid):
-		logging.debug("push_reply(m.type=%s, msid=%d)", rp.types.reverse[m.type], msid)
-		ev = m # may be either telebot.Message or rp.Reply (!!)
+	def reply(m, msid, who, except_who, reply_msid):
+		# `m` may be either telebot.Message or rp.Reply (!)
+		logging.debug("reply(m.type=%s, msid=%d)", rp.types.reverse[m.type], msid)
 		if who is not None:
 			if not who.isJoined():
 				return logging.warning("Tried to send message to left user", stack_info=True)
-			return send_to_single(ev, msid, who, reply_msid)
+			return send_to_single(m, msid, who, reply_msid)
 
 		for user in db.iterateUsers():
 			if not user.isJoined():
 				continue
 			if user == except_who and not user.debugEnabled:
 				continue
-			send_to_single(ev, msid, user, reply_msid)
+			send_to_single(m, msid, user, reply_msid)
 	@staticmethod
-	def push_delete(msid):
-		logging.debug("push_delete(msid=%d)", msid)
+	def delete(msid):
+		logging.debug("delete(msid=%d)", msid)
 		tmp = ch.getMessage(msid)
 		except_id = None if tmp is None else tmp.user_id
 		# FIXME: there's a hard to avoid race condition with currently being processed messages here
@@ -245,10 +260,10 @@ class MyReceiver(core.Receiver):
 			def f(user=user, id=id):
 				bot.delete_message(user.id, id)
 			# queued message has msid=None here since this is a deletion, not a message being sent
-			message_queue.put(get_priority_for(user), QueueItem(user, None, f))
+			put_into_queue(user, None, f)
 	@staticmethod
-	def stop_for_user(user):
-		logging.debug("stop_for_user(%s)", user)
+	def stop_invoked(user):
+		logging.debug("stop_invoked(%s)", user)
 		# FIXME: same race cond as above, but it doesn't matter as much here
 		message_queue.delete(lambda item, user_id=user.id: item.user_id == user_id)
 
