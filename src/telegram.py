@@ -339,6 +339,7 @@ def cmd_modsay(ev):
 	if " " not in ev.text:
 		return
 	arg = ev.text[ev.text.find(" ")+1:].strip()
+	arg = escape_html(arg)
 
 	return send_answer(ev, core.send_mod_message(c_user, arg), True)
 
@@ -347,6 +348,7 @@ def cmd_adminsay(ev):
 	if " " not in ev.text:
 		returnindex
 	arg = ev.text[ev.text.find(" ")+1:].strip()
+	arg = escape_html(arg)
 
 	return send_answer(ev, core.send_admin_message(c_user, arg), True)
 
