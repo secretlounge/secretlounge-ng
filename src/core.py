@@ -295,6 +295,7 @@ def warn_user(user, msid, delete=False):
 		_push_system_message(rp.Reply(rp.types.GIVEN_COOLDOWN, duration=d, deleted=delete), who=user2, reply_to=msid)
 		cm.warned = True
 	else:
+		user2 = db.getUser(id=cm.user_id)
 		if not delete: # allow deleting already warned messages
 			return rp.Reply(rp.types.ERR_ALREADY_WARNED)
 	if delete:
