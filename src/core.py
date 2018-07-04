@@ -217,8 +217,20 @@ def get_info_mod(user, msid):
 
 @requireUser
 def get_users(user):
-	n = sum(1 for user in db.iterateUsers() if user.isJoined())
-	return rp.Reply(rp.types.USERS_INFO, count=n)
+	if user.rank < RANKS.mod:
+		n = sum(1 for user in db.iterateUsers() if user.isJoined())
+		return rp.Reply(rp.types.USERS_INFO, count=n)
+	active, inactive, black = 0, 0, 0
+	for user in db.iterateUsers():
+		if user.isBlacklisted():
+			black += 1
+		elif not user.isJoined():
+			inactive += 1
+		else:
+			active += 1
+	return rp.Reply(rp.types.USERS_INFO_EXTENDED,
+		active=active, inactive=inactive, blacklisted=black,
+		total=active + inactive + black)
 
 @requireUser
 def get_motd(user):

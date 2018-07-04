@@ -53,6 +53,7 @@ types = NumericEnum([
 	"USER_INFO",
 	"USER_INFO_MOD",
 	"USERS_INFO",
+	"USERS_INFO_EXTENDED",
 
 	"PROGRAM_VERSION",
 	"HELP_MODERATOR",
@@ -116,6 +117,9 @@ format_strs = {
 		"<b>cooldown</b>: "+
 		( cooldown and "yes, until {cooldown!t}" or "no" ),
 	types.USERS_INFO: "<b>{count}</b> <i>users</i>.",
+	types.USERS_INFO_EXTENDED:
+		"<b>{active}</b> <i>active</i>, {inactive} <i>inactive and</i> "+
+		"{blacklisted} <i>blacklisted users</i> (<i>total</i>: {total})",
 
 	types.PROGRAM_VERSION: "secretlounge-ng v{version} ~ https://github.com/sfan5/secretlounge-ng",
 	types.HELP_MODERATOR:
