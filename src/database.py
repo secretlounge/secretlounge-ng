@@ -111,6 +111,8 @@ class Database():
 	def __init__(self):
 		self.lock = RLock()
 		assert self.__class__ != Database # do not instantiate directly
+	def register_tasks(self, sched):
+		...
 	def close(self):
 		...
 	def getUser(self, id=None, username=None):
@@ -152,6 +154,8 @@ class JSONDatabase(Database):
 		except FileNotFoundError as e:
 			pass
 		logging.warning("The JSON backend is meant for development only!")
+	def register_tasks(self, sched):
+		return
 	def close(self):
 		return
 	@staticmethod
@@ -243,7 +247,10 @@ class SQLiteDatabase(Database):
 			detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
 		self.db.row_factory = sqlite3.Row
 		self._ensure_schema()
+	def register_tasks(self, sched):
+		sched.register(self.db.commit, seconds=5)
 	def close(self):
+		self.db.commit()
 		self.db.close()
 	@staticmethod
 	def _systemConfigToDict(config):
@@ -319,7 +326,6 @@ CREATE TABLE IF NOT EXISTS `users` (
 		param = list(newuser.values()) + [id, ]
 		with self.lock:
 			self.db.execute(sql, param)
-			self.db.commit()
 	def addUser(self, newuser):
 		newuser = SQLiteDatabase._userToDict(newuser)
 		sql = "INSERT INTO users("
@@ -330,7 +336,6 @@ CREATE TABLE IF NOT EXISTS `users` (
 		param = list(newuser.values())
 		with self.lock:
 			self.db.execute(sql, param)
-			self.db.commit()
 	def iterateUserIds(self):
 		sql = "SELECT `id` FROM users"
 		with self.lock:
@@ -355,4 +360,3 @@ CREATE TABLE IF NOT EXISTS `users` (
 		with self.lock:
 			for k, v in d.items():
 				self.db.execute(sql, (k, v))
-			self.db.commit()
