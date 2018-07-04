@@ -97,7 +97,7 @@ format_strs = {
 	types.ERR_NOT_IN_CACHE: em("Message not found in cache... (24h passed or bot was restarted)"),
 	types.ERR_NO_USER: em("No user found by that name!"),
 	types.ERR_COOLDOWN: em("Your cooldown expires at {until!t}"),
-	types.ERR_ALREADY_WARNED: em("A warning has already been issued for this message"),
+	types.ERR_ALREADY_WARNED: em("A warning has already been issued for this message."),
 	types.ERR_BLACKLISTED: lambda reason, **_:
 		em( "You've been blacklisted" + (reason and " for {reason!x}" or "") ),
 	types.ERR_ALREADY_UPVOTED: em("You already upvoted this message."),
@@ -116,7 +116,7 @@ format_strs = {
 		"<b>karma</b>: {karma}\n"+
 		"<b>cooldown</b>: "+
 		( cooldown and "yes, until {cooldown!t}" or "no" ),
-	types.USERS_INFO: "<b>{count}</b> <i>users</i>.",
+	types.USERS_INFO: "<b>{count}</b> <i>users</i>",
 	types.USERS_INFO_EXTENDED:
 		"<b>{active}</b> <i>active</i>, {inactive} <i>inactive and</i> "+
 		"{blacklisted} <i>blacklisted users</i> (<i>total</i>: {total})",

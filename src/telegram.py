@@ -346,7 +346,7 @@ def cmd_modsay(ev):
 def cmd_adminsay(ev):
 	c_user = UserContainer(ev.from_user)
 	if " " not in ev.text:
-		returnindex
+		return
 	arg = ev.text[ev.text.find(" ")+1:].strip()
 	arg = escape_html(arg)
 
