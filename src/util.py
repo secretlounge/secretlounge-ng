@@ -1,6 +1,34 @@
 import itertools
+import time
+import logging
 from queue import PriorityQueue
 from threading import Lock
+from datetime import timedelta
+
+class Scheduler():
+	def __init__(self):
+		self.tasks = [] # list of [interval, next_trigger, func]
+	@staticmethod
+	def _wrapped_call(f):
+		try:
+			f()
+		except Exception as e:
+			logging.exception("Exception raised during scheduled task")
+	def register(self, func, **kwargs):
+		interval = timedelta(**kwargs) // timedelta(seconds=1)
+		self.tasks.append([interval, 0, func])
+	def run(self):
+		while True:
+			# Run tasks that have expired
+			now = int(time.monotonic())
+			for e in self.tasks:
+				if now >= e[1]:
+					Scheduler._wrapped_call(e[2])
+					e[1] = now + e[0]
+			# Wait until a task expires
+			now = int(time.monotonic())
+			wait = min((e[1] - now) for e in self.tasks)
+			time.sleep(wait)
 
 class MutablePriorityQueue():
 	def __init__(self):

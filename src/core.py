@@ -1,6 +1,6 @@
 import logging
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from threading import Lock
 
 import src.replies as rp
@@ -23,22 +23,19 @@ def init(config, _db, _ch):
 		c.defaults()
 		db.setSystemConfig(c)
 
-def schedule_thread():
-	next_warningcheck = datetime.utcfromtimestamp(0)
-	while True:
-		time.sleep(SPAM_INTERVAL_SECONDS)
-		# decrease spam scores
-		spam_scores.scheduledTask()
-		# remove warnings
+def register_tasks(sched):
+	# spam score handling
+	sched.register(spam_scores.scheduledTask, seconds=SPAM_INTERVAL_SECONDS)
+	# warning removal
+	def task():
 		now = datetime.now()
-		if now >= next_warningcheck:
-			for user in db.iterateUsers():
-				if not user.isJoined():
-					continue
-				if user.warnExpiry is not None and now >= user.warnExpiry:
-					with db.modifyUser(id=user.id) as user:
-						user.removeWarning()
-			next_warningcheck = datetime.now() + timedelta(minutes=15)
+		for user in db.iterateUsers():
+			if not user.isJoined():
+				continue
+			if user.warnExpiry is not None and now >= user.warnExpiry:
+				with db.modifyUser(id=user.id) as user:
+					user.removeWarning()
+	sched.register(task, minutes=15)
 
 def updateUserFromEvent(user, c_user):
 	user.username = c_user.username

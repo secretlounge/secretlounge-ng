@@ -64,7 +64,5 @@ class Cache():
 		if n > 0:
 			logging.debug("Expired %d entries from cache", n)
 		return n
-	def expireThread(self):
-		while True:
-			sleep(6 * 60 * 60) # cache duration / 4
-			self.expire()
+	def register_tasks(self, sched):
+		sched.register(self.expire, hours=6) # (1/4) * cache duration
