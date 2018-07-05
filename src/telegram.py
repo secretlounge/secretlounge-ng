@@ -34,7 +34,7 @@ def init(config, _db, _ch):
 	allow_contacts = config["allow_contacts"]
 	allow_documents = config["allow_documents"]
 
-	types = ["text", "location", "venue", "game"]
+	types = ["text", "location", "venue"]
 	if allow_contacts:
 		types += ["contact"]
 	types += ["audio", "document", "photo", "sticker", "video", "video_note", "voice"]
@@ -189,8 +189,6 @@ def resend_message(chat_id, ev, reply_to=None):
 		for prop in ["phone_number", "first_name", "last_name"]:
 			kwargs[prop] = getattr(ev.venue, prop)
 		return bot.send_contact(chat_id, **kwargs)
-	elif ev.content_type == "game":
-		return bot.send_game(chat_id, ev.game.title, **kwargs) # ???
 	elif ev.content_type == "sticker":
 		return bot.send_sticker(chat_id, ev.sticker.file_id, **kwargs)
 	else:
