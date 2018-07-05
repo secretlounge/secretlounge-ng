@@ -253,11 +253,10 @@ def check_telegram_exc(e, user):
 class MyReceiver(core.Receiver):
 	@staticmethod
 	def reply(m, msid, who, except_who, reply_msid):
-		# `m` may be either telebot.Message or rp.Reply (!)
 		logging.debug("reply(m.type=%s, msid=%r, reply_msid=%r)", rp.types.reverse[m.type], msid, reply_msid)
 		if who is not None:
 			if not who.isJoined():
-				return logging.warning("Tried to send message to left user", stack_info=True)
+				return logging.warning("Dropping reply destined for user that has left")
 			return send_to_single(m, msid, who, reply_msid)
 
 		for user in db.iterateUsers():
