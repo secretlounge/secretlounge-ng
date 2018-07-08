@@ -248,10 +248,14 @@ class SQLiteDatabase(Database):
 		self.db.row_factory = sqlite3.Row
 		self._ensure_schema()
 	def register_tasks(self, sched):
-		sched.register(self.db.commit, seconds=5)
+		def f():
+			with self.lock:
+				self.db.commit()
+		sched.register(f, seconds=5)
 	def close(self):
-		self.db.commit()
-		self.db.close()
+		with self.lock:
+			self.db.commit()
+			self.db.close()
 	@staticmethod
 	def _systemConfigToDict(config):
 		return {"motd": config.motd}
