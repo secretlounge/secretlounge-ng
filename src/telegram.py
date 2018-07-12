@@ -187,7 +187,7 @@ def resend_message(chat_id, ev, reply_to=None):
 		return bot.send_venue(chat_id, **kwargs)
 	elif ev.content_type == "contact":
 		for prop in ["phone_number", "first_name", "last_name"]:
-			kwargs[prop] = getattr(ev.venue, prop)
+			kwargs[prop] = getattr(ev.contact, prop)
 		return bot.send_contact(chat_id, **kwargs)
 	elif ev.content_type == "sticker":
 		return bot.send_sticker(chat_id, ev.sticker.file_id, **kwargs)
