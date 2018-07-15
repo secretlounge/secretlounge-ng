@@ -9,3 +9,6 @@ database: [sqlite, "path/to/secretlounge.db"]
 allow_contacts: false
 # relay arbitrary documents (gifs always work)
 allow_documents: true
+
+# point of contact shown to blacklisted users
+#blacklist_contact: http://t.me/invite/something

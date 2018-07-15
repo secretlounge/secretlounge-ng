@@ -98,8 +98,9 @@ format_strs = {
 	types.ERR_NO_USER: em("No user found by that name!"),
 	types.ERR_COOLDOWN: em("Your cooldown expires at {until!t}"),
 	types.ERR_ALREADY_WARNED: em("A warning has already been issued for this message."),
-	types.ERR_BLACKLISTED: lambda reason, **_:
-		em( "You've been blacklisted" + (reason and " for {reason!x}" or "") ),
+	types.ERR_BLACKLISTED: lambda reason, contact, **_:
+		em( "You've been blacklisted" + (reason and " for {reason!x}" or "") )+
+		( em("\ncontact:") + " {contact}" ) if contact else "",
 	types.ERR_ALREADY_UPVOTED: em("You already upvoted this message."),
 	types.ERR_UPVOTE_OWN_MESSAGE: em("You can't upvote your own message."),
 	types.ERR_SPAMMY: em("Your message has not been sent. Avoid sending messages too fast, try again later."),

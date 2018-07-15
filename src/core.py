@@ -12,12 +12,17 @@ db = None
 ch = None
 spam_scores = None
 
+blacklist_contact = ""
+
 def init(config, _db, _ch):
-	global db, ch, spam_scores
+	global db, ch, spam_scores, blacklist_contact
 	db = _db
 	ch = _ch
 	spam_scores = ScoreKeeper()
 
+	blacklist_contact = config.get("blacklist_contact", "")
+
+	# initialize db if empty
 	if db.getSystemConfig() is None:
 		c = SystemConfig()
 		c.defaults()
@@ -51,7 +56,7 @@ def requireUser(func):
 			return rp.Reply(rp.types.USER_NOT_IN_CHAT)
 		# check for blacklist or absence
 		if user.isBlacklisted():
-			return rp.Reply(rp.types.ERR_BLACKLISTED, reason=user.blacklistReason)
+			return rp.Reply(rp.types.ERR_BLACKLISTED, reason=user.blacklistReason, contact=blacklist_contact)
 		elif not user.isJoined():
 			return rp.Reply(rp.types.USER_NOT_IN_CHAT)
 		# keep db entry up to date
@@ -146,7 +151,7 @@ def user_join(c_user):
 
 	if user is not None:
 		if user.isBlacklisted():
-			return rp.Reply(rp.types.ERR_BLACKLISTED, reason=user.blacklistReason)
+			return rp.Reply(rp.types.ERR_BLACKLISTED, reason=user.blacklistReason, contact=blacklist_contact)
 		elif user.isJoined():
 			return rp.Reply(rp.types.USER_IN_CHAT)
 		# user rejoins
@@ -324,7 +329,7 @@ def blacklist_user(user, msid, reason):
 	with db.modifyUser(id=cm.user_id) as user2:
 		if user2.rank >= user.rank: return
 		user2.setBlacklisted(reason)
-	_push_system_message(rp.Reply(rp.types.ERR_BLACKLISTED, reason=reason), who=user2, reply_to=msid)
+	_push_system_message(rp.Reply(rp.types.ERR_BLACKLISTED, reason=reason, contact=blacklist_contact), who=user2, reply_to=msid)
 	Sender.delete(msid)
 	logging.info("%s was blacklisted by %s for: %s", user2, user, reason)
 	return rp.Reply(rp.types.SUCCESS)
