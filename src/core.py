@@ -145,7 +145,9 @@ def user_join(c_user):
 		user = None
 
 	if user is not None:
-		if user.isJoined():
+		if user.isBlacklisted():
+			return rp.Reply(rp.types.ERR_BLACKLISTED, reason=user.blacklistReason)
+		elif user.isJoined():
 			return rp.Reply(rp.types.USER_IN_CHAT)
 		# user rejoins
 		with db.modifyUser(id=user.id) as user:
