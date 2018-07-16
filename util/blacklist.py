@@ -47,7 +47,7 @@ def modify_db(db, f):
 def ban_user(db, id, reason):
 	c = db.execute("SELECT COUNT(*) FROM users WHERE id = ?", (id, ))
 	if c.fetchone()[0] == 0:
-		# user was never here, add an entry to still blacklist them
+		# user was never here, add an placeholder entry to still ban them
 		nodate = datetime.utcfromtimestamp(0)
 		u = {
 			"id": id,
@@ -77,10 +77,15 @@ def ban_user(db, id, reason):
 	return 1, 0
 
 def unban_user(db, id):
-	c = db.execute("SELECT COUNT(*) FROM users WHERE id = ? AND rank = ?", (id, -10))
-	if c.fetchone()[0] == 0:
+	c = db.execute("SELECT realname, left FROM users WHERE id = ? AND rank = ?", (id, -10))
+	row = c.fetchone()
+	if row is None:
 		return 0
-	f = lambda: db.execute("UPDATE users SET rank = ?, blacklistReason = NULL WHERE id = ?", (0, id))
+	if row[0] == "" and row[1] == datetime.utcfromtimestamp(0):
+		# this is a placeholder entry, just delete it instead
+		f = lambda: db.execute("DELETE FROM users WHERE id = ?", (id, ))
+	else:
+		f = lambda: db.execute("UPDATE users SET rank = ?, blacklistReason = NULL WHERE id = ?", (0, id))
 	modify_db(db, f)
 	return 1
 
