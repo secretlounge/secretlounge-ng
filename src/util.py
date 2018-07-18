@@ -28,7 +28,8 @@ class Scheduler():
 			# Wait until a task expires
 			now = int(time.monotonic())
 			wait = min((e[1] - now) for e in self.tasks)
-			time.sleep(wait)
+			if wait > 0:
+				time.sleep(wait)
 
 class MutablePriorityQueue():
 	def __init__(self):
