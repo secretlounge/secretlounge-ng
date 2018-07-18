@@ -124,7 +124,9 @@ def calc_spam_score(ev):
 
 class QueueItem():
 	def __init__(self, user, msid, func):
-		self.user_id = user.id
+		self.user_id = None
+		if user is not None:
+			self.user_id = user.id
 		self.msid = msid
 		self.func = func
 	def call(self):
