@@ -66,7 +66,7 @@ class User():
 		return self.realname
 	def getMessagePriority(self):
 		inactive_min = (datetime.now() - self.lastActive) / timedelta(minutes=1)
-		c1 = max(RANKS.values()) - self.rank
+		c1 = max(RANKS.values()) - max(self.rank, 0)
 		c2 = int(inactive_min) & 0xffff
 		# lower value means higher priority
 		# in this case: prioritize by higher rank, then by lower inactivity time

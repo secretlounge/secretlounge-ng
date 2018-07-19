@@ -85,7 +85,7 @@ def send_answer(ev, m, reply_to=False):
 		return
 	elif type(m) == list:
 		for m2 in m:
-			send_answer(ev, m2)
+			send_answer(ev, m2, reply_to)
 		return
 	kwargs = {"reply_to": ev.message_id} if reply_to else {}
 	def f(ev=ev, m=m):
