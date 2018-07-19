@@ -100,7 +100,10 @@ def sync(d):
 		for name, db in d.items():
 			c = db.execute("SELECT id, blacklistReason FROM users WHERE rank = ? AND left >= ?", (-10, last_update))
 			for row in c:
-				l.append((row[0], row[1] or "", name))
+				reason = row[1] or ""
+				if reason.endswith("]"): # transferred from elsewhere?
+					continue
+				l.append((row[0], reason, name))
 		# apply the same bans on other instances
 		for id, reason, from_name in l:
 			reason = reason + " [" + from_name + "]"
