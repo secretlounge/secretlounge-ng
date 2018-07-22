@@ -53,7 +53,7 @@ def getUserByName(username):
 	for user in db.iterateUsers():
 		if not user.isJoined():
 			continue
-		if user.username.lower() == username:
+		if user.username is not None and user.username.lower() == username:
 			return user
 	return None
 
