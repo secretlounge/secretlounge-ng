@@ -47,6 +47,16 @@ def updateUserFromEvent(user, c_user):
 	user.realname = c_user.realname
 	user.lastActive = datetime.now()
 
+def getUserByName(username):
+	username = username.lower()
+	# there *should* only be a single joined user with a given username
+	for user in db.iterateUsers():
+		if not user.isJoined():
+			continue
+		if user.username.lower() == username:
+			return user
+	return None
+
 def requireUser(func):
 	def wrapper(c_user, *args, **kwargs):
 		# fetch user from db
@@ -266,9 +276,8 @@ def toggle_karma(user):
 @requireUser
 @requireRank(RANKS.admin)
 def promote_user(user, username2, rank):
-	try:
-		user2 = db.getUser(username=username2)
-	except KeyError as e:
+	user2 = getUserByName(username2)
+	if user2 is None:
 		return rp.Reply(rp.types.ERR_NO_USER)
 
 	if user2.rank >= rank: return
