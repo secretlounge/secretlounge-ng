@@ -42,7 +42,7 @@ def init(config, _db, _ch):
 	cmds = [
 		"start", "stop", "users", "info", "motd", "toggledebug", "togglekarma",
 		"version", "modhelp", "adminhelp", "modsay", "adminsay", "mod",
-		"admin", "warn", "delete", "blacklist"
+		"admin", "warn", "delete", "uncooldown", "blacklist"
 	]
 	for c in cmds: # maps /<c> to the function cmd_<c>
 		c = c.lower()
@@ -377,6 +377,20 @@ def cmd_warn(ev, delete=False):
 	send_answer(ev, core.warn_user(c_user, reply_msid, delete), True)
 
 cmd_delete = lambda ev: cmd_warn(ev, True)
+
+def cmd_uncooldown(ev):
+	c_user = UserContainer(ev.from_user)
+	if " " not in ev.text:
+		return
+	arg = ev.text[ev.text.find(" ")+1:].strip()
+
+	oid, username = None, None
+	if len(arg) < 5:
+		oid = arg # usernames can't be this short -> it's an id
+	else:
+		username = arg
+
+	send_answer(ev, core.uncooldown_user(c_user, oid, username), True)
 
 def cmd_blacklist(ev):
 	c_user = UserContainer(ev.from_user)

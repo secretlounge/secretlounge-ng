@@ -57,6 +57,14 @@ def getUserByName(username):
 			return user
 	return None
 
+def getUserByOid(oid):
+	for user in db.iterateUsers():
+		if not user.isJoined():
+			continue
+		if user.getObfuscatedId() == oid:
+			return user
+	return None
+
 def requireUser(func):
 	def wrapper(c_user, *args, **kwargs):
 		# fetch user from db
@@ -326,6 +334,29 @@ def warn_user(user, msid, delete=False):
 	if delete:
 		Sender.delete(msid)
 	logging.info("%s warned [%s]%s", user, user2.getObfuscatedId(), delete and " (message deleted)" or "")
+	return rp.Reply(rp.types.SUCCESS)
+
+@requireUser
+@requireRank(RANKS.admin)
+def uncooldown_user(user, oid2=None, username2=None):
+	if oid2 is not None:
+		user2 = getUserByOid(oid2)
+		if user2 is None:
+			return rp.Reply(rp.types.ERR_NO_USER_BY_ID)
+	elif username2 is not None:
+		user2 = getUserByName(username2)
+		if user2 is None:
+			return rp.Reply(rp.types.ERR_NO_USER)
+	else:
+		raise ValueError()
+
+	if not user2.isInCooldown():
+		return rp.Reply(rp.types.ERR_NOT_IN_COOLDOWN)
+	with db.modifyUser(id=user2.id) as user2:
+		user2.removeWarning()
+		was_until = user2.cooldownUntil
+		user2.cooldownUntil = None
+	logging.info("%s removed cooldown from %s (was until %s)", user, user2, format_datetime(was_until))
 	return rp.Reply(rp.types.SUCCESS)
 
 @requireUser

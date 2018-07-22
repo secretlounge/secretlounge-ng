@@ -43,7 +43,9 @@ types = NumericEnum([
 	"ERR_NO_REPLY",
 	"ERR_NOT_IN_CACHE",
 	"ERR_NO_USER",
+	"ERR_NO_USER_BY_ID",
 	"ERR_ALREADY_WARNED",
+	"ERR_NOT_IN_COOLDOWN",
 	"ERR_COOLDOWN",
 	"ERR_BLACKLISTED",
 	"ERR_ALREADY_UPVOTED",
@@ -96,8 +98,10 @@ format_strs = {
 	types.ERR_NO_REPLY: em("You need to reply to a message to use this command."),
 	types.ERR_NOT_IN_CACHE: em("Message not found in cache... (24h passed or bot was restarted)"),
 	types.ERR_NO_USER: em("No user found by that name!"),
+	types.ERR_NO_USER_BY_ID: em("No user found by that id, note that IDs rotate every 24 hours."),
 	types.ERR_COOLDOWN: em("Your cooldown expires at {until!t}"),
 	types.ERR_ALREADY_WARNED: em("A warning has already been issued for this message."),
+	types.ERR_NOT_IN_COOLDOWN: em("This user is not in a cooldown right now."),
 	types.ERR_BLACKLISTED: lambda reason, contact, **_:
 		em( "You've been blacklisted" + (reason and " for {reason!x}" or "") )+
 		( em("\ncontact:") + " {contact}" ) if contact else "",
@@ -137,6 +141,7 @@ format_strs = {
 		"  /adminhelp - show this text\n"+
 		"  /adminsay &lt;message&gt; - send an official admin message\n"+
 		"  /motd &lt;message&gt; - set the welcome message\n"+
+		"  /uncooldown &lt;id | username&gt; - remove cooldown from an user\n"+
 		"  /mod &lt;username&gt; - promote an user to the moderator rank\n"+
 		"  /admin &lt;username&gt; - promote an user to the admin rank\n"+
 		"\n"+

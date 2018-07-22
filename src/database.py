@@ -84,7 +84,7 @@ class User():
 		self.cooldownUntil = datetime.now() + cooldownTime
 		return cooldownTime
 	def removeWarning(self):
-		self.warnings -= 1
+		self.warnings = max(self.warnings - 1, 0)
 		if self.warnings > 0:
 			self.warnExpiry = datetime.now() + timedelta(hours=WARN_EXPIRE_HOURS)
 		else:
