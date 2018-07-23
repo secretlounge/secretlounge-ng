@@ -267,6 +267,7 @@ def get_motd(user):
 def set_motd(user, arg):
 	with db.modifySystemConfig() as config:
 		config.motd = arg
+	logging.info("%s set motd to: %r", user, arg)
 	return rp.Reply(rp.types.SUCCESS)
 
 @requireUser
