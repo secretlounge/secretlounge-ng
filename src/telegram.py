@@ -42,7 +42,7 @@ def init(config, _db, _ch):
 	cmds = [
 		"start", "stop", "users", "info", "motd", "toggledebug", "togglekarma",
 		"version", "modhelp", "adminhelp", "modsay", "adminsay", "mod",
-		"admin", "warn", "delete", "uncooldown", "blacklist"
+		"admin", "warn", "delete", "uncooldown", "blacklist", "s", "sign"
 	]
 	for c in cmds: # maps /<c> to the function cmd_<c>
 		c = c.lower()
@@ -245,8 +245,8 @@ def check_telegram_exc(e, user):
 
 ####
 
-# Event receiver: handles all things the core decides to do "on its own",
-# e.g. karma notifications, deleting messages.
+# Event receiver: handles all things the core decides to do "on its own":
+# e.g. karma notifications, deletion of messages, signed messages
 # This does *not* include direct replies to commands or relaying messages.
 
 @core.registerReceiver
@@ -455,3 +455,19 @@ def relay(ev):
 			continue
 
 		send_to_single(ev, msid, user2, reply_msid)
+
+def cmd_sign(ev):
+	c_user = UserContainer(ev.from_user)
+	if " " not in ev.text:
+		return
+	arg = ev.text[ev.text.find(" ")+1:].strip()
+
+	msid = core.send_signed_user_message(c_user, calc_spam_score(ev), arg)
+	if type(msid) == rp.Reply:
+		return send_answer(ev, msid, True)
+
+	# save the original message in the mapping, this isn't done inside MyReceiver.reply()
+	# since there's no "original message" at that point
+	ch.saveMapping(c_user.id, msid, ev.message_id)
+
+cmd_s = cmd_sign # alias

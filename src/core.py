@@ -12,15 +12,17 @@ db = None
 ch = None
 spam_scores = None
 
-blacklist_contact = ""
+blacklist_contact = None
+enable_signing = None
 
 def init(config, _db, _ch):
-	global db, ch, spam_scores, blacklist_contact
+	global db, ch, spam_scores, blacklist_contact, enable_signing
 	db = _db
 	ch = _ch
 	spam_scores = ScoreKeeper()
 
 	blacklist_contact = config.get("blacklist_contact", "")
+	enable_signing = config["enable_signing"]
 
 	# initialize db if empty
 	if db.getSystemConfig() is None:
@@ -401,6 +403,20 @@ def prepare_user_message(user, msg_score):
 	if not ok:
 		return rp.Reply(rp.types.ERR_SPAMMY)
 	return ch.assignMessageId(CachedMessage(user.id))
+
+@requireUser
+def send_signed_user_message(user, msg_score, text):
+	if not enable_signing:
+		return rp.Reply(rp.types.ERR_COMMAND_DISABLED)
+	if user.isInCooldown():
+		return rp.Reply(rp.types.ERR_COOLDOWN, until=user.cooldownUntil)
+	ok = spam_scores.increaseSpamScore(user.id, msg_score)
+	if not ok:
+		return rp.Reply(rp.types.ERR_SPAMMY)
+	m = rp.Reply(rp.types.SIGNED_MSG, text=text, user_id=user.id, user_text=user.getFormattedName())
+	msid = ch.assignMessageId(CachedMessage(user.id))
+	Sender.reply(m, msid, None, user, None)
+	return msid
 
 # who is None -> to everyone except the user <except_who> (if applicable)
 # who is not None -> only to the user <who>

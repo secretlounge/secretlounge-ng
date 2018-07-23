@@ -29,6 +29,7 @@ types = NumericEnum([
 	"CUSTOM",
 	"SUCCESS",
 	"BOOLEAN_CONFIG",
+	"SIGNED_MSG",
 
 	"CHAT_JOIN",
 	"CHAT_LEAVE",
@@ -40,6 +41,7 @@ types = NumericEnum([
 	"KARMA_THANK_YOU",
 	"KARMA_NOTIFICATION",
 
+	"ERR_COMMAND_DISABLED",
 	"ERR_NO_REPLY",
 	"ERR_NOT_IN_CACHE",
 	"ERR_NO_USER",
@@ -80,6 +82,7 @@ format_strs = {
 	types.SUCCESS: "☑",
 	types.BOOLEAN_CONFIG: lambda enabled, **_:
 		"<b>{description!x}</b>: " + (enabled and "enabled" or "disabled"),
+	types.SIGNED_MSG: "{text!x} <a href=\"tg://user?id={user_id}\">~~{user_text!x}</a>",
 
 	types.CHAT_JOIN: em("You joined the chat!"),
 	types.CHAT_LEAVE: em("You left the chat!"),
@@ -95,6 +98,7 @@ format_strs = {
 		em( "You've just been given sweet karma! (check /info to see your karma"+
 			" or /toggleKarma to turn these notifications off)" ),
 
+	types.ERR_COMMAND_DISABLED: em("This command has been disabled."),
 	types.ERR_NO_REPLY: em("You need to reply to a message to use this command."),
 	types.ERR_NOT_IN_CACHE: em("Message not found in cache... (24h passed or bot was restarted)"),
 	types.ERR_NO_USER: em("No user found by that name!"),
