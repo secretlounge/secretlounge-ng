@@ -81,7 +81,10 @@ class User():
 		cooldownTime = timedelta(minutes=BASE_COOLDOWN_MINUTES ** self.warnings)
 		self.warnings += 1
 		self.warnExpiry = datetime.now() + timedelta(hours=WARN_EXPIRE_HOURS)
-		self.cooldownUntil = datetime.now() + cooldownTime
+		try:
+			self.cooldownUntil = datetime.now() + cooldownTime
+		except OverflowError: # should never happen if people behave
+			self.cooldownUntil = datetime(4400, 1, 1, 0, 0, 0)
 		return cooldownTime
 	def removeWarning(self):
 		self.warnings = max(self.warnings - 1, 0)
