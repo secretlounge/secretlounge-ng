@@ -372,6 +372,7 @@ def blacklist_user(user, msid, reason):
 	with db.modifyUser(id=cm.user_id) as user2:
 		if user2.rank >= user.rank: return
 		user2.setBlacklisted(reason)
+	Sender.stop_invoked(user2) # do this before queueing new messages below
 	_push_system_message(rp.Reply(rp.types.ERR_BLACKLISTED, reason=reason, contact=blacklist_contact), who=user2, reply_to=msid)
 	Sender.delete(msid)
 	logging.info("%s was blacklisted by %s for: %s", user2, user, reason)
