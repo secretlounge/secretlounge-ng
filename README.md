@@ -23,10 +23,15 @@ start - Join the chat (start receiving messages)
 stop - Leave the chat (stop receiving messages)
 users - Get list of users
 info - Get info about your account
+sign - Sign a message with your username
+s - Alias of sign
+tsign - Sign a message with your tripcode
+t - Alias of tsign
 motd - Show the welcome message
 version - Get version & source code of this bot
 modhelp - Show commands available to moderators
 adminhelp - Show commands available to admins
 toggledebug - Toggle debug mode (sends back all messages to you)
 togglekarma - Toggle karma notifications
+settripcode - Set a tripcode for your mesaages
 ```

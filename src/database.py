@@ -32,6 +32,7 @@ class User():
 		self.karma = None # int
 		self.hideKarma = None # bool
 		self.debugEnabled = None # bool
+		self.tripcode = None # str
 	def __eq__(self, other):
 		if type(other) == User:
 			return self.id == other.id
@@ -174,7 +175,7 @@ class JSONDatabase(Database):
 	def _userToDict(user):
 		props = ["id", "username", "realname", "rank", "joined", "left",
 			"lastActive", "cooldownUntil", "blacklistReason", "warnings",
-			"warnExpiry", "karma", "hideKarma", "debugEnabled"]
+			"warnExpiry", "karma", "hideKarma", "debugEnabled", "tripcode"]
 		d = {}
 		for prop in props:
 			value = getattr(user, prop)
@@ -272,7 +273,7 @@ class SQLiteDatabase(Database):
 	def _userToDict(user):
 		props = ["id", "username", "realname", "rank", "joined", "left",
 			"lastActive", "cooldownUntil", "blacklistReason", "warnings",
-			"warnExpiry", "karma", "hideKarma", "debugEnabled"]
+			"warnExpiry", "karma", "hideKarma", "debugEnabled", "tripcode"]
 		return {prop: getattr(user, prop) for prop in props}
 	@staticmethod
 	def _userFromRow(r):
@@ -305,6 +306,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 	`karma` INTEGER NOT NULL,
 	`hideKarma` TINYINT NOT NULL,
 	`debugEnabled` TINYINT NOT NULL,
+	`tripcode` TEXT,
 	PRIMARY KEY (`id`)
 );
 			""".strip())

@@ -1,3 +1,4 @@
+from crypt import crypt as tripcr
 import itertools
 import time
 import logging
@@ -71,3 +72,16 @@ class Enum():
 		return self._m.keys()
 	def values(self):
 		return self._m.values()
+
+def genTripcode(tripcode):
+	triphalves = tripcode.split('#')
+	trname = triphalves[0]
+	trpass = triphalves[1]
+
+	trpass_trunc = trpass[:8]
+
+	salt = (trpass_trunc + 'H.')[1:3]
+	trip_final = tripcr(trpass_trunc, salt)
+
+	formatted_trip = trname, " !" + trip_final[-10:]
+	return formatted_trip
