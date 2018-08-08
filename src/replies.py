@@ -30,6 +30,7 @@ types = NumericEnum([
 	"SUCCESS",
 	"BOOLEAN_CONFIG",
 	"SIGNED_MSG",
+	"TSIGNED_MSG",
 
 	"CHAT_JOIN",
 	"CHAT_LEAVE",
@@ -40,6 +41,7 @@ types = NumericEnum([
 	"PROMOTED_ADMIN",
 	"KARMA_THANK_YOU",
 	"KARMA_NOTIFICATION",
+	"TRIPCODE_SET",
 
 	"ERR_COMMAND_DISABLED",
 	"ERR_NO_REPLY",
@@ -53,6 +55,8 @@ types = NumericEnum([
 	"ERR_ALREADY_UPVOTED",
 	"ERR_UPVOTE_OWN_MESSAGE",
 	"ERR_SPAMMY",
+	"ERR_INVALID_TRIP_FORMAT",
+	"ERR_NO_TRIPCODE",
 
 	"USER_INFO",
 	"USER_INFO_MOD",
@@ -83,6 +87,8 @@ format_strs = {
 	types.BOOLEAN_CONFIG: lambda enabled, **_:
 		"<b>{description!x}</b>: " + (enabled and "enabled" or "disabled"),
 	types.SIGNED_MSG: "{text!x} <a href=\"tg://user?id={user_id}\">~~{user_text!x}</a>",
+	types.TSIGNED_MSG: "<b>{tripcode!x}</b>:\n"+
+			"{text!x}",
 
 	types.CHAT_JOIN: em("You joined the chat!"),
 	types.CHAT_LEAVE: em("You left the chat!"),
@@ -94,9 +100,10 @@ format_strs = {
 	types.PROMOTED_MOD: em("You've been promoted to moderator, run /modhelp for a list of commands."),
 	types.PROMOTED_ADMIN: em("You've been promoted to admin, run /adminhelp for a list of commands."),
 	types.KARMA_THANK_YOU: em("You just gave this user some sweet karma, awesome!"),
-	types.KARMA_NOTIFICATION: 
+	types.KARMA_NOTIFICATION:
 		em( "You've just been given sweet karma! (check /info to see your karma"+
 			" or /toggleKarma to turn these notifications off)" ),
+	types.TRIPCODE_SET: "<b>Tripcode set to</b>: {trip!x}",
 
 	types.ERR_COMMAND_DISABLED: em("This command has been disabled."),
 	types.ERR_NO_REPLY: em("You need to reply to a message to use this command."),
@@ -112,10 +119,15 @@ format_strs = {
 	types.ERR_ALREADY_UPVOTED: em("You already upvoted this message."),
 	types.ERR_UPVOTE_OWN_MESSAGE: em("You can't upvote your own message."),
 	types.ERR_SPAMMY: em("Your message has not been sent. Avoid sending messages too fast, try again later."),
+	types.ERR_INVALID_TRIP_FORMAT:
+		em("You tried to set an invalid tripcode, the format is ")+
+		"<code>name#pass</code>" + em("."),
+	types.ERR_NO_TRIPCODE: em("You don't have a tripcode set."),
 
-	types.USER_INFO: lambda warnings, cooldown, **_:
-		"<b>id</b>: {id}, <b>username</b>: {username!x}, <b>rank</b>: {rank_i} ({rank}), "+
-		"<b>karma</b>: {karma}\n"+
+	types.USER_INFO: lambda warnings, cooldown, tripcode, **_:
+		"<b>id</b>: {id}, <b>username</b>: {username!x}, <b>rank</b>: {rank_i} ({rank})\n"+
+		"<b>karma</b>: {karma}, "+
+		"<b>tripcode</b>: " + ("{tripcode!x}" if tripcode is not None else "unset" ) + "\n"+
 		"<b>warnings</b>: {warnings} " + smiley(warnings)+
 		( " (one warning will be removed on {warnExpiry!t})" if warnings > 0 else "" ) + ", "+
 		"<b>cooldown</b>: "+

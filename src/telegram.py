@@ -42,7 +42,8 @@ def init(config, _db, _ch):
 	cmds = [
 		"start", "stop", "users", "info", "motd", "toggledebug", "togglekarma",
 		"version", "modhelp", "adminhelp", "modsay", "adminsay", "mod",
-		"admin", "warn", "delete", "uncooldown", "blacklist", "s", "sign"
+		"admin", "warn", "delete", "uncooldown", "blacklist", "s", "sign",
+		"settripcode", "t", "tsign"
 	]
 	for c in cmds: # maps /<c> to the function cmd_<c>
 		c = c.lower()
@@ -321,6 +322,14 @@ cmd_toggledebug = wrap_core(core.toggle_debug)
 cmd_togglekarma = wrap_core(core.toggle_karma)
 
 
+def cmd_settripcode(ev):
+	c_user = UserContainer(ev.from_user)
+	if " " not in ev.text:
+		return
+	arg = ev.text[ev.text.find(" ")+1:].strip()
+
+	return send_answer(ev, core.set_tripcode(c_user, arg), True)
+
 def cmd_modhelp(ev):
 	send_answer(ev, rp.Reply(rp.types.HELP_MODERATOR), True)
 
@@ -469,3 +478,17 @@ def cmd_sign(ev):
 	ch.saveMapping(c_user.id, msid, ev.message_id)
 
 cmd_s = cmd_sign # alias
+
+def cmd_tsign(ev):
+	c_user = UserContainer(ev.from_user)
+	if " " not in ev.text:
+		return
+	arg = ev.text[ev.text.find(" ")+1:].strip()
+
+	msid = core.send_signed_user_message(c_user, calc_spam_score(ev), arg, tripcode=True)
+	if type(msid) == rp.Reply:
+		return send_answer(ev, msid, True)
+
+	ch.saveMapping(c_user.id, msid, ev.message_id)
+
+cmd_t = cmd_tsign # alias

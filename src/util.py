@@ -4,6 +4,7 @@ import logging
 from queue import PriorityQueue
 from threading import Lock
 from datetime import timedelta
+from crypt import crypt
 
 class Scheduler():
 	def __init__(self):
@@ -71,3 +72,14 @@ class Enum():
 		return self._m.keys()
 	def values(self):
 		return self._m.values()
+
+def genTripcode(tripcode):
+	# doesn't actually match 4chan's algorithm exactly
+	pos = tripcode.find("#")
+	trname = tripcode[:pos]
+	trpass = tripcode[pos+1:]
+
+	salt = (trpass[:8] + 'H.')[1:3]
+	trip_final = crypt(trpass[:8], salt)
+
+	return trname + " !" + trip_final[-10:]

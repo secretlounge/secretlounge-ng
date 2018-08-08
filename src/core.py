@@ -7,6 +7,7 @@ import src.replies as rp
 from src.globals import *
 from src.database import User, SystemConfig
 from src.cache import CachedMessage
+from src.util import genTripcode
 
 db = None
 ch = None
@@ -217,6 +218,7 @@ def get_info(user):
 		"username": user.getFormattedName(),
 		"rank_i": user.rank,
 		"rank": RANKS.reverse[user.rank],
+		"tripcode": user.tripcode,
 		"karma": user.karma,
 		"warnings": user.warnings,
 		"warnExpiry": user.warnExpiry,
@@ -283,6 +285,18 @@ def toggle_karma(user):
 		user.hideKarma = not user.hideKarma
 		new = user.hideKarma
 	return rp.Reply(rp.types.BOOLEAN_CONFIG, description="Karma notifications", enabled=not new)
+
+@requireUser
+def set_tripcode(user, text):
+	if not enable_signing:
+		return rp.Reply(rp.types.ERR_COMMAND_DISABLED)
+
+	if not (0 < text.find("#") < len(text) - 1):
+		return rp.Reply(rp.types.ERR_INVALID_TRIP_FORMAT)
+
+	with db.modifyUser(id=user.id) as user:
+		user.tripcode = text
+	return rp.Reply(rp.types.TRIPCODE_SET, trip=text)
 
 @requireUser
 @requireRank(RANKS.admin)
@@ -407,7 +421,7 @@ def prepare_user_message(user, msg_score):
 	return ch.assignMessageId(CachedMessage(user.id))
 
 @requireUser
-def send_signed_user_message(user, msg_score, text):
+def send_signed_user_message(user, msg_score, text, tripcode=False):
 	if not enable_signing:
 		return rp.Reply(rp.types.ERR_COMMAND_DISABLED)
 	if user.isInCooldown():
@@ -415,7 +429,14 @@ def send_signed_user_message(user, msg_score, text):
 	ok = spam_scores.increaseSpamScore(user.id, msg_score)
 	if not ok:
 		return rp.Reply(rp.types.ERR_SPAMMY)
-	m = rp.Reply(rp.types.SIGNED_MSG, text=text, user_id=user.id, user_text=user.getFormattedName())
+
+	if tripcode:
+		if user.tripcode is None:
+			return rp.Reply(rp.types.ERR_NO_TRIPCODE)
+		m = rp.Reply(rp.types.TSIGNED_MSG, text=text, user_id=user.id, tripcode=genTripcode(user.tripcode))
+	else:
+		m = rp.Reply(rp.types.SIGNED_MSG, text=text, user_id=user.id, user_text=user.getFormattedName())
+
 	msid = ch.assignMessageId(CachedMessage(user.id))
 	Sender.reply(m, msid, None, user, None)
 	return msid
