@@ -414,13 +414,19 @@ def prepare_user_message(user, msg_score):
 		return rp.Reply(rp.types.ERR_SPAMMY)
 	return ch.assignMessageId(CachedMessage(user.id))
 @requireUser
-def edit_message(user, msg_id, new_text):
-	msid = ch.lookupMapping(user.id, data=(msg_id + 1))
+def edit_message(user, msg_id, new_text, msg_score=None):
+	if user.isInCooldown():
+		return rp.Reply(rp.types.ERR_COOLDOWN, until=user.cooldownUntil)
+	if msg_score is not None:
+		ok = spam_scores.increaseSpamScore(user.id, msg_score)
+		if not ok:
+			return rp.Reply(rp.types.ERR_SPAMMY)
+	if user.debugEnabled:
+		msid = ch.lookupMapping(user.id, data=(msg_id + 1))
+	else:
+		msid = ch.lookupMapping(user.id, data=(msg_id + 2))
 	if msid is None:
-		other_msid = ch.lookupMapping(user.id, data=(msg_id + 2))
-		if msid is None:
-			return
-		msid = other_msid
+		return
 	Sender.edit(msid, new_text)
 
 @requireUser

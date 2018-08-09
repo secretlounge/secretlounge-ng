@@ -10,6 +10,9 @@ allow_contacts: false
 # relay arbitrary documents (gifs always work)
 allow_documents: true
 
+# relay edited messages (edits mesage relayed to others, doesn't resend)
+allow_edit: true
+
 # enable signing messages using /sign
 enable_signing: false
 # point of contact shown to blacklisted users

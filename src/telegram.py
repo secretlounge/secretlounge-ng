@@ -19,9 +19,10 @@ registered_commands = {}
 
 # settings regarding message relaying
 allow_documents = None
+allow_edit = None
 
 def init(config, _db, _ch):
-	global bot, db, ch, message_queue, allow_documents
+	global bot, db, ch, message_queue, allow_documents, allow_edit
 	if config["bot_token"] == "":
 		logging.error("No telegram token specified.")
 		exit(1)
@@ -34,6 +35,7 @@ def init(config, _db, _ch):
 
 	allow_contacts = config["allow_contacts"]
 	allow_documents = config["allow_documents"]
+	allow_edit = config["allow_edit"]
 
 	types = ["text", "location", "venue"]
 	if allow_contacts:
@@ -294,12 +296,10 @@ class MyReceiver(core.Receiver):
 		message_queue.delete(lambda item, user_id=user.id: item.user_id == user_id)
 	@staticmethod
 	def edit(msid, new_text):
-		print(new_text)
 		tmp = ch.getMessage(msid)
 		except_id = None if tmp is None else tmp.user_id
 		for user in db.iterateUsers():
 			id = ch.lookupMapping(user.id, msid=msid)
-			print(msid)
 			if id is None:
 				continue
 			def f(user=user, id=id, new_text=new_text):
@@ -437,6 +437,25 @@ def cmd_plusone(ev):
 
 
 def relay(ev):
+	if allow_edit and ev.edit_date is not None:
+		if ev.content_type == "text" and not ev.text.startswith("/"):
+			spam_score = calc_spam_score(ev)
+			user = db.getUser(id=ev.from_user.id)
+			try_edit = core.edit_message(user, ev.message_id, ev.text, spam_score)
+			if type(try_edit) == rp.Reply: # don't relay message, instead reply with something
+				return send_answer(ev, try_edit)
+			for user2 in db.iterateUsers():
+				if not user2.isJoined():
+					continue
+				if user2 == user:
+					continue
+				core.edit_message(user2, ev.message_id, ev.text)
+			return
+		else:
+			return
+	elif ev.edit_date is not None:
+		return
+
 	# handle commands and karma giving
 	if ev.content_type == "text" and ev.text.startswith("/"):
 		pos = ev.text.find(" ") if " " in ev.text else len(ev.text)
@@ -449,14 +468,6 @@ def relay(ev):
 
 	# filter disallowed media types
 	if not allow_documents and ev.content_type == "document" and ev.document.mime_type not in ("image/gif", "video/mp4"):
-		return
-
-	if ev.edit_date is not None and ev.content_type == "text":
-		for user2 in db.iterateUsers():
-			print(user2.debugEnabled)
-			if not user2.isJoined():
-				continue
-			core.edit_message(user2, ev.message_id, ev.text)
 		return
 
 	msid = core.prepare_user_message(UserContainer(ev.from_user), calc_spam_score(ev))
