@@ -1,3 +1,4 @@
+# vim: set noet ts=4:
 import telebot
 import logging
 import time
@@ -56,6 +57,10 @@ def handler(func, *args, **kwargs):
 		except Exception as e:
 			logging.exception("Exception raised in event handler")
 	bot.message_handler(*args, **kwargs)(wrapper)
+	try:
+		bot.edited_message_handler(*args, **kwargs)(wrapper)
+	except:
+		pass
 
 def run():
 	while True:
@@ -287,6 +292,22 @@ class MyReceiver(core.Receiver):
 		logging.debug("stop_invoked(%s)", user)
 		# FIXME: same race cond as above, but it doesn't matter as much here
 		message_queue.delete(lambda item, user_id=user.id: item.user_id == user_id)
+	@staticmethod
+	def edit(msid, new_text):
+		print(new_text)
+		tmp = ch.getMessage(msid)
+		except_id = None if tmp is None else tmp.user_id
+		for user in db.iterateUsers():
+			id = ch.lookupMapping(user.id, msid=msid)
+			print(msid)
+			if id is None:
+				continue
+			def f(user=user, id=id, new_text=new_text):
+				try:
+					bot.edit_message_text(chat_id=user.id, message_id=id, text=new_text)
+				except telebot.apihelper.ApiException:
+					pass
+			put_into_queue(user, msid, f)
 
 ####
 
@@ -430,7 +451,16 @@ def relay(ev):
 	if not allow_documents and ev.content_type == "document" and ev.document.mime_type not in ("image/gif", "video/mp4"):
 		return
 
+	if ev.edit_date is not None and ev.content_type == "text":
+		for user2 in db.iterateUsers():
+			print(user2.debugEnabled)
+			if not user2.isJoined():
+				continue
+			core.edit_message(user2, ev.message_id, ev.text)
+		return
+
 	msid = core.prepare_user_message(UserContainer(ev.from_user), calc_spam_score(ev))
+
 	if type(msid) == rp.Reply: # don't relay message, instead reply with something
 		return send_answer(ev, msid)
 

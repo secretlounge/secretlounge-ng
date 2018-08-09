@@ -1,3 +1,4 @@
+# vim: set noet ts=4:
 import logging
 import time
 from datetime import datetime
@@ -140,6 +141,9 @@ class Receiver():
 	@staticmethod
 	def stop_invoked(who):
 		...
+	@staticmethod
+	def edit(msid, new_text):
+		...
 
 class Sender(Receiver): # flawless class hierachy I know...
 	receivers = []
@@ -155,6 +159,10 @@ class Sender(Receiver): # flawless class hierachy I know...
 	def stop_invoked(*args):
 		for r in Sender.receivers:
 			r.stop_invoked(*args)
+	@staticmethod
+	def edit(*args):
+		for r in Sender.receivers:
+			r.edit(*args)
 
 def registerReceiver(obj):
 	assert(issubclass(obj, Receiver))
@@ -405,6 +413,15 @@ def prepare_user_message(user, msg_score):
 	if not ok:
 		return rp.Reply(rp.types.ERR_SPAMMY)
 	return ch.assignMessageId(CachedMessage(user.id))
+@requireUser
+def edit_message(user, msg_id, new_text):
+	msid = ch.lookupMapping(user.id, data=(msg_id + 1))
+	if msid is None:
+		other_msid = ch.lookupMapping(user.id, data=(msg_id + 2))
+		if msid is None:
+			return
+		msid = other_msid
+	Sender.edit(msid, new_text)
 
 @requireUser
 def send_signed_user_message(user, msg_score, text):
