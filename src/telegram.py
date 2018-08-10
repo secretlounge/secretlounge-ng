@@ -1,3 +1,4 @@
+# vim: set noet ts=4:
 import telebot
 import logging
 import time
@@ -196,8 +197,23 @@ def resend_message(chat_id, ev, reply_to=None):
 	else:
 		raise NotImplementedError("content_type = %s" % ev.content_type)
 
-def send_to_single_inner(chat_id, ev, **kwargs):
-	if type(ev) == rp.Reply:
+def send_to_single_inner(chat_id, ev, cap_ev=None, **kwargs):
+	if cap_ev is not None:
+		cap_ev.caption = rp.formatForTelegram(ev)
+		if cap_ev.content_type == "photo":
+			photo = sorted(cap_ev.photo, key=lambda e: e.width*e.height, reverse=True)[0]
+			return bot.send_photo(chat_id, photo.file_id, caption=cap_ev.caption, parse_mode="HTML", **kwargs)
+		elif cap_ev.content_type == "audio":
+			for prop in ["performer", "title"]:
+				kwargs[prop] = getattr(cap_ev.audio, prop)
+			return bot.send_audio(chat_id, cap_ev.audio.file_id, caption=cap_ev.caption, parse_mode="HTML", **kwargs)
+		elif cap_ev.content_type == "document":
+			return bot.send_document(chat_id, cap_ev.document.file_id, caption=cap_ev.caption, parse_mode="HTML", **kwargs)
+		elif cap_ev.content_type == "video":
+			return bot.send_video(chat_id, cap_ev.video.file_id, caption=cap_ev.caption, parse_mode="HTML", **kwargs)
+		elif cap_ev.content_type == "voice":
+			return bot.send_voice(chat_id, cap_ev.voice.file_id, caption=cap_ev.caption, parse_mode="HTML", **kwargs)
+	elif type(ev) == rp.Reply:
 		if "reply_to" in kwargs.keys():
 			kwargs = {"reply_to_message_id": kwargs["reply_to"]}
 		else:
@@ -206,16 +222,16 @@ def send_to_single_inner(chat_id, ev, **kwargs):
 	else:
 		return resend_message(chat_id, ev, **kwargs)
 
-def send_to_single(ev, msid, user, reply_msid):
+def send_to_single(ev, msid, user, reply_msid, cap_ev=None):
 	# set reply_to_message_id if applicable
 	kwargs = {}
 	if reply_msid is not None:
 		kwargs["reply_to"] = ch.lookupMapping(user.id, msid=reply_msid)
 
-	def f(ev=ev, msid=msid, user=user):
+	def f(ev=ev, msid=msid, user=user, cap_ev=cap_ev):
 		while True:
 			try:
-				ev2 = send_to_single_inner(user.id, ev, **kwargs)
+				ev2 = send_to_single_inner(user.id, ev, cap_ev=cap_ev, **kwargs)
 			except telebot.apihelper.ApiException as e:
 				retry = check_telegram_exc(e, user)
 				if retry:
@@ -263,6 +279,14 @@ class MyReceiver(core.Receiver):
 			if user == except_who and not user.debugEnabled:
 				continue
 			send_to_single(m, msid, user, reply_msid)
+	@staticmethod
+	def reply_caption(m, msid, except_who, reply_msid, ev):
+		for user in db.iterateUsers():
+			if not user.isJoined():
+				continue
+			if user == except_who and not user.debugEnabled:
+				continue
+			send_to_single(m, msid, user, reply_msid, ev)
 	@staticmethod
 	def delete(msid):
 		logging.debug("delete(msid=%d)", msid)
@@ -425,6 +449,13 @@ def relay(ev):
 		return
 	elif ev.content_type == "text" and ev.text.strip() == "+1":
 		return cmd_plusone(ev)
+	elif ev.content_type in ("photo","audio","video","document","voice") and ev.caption is not None and ev.caption.startswith("/"):
+		pos = ev.caption.find(" ") if " " in ev.caption else len(ev.caption)
+		c = ev.caption[1:pos].lower()
+		if c in registered_commands.keys():
+			if c == "sign":
+				cmd_sign_cap(ev)
+		return
 
 	# filter disallowed media types
 	if not allow_documents and ev.content_type == "document" and ev.document.mime_type not in ("image/gif", "video/mp4"):
@@ -461,6 +492,20 @@ def cmd_sign(ev):
 	arg = ev.text[ev.text.find(" ")+1:].strip()
 
 	msid = core.send_signed_user_message(c_user, calc_spam_score(ev), arg)
+	if type(msid) == rp.Reply:
+		return send_answer(ev, msid, True)
+
+	# save the original message in the mapping, this isn't done inside MyReceiver.reply()
+	# since there's no "original message" at that point
+	ch.saveMapping(c_user.id, msid, ev.message_id)
+
+def cmd_sign_cap(ev):
+	c_user = UserContainer(ev.from_user)
+	if " " not in ev.caption:
+		return
+	arg = ev.caption[ev.caption.find(" ")+1:].strip()
+
+	msid = core.send_signed_user_caption(c_user, calc_spam_score(ev), arg, ev)
 	if type(msid) == rp.Reply:
 		return send_answer(ev, msid, True)
 
