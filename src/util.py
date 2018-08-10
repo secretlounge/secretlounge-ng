@@ -1,3 +1,4 @@
+# vim: set noet ts=4:
 import itertools
 import time
 import logging
@@ -71,3 +72,11 @@ class Enum():
 		return self._m.keys()
 	def values(self):
 		return self._m.values()
+
+def langcode_to_flag(langcode):
+	flags = { "en" : "🇺🇸", "en-us" : "🇺🇸", "en-gb" : "🇬🇧", "fr" : "🇫🇷", "de" : "🇩🇪", "es" : "🇪🇸",  "pt" : "🇵🇹", "ru" : "🇷🇺" }
+	
+	user_flag = [flag for lang, flag in flags.items() if lang == langcode]
+	if user_flag is not None:
+		return user_flag[0]
+	return None

@@ -1,3 +1,4 @@
+# vim: set noet ts=4:
 import logging
 import time
 from datetime import datetime
@@ -184,6 +185,7 @@ def user_join(c_user):
 	user = User()
 	user.defaults()
 	user.id = c_user.id
+	user.langcode = c_user.language_code
 	updateUserFromEvent(user, c_user)
 	if not any(db.iterateUserIds()):
 		user.rank = RANKS.admin
