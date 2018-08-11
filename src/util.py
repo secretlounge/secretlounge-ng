@@ -2,6 +2,8 @@
 import itertools
 import time
 import logging
+import json
+import csv
 from queue import PriorityQueue
 from threading import Lock
 from datetime import timedelta
@@ -72,10 +74,39 @@ class Enum():
 		return self._m.keys()
 	def values(self):
 		return self._m.values()
+def country_to_code(country):
+	country = country.capitalize()
+	dic = {}
+	with open("wikipedia-iso-country-codes.csv") as f:
+		file= csv.DictReader(f, delimiter=',')
+		for line in file:
+			dic[line['English short name lower case']] = line['Alpha-2 code']
+	country_list = [country]
+	try:
+		country_code = [dic[x] for x in country_list]
+	except KeyError:
+		return None
+	else:
+		return country_code[0]
+
+
+def code_to_country(code):
+	code = code.upper()
+	dic = {}
+	with open("wikipedia-iso-country-codes.csv") as f:
+		file= csv.DictReader(f, delimiter=',')
+		for line in file:
+			dic[line['English short name lower case']] = line['Alpha-2 code']
+		country = [k for k,v in dic.items() if v == code]
+		if country:
+			return country
+		else:
+			return None
 
 def langcode_to_flag(langcode):
-	flags = { "en" : "🇺🇸", "en-us" : "🇺🇸", "en-gb" : "🇬🇧", "fr" : "🇫🇷", "de" : "🇩🇪", "es" : "🇪🇸",  "pt" : "🇵🇹", "ru" : "🇷🇺" }
-	
+	langcode = langcode.lower()
+	with open("flags.json") as f:
+		flags = json.load(f)
 	user_flag = [flag for lang, flag in flags.items() if lang == langcode]
 	if user_flag is not None:
 		return user_flag[0]

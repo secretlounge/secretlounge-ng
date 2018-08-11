@@ -46,7 +46,7 @@ def init(config, _db, _ch):
 	cmds = [
 		"start", "stop", "users", "info", "motd", "toggledebug", "togglekarma",
 		"version", "modhelp", "adminhelp", "modsay", "adminsay", "mod",
-		"admin", "warn", "delete", "uncooldown", "blacklist", "s", "sign"
+		"admin", "warn", "delete", "uncooldown", "blacklist", "s", "sign", "setflag"
 	]
 	for c in cmds: # maps /<c> to the function cmd_<c>
 		c = c.lower()
@@ -489,3 +489,11 @@ def cmd_sign(ev):
 	ch.saveMapping(c_user.id, msid, ev.message_id)
 
 cmd_s = cmd_sign # alias
+
+def cmd_setflag(ev):
+	c_user = UserContainer(ev.from_user)
+	if " " not in ev.text:
+		return
+	arg = ev.text.split()[1]
+	return send_answer(ev, core.set_flag(c_user, arg), True)
+								
