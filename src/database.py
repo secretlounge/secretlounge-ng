@@ -188,10 +188,13 @@ class JSONDatabase(Database):
 		if d is None: return None
 		props = ["id", "username", "realname", "rank", "blacklistReason", 
 			"warnings", "karma", "hideKarma", "debugEnabled"]
+		props_d = [("tripcode", None)]
 		dateprops = ["joined", "left", "lastActive", "cooldownUntil", "warnExpiry"]
 		user = User()
 		for prop in props:
 			setattr(user, prop, d[prop])
+		for prop, default in props_d:
+			setattr(user, prop, d.get(prop, default))
 		for prop in dateprops:
 			if d[prop] is not None:
 				setattr(user, prop, datetime.utcfromtimestamp(d[prop]))
@@ -282,7 +285,12 @@ class SQLiteDatabase(Database):
 			setattr(user, prop, r[prop])
 		return user
 	def _ensure_schema(self):
+		def row_exists(table, name):
+			cur = self.db.execute("PRAGMA table_info(`" + table + "`);")
+			return any(row[1] == name for row in cur)
+
 		with self.lock:
+			# create initial schema
 			self.db.execute("""
 CREATE TABLE IF NOT EXISTS `system_config` (
 	`name` TEXT NOT NULL,
@@ -310,6 +318,9 @@ CREATE TABLE IF NOT EXISTS `users` (
 	PRIMARY KEY (`id`)
 );
 			""".strip())
+			# migration
+			if not row_exists("users", "tripcode"):
+				self.db.execute("ALTER TABLE `users` ADD `tripcode` TEXT")
 	def getUser(self, id=None, username=None):
 		sql = "SELECT * FROM users WHERE "
 		if id is not None:
