@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 from threading import Lock
 
-from src.util import country_to_code, code_to_country
+from src.util import country_to_code, code_to_country, langcode_to_flag
 import src.replies as rp
 from src.globals import *
 from src.database import User, SystemConfig
@@ -188,7 +188,7 @@ def user_join(c_user):
 	user = User()
 	user.defaults()
 	user.id = c_user.id
-	user.langcode = c_user.language_code
+	user.flag = c_user.language_code
 	updateUserFromEvent(user, c_user)
 	if not any(db.iterateUserIds()):
 		user.rank = RANKS.admin
@@ -227,6 +227,10 @@ def get_info(user):
 		"warnExpiry": user.warnExpiry,
 		"cooldown": user.cooldownUntil if user.isInCooldown() else None,
 	}
+	if show_flags:
+		params["flag"] = langcode_to_flag(user.flag)
+	else:
+		params["flag"] = None
 	return rp.Reply(rp.types.USER_INFO, **params)
 
 @requireUser
@@ -304,8 +308,8 @@ def set_flag(user, flag):
 		else:
 			flag = check_flag
 	with db.modifyUser(id=user.id) as user:
-		user.langcode = flag
-	return rp.Reply(rp.types.SET_FLAG, flag=flag)
+		user.flag = flag
+	return rp.Reply(rp.types.SET_FLAG, flag=langcode_to_flag(flag))
 
 @requireUser
 @requireRank(RANKS.admin)

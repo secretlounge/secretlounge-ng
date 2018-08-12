@@ -33,7 +33,7 @@ class User():
 		self.karma = None # int
 		self.hideKarma = None # bool
 		self.debugEnabled = None # bool
-		self.langcode = None # ste
+		self.flag = None # ste
 	def __eq__(self, other):
 		if type(other) == User:
 			return self.id == other.id
@@ -274,7 +274,7 @@ class SQLiteDatabase(Database):
 	def _userToDict(user):
 		props = ["id", "username", "realname", "rank", "joined", "left",
 			"lastActive", "cooldownUntil", "blacklistReason", "warnings",
-			"warnExpiry", "karma", "hideKarma", "debugEnabled", "langcode"]
+			"warnExpiry", "karma", "hideKarma", "debugEnabled", "flag"]
 		return {prop: getattr(user, prop) for prop in props}
 	@staticmethod
 	def _userFromRow(r):
@@ -307,7 +307,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 	`karma` INTEGER NOT NULL,
 	`hideKarma` TINYINT NOT NULL,
 	`debugEnabled` TINYINT NOT NULL,
-	`langcode` TEXT,
+	`flag` TEXT,
 	PRIMARY KEY (`id`)
 );
 			""".strip())

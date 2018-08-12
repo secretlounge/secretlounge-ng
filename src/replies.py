@@ -118,9 +118,9 @@ format_strs = {
 	types.ERR_SPAMMY: em("Your message has not been sent. Avoid sending messages too fast, try again later."),
 	types.ERR_INVALID_FLAG: "{flag!x} <i>is not a valid flag</i>",
 
-	types.USER_INFO: lambda warnings, cooldown, **_:
+	types.USER_INFO: lambda warnings, cooldown, flag, **_:
 		"<b>id</b>: {id}, <b>username</b>: {username!x}, <b>rank</b>: {rank_i} ({rank}), "+
-		"<b>karma</b>: {karma}\n"+
+		"<b>karma</b>: {karma}" + ( " <b>flag</b>: {flag}" if flag is not None else "" ) +"\n"+
 		"<b>warnings</b>: {warnings} " + smiley(warnings)+
 		( " (one warning will be removed on {warnExpiry!t})" if warnings > 0 else "" ) + ", "+
 		"<b>cooldown</b>: "+

@@ -104,10 +104,9 @@ def code_to_country(code):
 			return None
 
 def langcode_to_flag(langcode):
-	langcode = langcode.lower()
-	with open("flags.json") as f:
-		flags = json.load(f)
-	user_flag = [flag for lang, flag in flags.items() if lang == langcode]
-	if user_flag is not None:
-		return user_flag[0]
-	return None
+	offset = 127397
+	cc = langcode.upper()
+	flag_list = []
+	for c in cc:
+		flag_list.append(chr(ord(c) + offset))
+	return "".join(flag_list)

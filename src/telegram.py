@@ -220,7 +220,7 @@ def send_to_single(ev, msid, user, reply_msid):
 	def f(ev=ev, msid=msid, user=user):
 		while True:
 			if show_flags:
-				user_flag = langcode_to_flag(user.langcode)
+				user_flag = langcode_to_flag(user.flag)
 				if user_flag is not None:
 					if type(ev) != rp.Reply:
 						if ev.text is not None:
