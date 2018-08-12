@@ -75,6 +75,18 @@ class UserContainer():
 		if u.last_name is not None:
 			self.realname += " " + u.last_name
 
+def takesArgument(optional=False):
+	def f(func):
+		def wrap(ev):
+			arg = ""
+			if " " in ev.text:
+				arg = ev.text[ev.text.find(" ")+1:].strip()
+			if arg == "" and not optional:
+				return
+			return func(ev, arg)
+		return wrap
+	return f
+
 def wrap_core(func, reply_to=False):
 	def f(ev):
 		m = func(UserContainer(ev.from_user))
@@ -307,11 +319,9 @@ def cmd_info(ev):
 		return send_answer(ev, rp.Reply(rp.types.ERR_NOT_IN_CACHE), True)
 	return send_answer(ev, core.get_info_mod(c_user, reply_msid), True)
 
-def cmd_motd(ev):
+@takesArgument(optional=True)
+def cmd_motd(ev, arg):
 	c_user = UserContainer(ev.from_user)
-	arg = ""
-	if " " in ev.text:
-		arg = ev.text[ev.text.find(" ")+1:].strip()
 
 	if arg == "":
 		send_answer(ev, core.get_motd(c_user), reply_to=True)
@@ -322,12 +332,9 @@ cmd_toggledebug = wrap_core(core.toggle_debug)
 cmd_togglekarma = wrap_core(core.toggle_karma)
 
 
-def cmd_settripcode(ev):
+@takesArgument()
+def cmd_settripcode(ev, arg):
 	c_user = UserContainer(ev.from_user)
-	if " " not in ev.text:
-		return
-	arg = ev.text[ev.text.find(" ")+1:].strip()
-
 	return send_answer(ev, core.set_tripcode(c_user, arg), True)
 
 def cmd_modhelp(ev):
@@ -340,36 +347,28 @@ def cmd_version(ev):
 	send_answer(ev, rp.Reply(rp.types.PROGRAM_VERSION, version=VERSION), True)
 
 
-def cmd_modsay(ev):
+@takesArgument()
+def cmd_modsay(ev, arg):
 	c_user = UserContainer(ev.from_user)
-	if " " not in ev.text:
-		return
-	arg = ev.text[ev.text.find(" ")+1:].strip()
 	arg = escape_html(arg)
-
 	return send_answer(ev, core.send_mod_message(c_user, arg), True)
 
-def cmd_adminsay(ev):
+@takesArgument()
+def cmd_adminsay(ev, arg):
 	c_user = UserContainer(ev.from_user)
-	if " " not in ev.text:
-		return
-	arg = ev.text[ev.text.find(" ")+1:].strip()
 	arg = escape_html(arg)
-
 	return send_answer(ev, core.send_admin_message(c_user, arg), True)
 
-def cmd_mod(ev):
+@takesArgument()
+def cmd_mod(ev, arg):
 	c_user = UserContainer(ev.from_user)
-	if " " not in ev.text:
-		return
-	arg = ev.text[ev.text.find(" ")+1:].strip().lstrip("@")
+	arg = arg.lstrip("@")
 	send_answer(ev, core.promote_user(c_user, arg, RANKS.mod), True)
 
-def cmd_admin(ev):
+@takesArgument()
+def cmd_admin(ev, arg):
 	c_user = UserContainer(ev.from_user)
-	if " " not in ev.text:
-		return
-	arg = ev.text[ev.text.find(" ")+1:].strip().lstrip("@")
+	arg = arg.lstrip("@")
 	send_answer(ev, core.promote_user(c_user, arg, RANKS.admin), True)
 
 def cmd_warn(ev, delete=False):
@@ -385,11 +384,9 @@ def cmd_warn(ev, delete=False):
 
 cmd_delete = lambda ev: cmd_warn(ev, True)
 
-def cmd_uncooldown(ev):
+@takesArgument()
+def cmd_uncooldown(ev, arg):
 	c_user = UserContainer(ev.from_user)
-	if " " not in ev.text:
-		return
-	arg = ev.text[ev.text.find(" ")+1:].strip()
 
 	oid, username = None, None
 	if len(arg) < 5:
@@ -399,12 +396,9 @@ def cmd_uncooldown(ev):
 
 	send_answer(ev, core.uncooldown_user(c_user, oid, username), True)
 
-def cmd_blacklist(ev):
+@takesArgument(optional=True)
+def cmd_blacklist(ev, arg):
 	c_user = UserContainer(ev.from_user)
-	arg = ""
-	if " " in ev.text:
-		arg = ev.text[ev.text.find(" ")+1:].strip()
-
 	if ev.reply_to_message is None:
 		return send_answer(ev, rp.Reply(rp.types.ERR_NO_REPLY), True)
 
@@ -463,11 +457,9 @@ def relay(ev):
 
 		send_to_single(ev, msid, user2, reply_msid)
 
-def cmd_sign(ev):
+@takesArgument()
+def cmd_sign(ev, arg):
 	c_user = UserContainer(ev.from_user)
-	if " " not in ev.text:
-		return
-	arg = ev.text[ev.text.find(" ")+1:].strip()
 
 	msid = core.send_signed_user_message(c_user, calc_spam_score(ev), arg)
 	if type(msid) == rp.Reply:
@@ -479,11 +471,9 @@ def cmd_sign(ev):
 
 cmd_s = cmd_sign # alias
 
-def cmd_tsign(ev):
+@takesArgument()
+def cmd_tsign(ev, arg):
 	c_user = UserContainer(ev.from_user)
-	if " " not in ev.text:
-		return
-	arg = ev.text[ev.text.find(" ")+1:].strip()
 
 	msid = core.send_signed_user_message(c_user, calc_spam_score(ev), arg, tripcode=True)
 	if type(msid) == rp.Reply:
