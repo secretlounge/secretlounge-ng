@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 from threading import Lock
 
-from src.util import country_to_code, code_to_country, langcode_to_flag
+from src.util import country_to_code, code_to_country, langcode_to_flag, flag_to_langcode
 import src.replies as rp
 from src.globals import *
 from src.database import User, SystemConfig
@@ -300,7 +300,15 @@ def set_flag(user, flag):
 	if len(flag) == 2 or flag == "en-us":
 		check_flag = code_to_country(flag)
 		if check_flag is None:
-			return rp.Reply(rp.types.ERR_INVALID_FLAG, flag=flag)
+			try:
+				flag = flag_to_langcode(flag)
+			except ValueError:
+				if flag == 'eu':
+					pass
+				else:
+					return rp.Reply(rp.types.ERR_INVALID_FLAG, flag=flag)
+	elif flag in ('gay','pirate','recycle'):
+		pass
 	else:
 		check_flag = country_to_code(flag)
 		if check_flag is None:

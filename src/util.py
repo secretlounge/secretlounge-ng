@@ -104,9 +104,26 @@ def code_to_country(code):
 			return None
 
 def langcode_to_flag(langcode):
+	if langcode in ("gay","pirate","eu","recycle"):
+		if langcode == "gay":
+			return "\U0001f3f3\U0000200d\U0001f308"
+		if langcode == "pirate":
+			return "\U00002620"
+		if langcode == "recycle":
+			return "\U0000267B"
+		if langcode == "eu":
+			pass
 	offset = 127397
 	cc = langcode.upper()
 	flag_list = []
 	for c in cc:
 		flag_list.append(chr(ord(c) + offset))
 	return "".join(flag_list)
+
+def flag_to_langcode(flag):
+	flag_point = [ord(x) for x in flag]
+	langcode = []
+	for f in flag_point:
+		flag_letter = f - 127397
+		langcode.append(chr(flag_letter))
+	return "".join(langcode)
