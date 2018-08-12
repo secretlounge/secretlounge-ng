@@ -103,7 +103,7 @@ format_strs = {
 	types.KARMA_NOTIFICATION:
 		em( "You've just been given sweet karma! (check /info to see your karma"+
 			" or /toggleKarma to turn these notifications off)" ),
-	types.TRIPCODE_SET: "<b>Tripcode set to</b>: {trip!x}",
+	types.TRIPCODE_SET: em("Tripcode set. It will appear as: ") + "{trip!x}",
 
 	types.ERR_COMMAND_DISABLED: em("This command has been disabled."),
 	types.ERR_NO_REPLY: em("You need to reply to a message to use this command."),

@@ -296,7 +296,7 @@ def set_tripcode(user, text):
 
 	with db.modifyUser(id=user.id) as user:
 		user.tripcode = text
-	return rp.Reply(rp.types.TRIPCODE_SET, trip=text)
+	return rp.Reply(rp.types.TRIPCODE_SET, trip=genTripcode(text))
 
 @requireUser
 @requireRank(RANKS.admin)
