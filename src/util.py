@@ -1,6 +1,9 @@
+# vim: set noet ts=4:
 import itertools
 import time
 import logging
+import json
+import csv
 from queue import PriorityQueue
 from threading import Lock
 from datetime import timedelta
@@ -71,3 +74,56 @@ class Enum():
 		return self._m.keys()
 	def values(self):
 		return self._m.values()
+def country_to_code(country):
+	country = country.capitalize()
+	dic = {}
+	with open("wikipedia-iso-country-codes.csv") as f:
+		file= csv.DictReader(f, delimiter=',')
+		for line in file:
+			dic[line['English short name lower case']] = line['Alpha-2 code']
+	country_list = [country]
+	try:
+		country_code = [dic[x] for x in country_list]
+	except KeyError:
+		return None
+	else:
+		return country_code[0]
+
+
+def code_to_country(code):
+	code = code.upper()
+	dic = {}
+	with open("wikipedia-iso-country-codes.csv") as f:
+		file= csv.DictReader(f, delimiter=',')
+		for line in file:
+			dic[line['English short name lower case']] = line['Alpha-2 code']
+		country = [k for k,v in dic.items() if v == code]
+		if country:
+			return country
+		else:
+			return None
+
+def langcode_to_flag(langcode):
+	if langcode in ("gay","pirate","eu","recycle"):
+		if langcode == "gay":
+			return "\U0001f3f3\U0000200d\U0001f308"
+		if langcode == "pirate":
+			return "\U00002620"
+		if langcode == "recycle":
+			return "\U0000267B"
+		if langcode == "eu":
+			pass
+	offset = 127397
+	cc = langcode.upper()
+	flag_list = []
+	for c in cc:
+		flag_list.append(chr(ord(c) + offset))
+	return "".join(flag_list)
+
+def flag_to_langcode(flag):
+	flag_point = [ord(x) for x in flag]
+	langcode = []
+	for f in flag_point:
+		flag_letter = f - 127397
+		langcode.append(chr(flag_letter))
+	return "".join(langcode)

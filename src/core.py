@@ -1,8 +1,10 @@
+# vim: set noet ts=4:
 import logging
 import time
 from datetime import datetime
 from threading import Lock
 
+from src.util import country_to_code, code_to_country, langcode_to_flag, flag_to_langcode
 import src.replies as rp
 from src.globals import *
 from src.database import User, SystemConfig
@@ -14,15 +16,17 @@ spam_scores = None
 
 blacklist_contact = None
 enable_signing = None
+show_flags = None
 
 def init(config, _db, _ch):
-	global db, ch, spam_scores, blacklist_contact, enable_signing
+	global db, ch, spam_scores, blacklist_contact, enable_signing, show_flags
 	db = _db
 	ch = _ch
 	spam_scores = ScoreKeeper()
 
 	blacklist_contact = config.get("blacklist_contact", "")
 	enable_signing = config["enable_signing"]
+	show_flags = config["show_flags"]
 
 	# initialize db if empty
 	if db.getSystemConfig() is None:
@@ -184,6 +188,7 @@ def user_join(c_user):
 	user = User()
 	user.defaults()
 	user.id = c_user.id
+	user.flag = c_user.language_code
 	updateUserFromEvent(user, c_user)
 	if not any(db.iterateUserIds()):
 		user.rank = RANKS.admin
@@ -222,6 +227,10 @@ def get_info(user):
 		"warnExpiry": user.warnExpiry,
 		"cooldown": user.cooldownUntil if user.isInCooldown() else None,
 	}
+	if show_flags:
+		params["flag"] = langcode_to_flag(user.flag)
+	else:
+		params["flag"] = None
 	return rp.Reply(rp.types.USER_INFO, **params)
 
 @requireUser
@@ -283,6 +292,32 @@ def toggle_karma(user):
 		user.hideKarma = not user.hideKarma
 		new = user.hideKarma
 	return rp.Reply(rp.types.BOOLEAN_CONFIG, description="Karma notifications", enabled=not new)
+
+@requireUser
+def set_flag(user, flag):
+	if not show_flags:
+		return rp.Reply(rp.types.ERR_COMMAND_DISABLED)
+	if len(flag) == 2 or flag == "en-us":
+		check_flag = code_to_country(flag)
+		if check_flag is None:
+			try:
+				flag = flag_to_langcode(flag)
+			except ValueError:
+				if flag == 'eu':
+					pass
+				else:
+					return rp.Reply(rp.types.ERR_INVALID_FLAG, flag=flag)
+	elif flag in ('gay','pirate','recycle'):
+		pass
+	else:
+		check_flag = country_to_code(flag)
+		if check_flag is None:
+			return rp.Reply(rp.types.ERR_INVALID_FLAG, flag=flag)
+		else:
+			flag = check_flag
+	with db.modifyUser(id=user.id) as user:
+		user.flag = flag
+	return rp.Reply(rp.types.SET_FLAG, flag=langcode_to_flag(flag))
 
 @requireUser
 @requireRank(RANKS.admin)

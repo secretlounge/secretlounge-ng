@@ -10,7 +10,8 @@ allow_contacts: false
 # relay arbitrary documents (gifs always work)
 allow_documents: true
 
-# enable signing messages using /sign
-enable_signing: false
+# Allow users to set a flag and display them above messages
+show_flags: true
+
 # point of contact shown to blacklisted users
 #blacklist_contact: http://t.me/invite/something

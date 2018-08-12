@@ -1,3 +1,4 @@
+# vim: set noet ts=4:
 import telebot
 import logging
 import time
@@ -8,6 +9,7 @@ from queue import PriorityQueue
 import src.core as core
 import src.replies as rp
 from src.util import MutablePriorityQueue
+from src.util import langcode_to_flag
 from src.globals import *
 
 bot = None
@@ -18,9 +20,10 @@ registered_commands = {}
 
 # settings regarding message relaying
 allow_documents = None
+show_flags = None
 
 def init(config, _db, _ch):
-	global bot, db, ch, message_queue, allow_documents
+	global bot, db, ch, message_queue, allow_documents, show_flags
 	if config["bot_token"] == "":
 		logging.error("No telegram token specified.")
 		exit(1)
@@ -33,6 +36,7 @@ def init(config, _db, _ch):
 
 	allow_contacts = config["allow_contacts"]
 	allow_documents = config["allow_documents"]
+	show_flags = config["show_flags"]
 
 	types = ["text", "location", "venue"]
 	if allow_contacts:
@@ -42,7 +46,7 @@ def init(config, _db, _ch):
 	cmds = [
 		"start", "stop", "users", "info", "motd", "toggledebug", "togglekarma",
 		"version", "modhelp", "adminhelp", "modsay", "adminsay", "mod",
-		"admin", "warn", "delete", "uncooldown", "blacklist", "s", "sign"
+		"admin", "warn", "delete", "uncooldown", "blacklist", "s", "sign", "setflag"
 	]
 	for c in cmds: # maps /<c> to the function cmd_<c>
 		c = c.lower()
@@ -71,6 +75,7 @@ class UserContainer():
 		self.id = u.id
 		self.username = u.username
 		self.realname = u.first_name
+		self.language_code = u.language_code
 		if u.last_name is not None:
 			self.realname += " " + u.last_name
 
@@ -214,6 +219,21 @@ def send_to_single(ev, msid, user, reply_msid):
 
 	def f(ev=ev, msid=msid, user=user):
 		while True:
+			if show_flags:
+				user_flag = langcode_to_flag(user.flag)
+				if user_flag is not None:
+					if type(ev) != rp.Reply:
+						if ev.text is not None:
+							ev.text = user_flag + "\n" + ev.text
+						elif ev.caption is not None:
+							ev.caption = user_flag + "\n" + ev.caption
+						else:
+							pass
+					elif type(ev) == rp.Reply:
+						print(vars(ev))
+						ev.kwargs['text'] = user_flag + "\n" + ev.kwargs['text']
+					else:
+						pass
 			try:
 				ev2 = send_to_single_inner(user.id, ev, **kwargs)
 			except telebot.apihelper.ApiException as e:
@@ -469,3 +489,11 @@ def cmd_sign(ev):
 	ch.saveMapping(c_user.id, msid, ev.message_id)
 
 cmd_s = cmd_sign # alias
+
+def cmd_setflag(ev):
+	c_user = UserContainer(ev.from_user)
+	if " " not in ev.text:
+		return
+	arg = ev.text.split()[1]
+	return send_answer(ev, core.set_flag(c_user, arg), True)
+								
