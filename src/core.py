@@ -1,3 +1,4 @@
+# vim: set noet ts=4:
 import logging
 import time
 from datetime import datetime
@@ -136,6 +137,9 @@ class Receiver():
 	def reply(m, msid, who, except_who, reply_to):
 		...
 	@staticmethod
+	def reply_caption(m, msid, except_who, reply_to, ev):
+		...
+	@staticmethod
 	def delete(msid):
 		...
 	@staticmethod
@@ -148,6 +152,10 @@ class Sender(Receiver): # flawless class hierachy I know...
 	def reply(*args):
 		for r in Sender.receivers:
 			r.reply(*args)
+	@staticmethod
+	def reply_caption(*args):
+		for r in Sender.receivers:
+			r.reply_caption(*args)
 	@staticmethod
 	def delete(*args):
 		for r in Sender.receivers:
@@ -441,6 +449,19 @@ def send_signed_user_message(user, msg_score, text, tripcode=False):
 	Sender.reply(m, msid, None, user, None)
 	return msid
 
+@requireUser
+def send_signed_user_caption(user, msg_score, text, ev):
+	if not enable_signing:
+		return rp.Reply(rp.types.ERR_COMMAND_DISABLED)
+	if user.isInCooldown():
+		return rp.Reply(rp.types.ERR_COOLDOWN, until=user.cooldownUntil)
+	ok = spam_scores.increaseSpamScore(user.id, msg_score)
+	if not ok:
+		return rp.Reply(rp.types.ERR_SPAMMY)
+	m = rp.Reply(rp.types.SIGNED_MSG, text=text, user_id=user.id, user_text=user.getFormattedName())
+	msid = ch.assignMessageId(CachedMessage(user.id))
+	Sender.reply_caption(m, msid, user, None, ev)
+	return msid
 # who is None -> to everyone except the user <except_who> (if applicable)
 # who is not None -> only to the user <who>
 # reply_to: msid the message is in reply to
