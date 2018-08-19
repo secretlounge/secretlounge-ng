@@ -34,4 +34,4 @@ adminhelp - Show commands available to admins
 toggledebug - Toggle debug mode (sends back all messages to you)
 togglekarma - Toggle karma notifications
 settripcode - Set a tripcode for your mesaages
-```
+setflag - Set your flag

@@ -1,8 +1,10 @@
+# vim: set noet ts=4:
 import logging
 import time
 from datetime import datetime
 from threading import Lock
 
+from src.util import country_to_code, code_to_country, langcode_to_flag, flag_to_langcode
 import src.replies as rp
 from src.globals import *
 from src.database import User, SystemConfig
@@ -15,15 +17,17 @@ spam_scores = None
 
 blacklist_contact = None
 enable_signing = None
+show_flags = None
 
 def init(config, _db, _ch):
-	global db, ch, spam_scores, blacklist_contact, enable_signing
+	global db, ch, spam_scores, blacklist_contact, enable_signing, show_flags
 	db = _db
 	ch = _ch
 	spam_scores = ScoreKeeper()
 
 	blacklist_contact = config.get("blacklist_contact", "")
 	enable_signing = config["enable_signing"]
+	show_flags = config["show_flags"]
 
 	# initialize db if empty
 	if db.getSystemConfig() is None:
@@ -185,6 +189,12 @@ def user_join(c_user):
 	user = User()
 	user.defaults()
 	user.id = c_user.id
+	if c_user.language_code == 'en-US':
+		user.flag = "us"
+	elif c_user.language_code is not None:
+		user.flag = c_user.language_code
+	else:
+		user.flag = "neutral"
 	updateUserFromEvent(user, c_user)
 	if not any(db.iterateUserIds()):
 		user.rank = RANKS.admin
@@ -224,6 +234,10 @@ def get_info(user):
 		"warnExpiry": user.warnExpiry,
 		"cooldown": user.cooldownUntil if user.isInCooldown() else None,
 	}
+	if show_flags:
+		params["flag"] = langcode_to_flag(user.flag)
+	else:
+		params["flag"] = None
 	return rp.Reply(rp.types.USER_INFO, **params)
 
 @requireUser
@@ -287,6 +301,35 @@ def toggle_karma(user):
 	return rp.Reply(rp.types.BOOLEAN_CONFIG, description="Karma notifications", enabled=not new)
 
 @requireUser
+def set_flag(user, flag):
+	if not show_flags:
+		return rp.Reply(rp.types.ERR_COMMAND_DISABLED)
+	if flag in ("gay","pirate","recycle","\U0001f3f3\U0000fe0f\U0000200d\U0001f308","\U00002620\U0000fe0f","\U0000267B\U0000fe0f"):
+		pass
+	elif "syria" in flag.lower():
+		flag = "sy"
+	elif len(flag) == 2:
+		check_flag = code_to_country(flag)
+		if check_flag is None:
+			try:
+				flag = flag_to_langcode(flag)
+			except ValueError:
+				if flag == "eu":
+					pass
+				else:
+					return rp.Reply(rp.types.ERR_INVALID_FLAG, flag=flag)
+	else:
+		check_flag = country_to_code(flag)
+		if check_flag is None:
+			return rp.Reply(rp.types.ERR_INVALID_FLAG, flag=flag)
+		else:
+			flag = check_flag
+	with db.modifyUser(id=user.id) as user:
+		user.flag = flag
+	return rp.Reply(rp.types.SET_FLAG, flag=langcode_to_flag(flag))
+
+@requireUser
+>>>>>>> f314cd875ae231052e56a332da6edc2ef1f2d3ac
 def set_tripcode(user, text):
 	if not enable_signing:
 		return rp.Reply(rp.types.ERR_COMMAND_DISABLED)
@@ -433,8 +476,13 @@ def send_signed_user_message(user, msg_score, text, tripcode=False):
 	if tripcode:
 		if user.tripcode is None:
 			return rp.Reply(rp.types.ERR_NO_TRIPCODE)
-		m = rp.Reply(rp.types.TSIGNED_MSG, text=text, user_id=user.id, tripcode=genTripcode(user.tripcode))
+		if show_flags:
+			m = rp.Reply(rp.types.TSIGNED_MSG, text=text, user_id=user.id, tripcode=(genTripcode(user.tripcode) + " " + langcode_to_flag(user.flag)))
+		else:
+			m = rp.Reply(rp.types.TSIGNED_MSG, text=text, user_id=user.id, tripcode=genTripcode(user.tripcode))
 	else:
+		if show_flags:
+			text = langcode_to_flag(user.flag) + ":" + "\n" + text
 		m = rp.Reply(rp.types.SIGNED_MSG, text=text, user_id=user.id, user_text=user.getFormattedName())
 
 	msid = ch.assignMessageId(CachedMessage(user.id))

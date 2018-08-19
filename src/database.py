@@ -1,3 +1,4 @@
+# vim: set noet ts=4:
 import logging
 import os
 import json
@@ -32,6 +33,7 @@ class User():
 		self.karma = None # int
 		self.hideKarma = None # bool
 		self.debugEnabled = None # bool
+		self.flag = None # ste
 		self.tripcode = None # str
 	def __eq__(self, other):
 		if type(other) == User:
@@ -276,7 +278,7 @@ class SQLiteDatabase(Database):
 	def _userToDict(user):
 		props = ["id", "username", "realname", "rank", "joined", "left",
 			"lastActive", "cooldownUntil", "blacklistReason", "warnings",
-			"warnExpiry", "karma", "hideKarma", "debugEnabled", "tripcode"]
+			"warnExpiry", "karma", "hideKarma", "debugEnabled", "tripcode", "flag"]
 		return {prop: getattr(user, prop) for prop in props}
 	@staticmethod
 	def _userFromRow(r):
@@ -314,6 +316,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 	`karma` INTEGER NOT NULL,
 	`hideKarma` TINYINT NOT NULL,
 	`debugEnabled` TINYINT NOT NULL,
+	`flag` TEXT,
 	`tripcode` TEXT,
 	PRIMARY KEY (`id`)
 );
