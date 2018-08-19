@@ -1,9 +1,13 @@
+# vim: set noet ts=4:
 import itertools
 import time
 import logging
+import json
+import csv
 from queue import PriorityQueue
 from threading import Lock
 from datetime import timedelta
+from crypt import crypt
 
 class Scheduler():
 	def __init__(self):
@@ -71,3 +75,75 @@ class Enum():
 		return self._m.keys()
 	def values(self):
 		return self._m.values()
+
+def country_to_code(country):
+	print(country)
+	country = country.title()
+	print(country)
+	dic = {}
+	with open("wikipedia-iso-country-codes.csv") as f:
+		file= csv.DictReader(f, delimiter=',')
+		for line in file:
+			dic[line['English short name lower case']] = line['Alpha-2 code']
+	country_list = [country]
+	try:
+		country_code = [dic[x] for x in country_list]
+	except KeyError:
+		return None
+	else:
+		return country_code[0]
+
+
+def code_to_country(code):
+	code = code.upper()
+	dic = {}
+	with open("wikipedia-iso-country-codes.csv") as f:
+		file= csv.DictReader(f, delimiter=',')
+		for line in file:
+			dic[line['English short name lower case']] = line['Alpha-2 code']
+		country = [k for k,v in dic.items() if v == code]
+		if country:
+			return country
+		else:
+			return None
+
+def langcode_to_flag(langcode):
+	if langcode in ("gay","pirate","recycle","\U0001f3f3\U0000fe0f\U0000200d\U0001f308","\U00002620\U0000fe0f","\U0000267B\U0000fe0f"):
+		if langcode in ("gay","\U0001f3f3\U0000fe0f\U0000200d\U0001f308"):
+			return "\U0001f3f3\U0000200d\U0001f308"
+		elif langcode in ("pirate","\U00002620\U0000fe0f"):
+			return "\U00002620"
+		elif langcode in ("recycle","\U0000267B\U0000fe0f"):
+			return "\U0000267B"
+		elif langcode == 'neutral':
+			return "\U0001f3f3"
+		elif langcode == "eu":
+			pass
+	offset = 127397
+	if langcode is not None:
+		cc = langcode.upper()
+	else:
+		return None
+	flag_list = []
+	for c in cc:
+		flag_list.append(chr(ord(c) + offset))
+	return "".join(flag_list)
+
+def flag_to_langcode(flag):
+	flag_point = [ord(x) for x in flag]
+	langcode = []
+	for f in flag_point:
+		flag_letter = f - 127397
+		langcode.append(chr(flag_letter))
+	return "".join(langcode)
+
+def genTripcode(tripcode):
+	# doesn't actually match 4chan's algorithm exactly
+	pos = tripcode.find("#")
+	trname = tripcode[:pos]
+	trpass = tripcode[pos+1:]
+
+	salt = (trpass[:8] + 'H.')[1:3]
+	trip_final = crypt(trpass[:8], salt)
+
+	return trname + " !" + trip_final[-10:]

@@ -9,8 +9,9 @@ database: [sqlite, "path/to/secretlounge.db"]
 allow_contacts: false
 # relay arbitrary documents (gifs always work)
 allow_documents: true
-
-# enable signing messages using /sign
+# allow users to set a flag and display them above messages
+show_flags: false
+# enable signing messages using /sign or /tsign as well as setting a tripcode
 enable_signing: false
 # point of contact shown to blacklisted users
 #blacklist_contact: http://t.me/invite/something

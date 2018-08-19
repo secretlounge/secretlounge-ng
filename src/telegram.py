@@ -1,3 +1,4 @@
+# vim: set noet ts=4:
 import telebot
 import logging
 import time
@@ -8,6 +9,7 @@ from queue import PriorityQueue
 import src.core as core
 import src.replies as rp
 from src.util import MutablePriorityQueue
+from src.util import langcode_to_flag
 from src.globals import *
 
 bot = None
@@ -18,9 +20,10 @@ registered_commands = {}
 
 # settings regarding message relaying
 allow_documents = None
+show_flags = None
 
 def init(config, _db, _ch):
-	global bot, db, ch, message_queue, allow_documents
+	global bot, db, ch, message_queue, allow_documents, show_flags
 	if config["bot_token"] == "":
 		logging.error("No telegram token specified.")
 		exit(1)
@@ -33,6 +36,7 @@ def init(config, _db, _ch):
 
 	allow_contacts = config["allow_contacts"]
 	allow_documents = config["allow_documents"]
+	show_flags = config["show_flags"]
 
 	types = ["text", "location", "venue"]
 	if allow_contacts:
@@ -42,7 +46,8 @@ def init(config, _db, _ch):
 	cmds = [
 		"start", "stop", "users", "info", "motd", "toggledebug", "togglekarma",
 		"version", "modhelp", "adminhelp", "modsay", "adminsay", "mod",
-		"admin", "warn", "delete", "uncooldown", "blacklist", "s", "sign"
+		"admin", "warn", "delete", "uncooldown", "blacklist", "s", "sign",
+		"settripcode", "t", "tsign", "setflag"
 	]
 	for c in cmds: # maps /<c> to the function cmd_<c>
 		c = c.lower()
@@ -71,8 +76,21 @@ class UserContainer():
 		self.id = u.id
 		self.username = u.username
 		self.realname = u.first_name
+		self.language_code = u.language_code
 		if u.last_name is not None:
 			self.realname += " " + u.last_name
+
+def takesArgument(optional=False):
+	def f(func):
+		def wrap(ev):
+			arg = ""
+			if " " in ev.text:
+				arg = ev.text[ev.text.find(" ")+1:].strip()
+			if arg == "" and not optional:
+				return
+			return func(ev, arg)
+		return wrap
+	return f
 
 def wrap_core(func, reply_to=False):
 	def f(ev):
@@ -306,11 +324,9 @@ def cmd_info(ev):
 		return send_answer(ev, rp.Reply(rp.types.ERR_NOT_IN_CACHE), True)
 	return send_answer(ev, core.get_info_mod(c_user, reply_msid), True)
 
-def cmd_motd(ev):
+@takesArgument(optional=True)
+def cmd_motd(ev, arg):
 	c_user = UserContainer(ev.from_user)
-	arg = ""
-	if " " in ev.text:
-		arg = ev.text[ev.text.find(" ")+1:].strip()
 
 	if arg == "":
 		send_answer(ev, core.get_motd(c_user), reply_to=True)
@@ -320,6 +336,16 @@ def cmd_motd(ev):
 cmd_toggledebug = wrap_core(core.toggle_debug)
 cmd_togglekarma = wrap_core(core.toggle_karma)
 
+
+@takesArgument()
+def cmd_settripcode(ev, arg):
+	c_user = UserContainer(ev.from_user)
+	return send_answer(ev, core.set_tripcode(c_user, arg), True)
+
+@takesArgument()
+def cmd_setflag(ev, arg):
+	c_user = UserContainer(ev.from_user)
+	return send_answer(ev, core.set_flag(c_user, arg), True)
 
 def cmd_modhelp(ev):
 	send_answer(ev, rp.Reply(rp.types.HELP_MODERATOR), True)
@@ -331,36 +357,28 @@ def cmd_version(ev):
 	send_answer(ev, rp.Reply(rp.types.PROGRAM_VERSION, version=VERSION), True)
 
 
-def cmd_modsay(ev):
+@takesArgument()
+def cmd_modsay(ev, arg):
 	c_user = UserContainer(ev.from_user)
-	if " " not in ev.text:
-		return
-	arg = ev.text[ev.text.find(" ")+1:].strip()
 	arg = escape_html(arg)
-
 	return send_answer(ev, core.send_mod_message(c_user, arg), True)
 
-def cmd_adminsay(ev):
+@takesArgument()
+def cmd_adminsay(ev, arg):
 	c_user = UserContainer(ev.from_user)
-	if " " not in ev.text:
-		return
-	arg = ev.text[ev.text.find(" ")+1:].strip()
 	arg = escape_html(arg)
-
 	return send_answer(ev, core.send_admin_message(c_user, arg), True)
 
-def cmd_mod(ev):
+@takesArgument()
+def cmd_mod(ev, arg):
 	c_user = UserContainer(ev.from_user)
-	if " " not in ev.text:
-		return
-	arg = ev.text[ev.text.find(" ")+1:].strip().lstrip("@")
+	arg = arg.lstrip("@")
 	send_answer(ev, core.promote_user(c_user, arg, RANKS.mod), True)
 
-def cmd_admin(ev):
+@takesArgument()
+def cmd_admin(ev, arg):
 	c_user = UserContainer(ev.from_user)
-	if " " not in ev.text:
-		return
-	arg = ev.text[ev.text.find(" ")+1:].strip().lstrip("@")
+	arg = arg.lstrip("@")
 	send_answer(ev, core.promote_user(c_user, arg, RANKS.admin), True)
 
 def cmd_warn(ev, delete=False):
@@ -376,11 +394,9 @@ def cmd_warn(ev, delete=False):
 
 cmd_delete = lambda ev: cmd_warn(ev, True)
 
-def cmd_uncooldown(ev):
+@takesArgument()
+def cmd_uncooldown(ev, arg):
 	c_user = UserContainer(ev.from_user)
-	if " " not in ev.text:
-		return
-	arg = ev.text[ev.text.find(" ")+1:].strip()
 
 	oid, username = None, None
 	if len(arg) < 5:
@@ -390,12 +406,9 @@ def cmd_uncooldown(ev):
 
 	send_answer(ev, core.uncooldown_user(c_user, oid, username), True)
 
-def cmd_blacklist(ev):
+@takesArgument(optional=True)
+def cmd_blacklist(ev, arg):
 	c_user = UserContainer(ev.from_user)
-	arg = ""
-	if " " in ev.text:
-		arg = ev.text[ev.text.find(" ")+1:].strip()
-
 	if ev.reply_to_message is None:
 		return send_answer(ev, rp.Reply(rp.types.ERR_NO_REPLY), True)
 
@@ -443,6 +456,27 @@ def relay(ev):
 		if reply_msid is None:
 			logging.warning("Message replied to not found in cache")
 
+	if show_flags:
+		user_flag = langcode_to_flag(user.flag)
+		if user_flag is not None:
+			if type(ev) != rp.Reply:
+				if ev.text is not None:
+					ev.text = user_flag + ":" + "\n" + ev.text
+				elif ev.caption is not None:
+					ev.caption = user_flag + ":" + "\n" + ev.caption
+				elif ev.caption is None and ev.text is None:
+					ev.caption = user_flag
+				else:
+					pass
+			elif type(ev) == rp.Reply:
+				try:
+					rep_text = ev.kwargs['text']
+				except KeyError:
+					pass
+				if rep_text is not None and not user_flag in rep_text:
+					rep_text = user_flag + " " + rep_text['text']
+			else:
+				pass
 	# relay message to all other users
 	logging.debug("relay(): msid=%d reply_msid=%r", msid, reply_msid)
 	for user2 in db.iterateUsers():
@@ -454,11 +488,9 @@ def relay(ev):
 
 		send_to_single(ev, msid, user2, reply_msid)
 
-def cmd_sign(ev):
+@takesArgument()
+def cmd_sign(ev, arg):
 	c_user = UserContainer(ev.from_user)
-	if " " not in ev.text:
-		return
-	arg = ev.text[ev.text.find(" ")+1:].strip()
 
 	msid = core.send_signed_user_message(c_user, calc_spam_score(ev), arg)
 	if type(msid) == rp.Reply:
@@ -469,3 +501,15 @@ def cmd_sign(ev):
 	ch.saveMapping(c_user.id, msid, ev.message_id)
 
 cmd_s = cmd_sign # alias
+
+@takesArgument()
+def cmd_tsign(ev, arg):
+	c_user = UserContainer(ev.from_user)
+
+	msid = core.send_signed_user_message(c_user, calc_spam_score(ev), arg, tripcode=True)
+	if type(msid) == rp.Reply:
+		return send_answer(ev, msid, True)
+
+	ch.saveMapping(c_user.id, msid, ev.message_id)
+
+cmd_t = cmd_tsign # alias
