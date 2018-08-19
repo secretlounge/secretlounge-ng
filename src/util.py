@@ -80,6 +80,9 @@ def genTripcode(tripcode):
 	trpass = tripcode[pos+1:]
 
 	salt = (trpass[:8] + 'H.')[1:3]
+	salt_chars = "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+	salt = "".join(c if c in salt_chars else "." for c in salt)
+
 	trip_final = crypt(trpass[:8], salt)
 
 	return trname + " !" + trip_final[-10:]
