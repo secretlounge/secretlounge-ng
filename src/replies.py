@@ -57,9 +57,9 @@ types = NumericEnum([
 	"ERR_ALREADY_UPVOTED",
 	"ERR_UPVOTE_OWN_MESSAGE",
 	"ERR_SPAMMY",
-	"ERR_INVALID_FLAG",
 	"ERR_INVALID_TRIP_FORMAT",
 	"ERR_NO_TRIPCODE",
+	"ERR_INVALID_FLAG",
 
 	"USER_INFO",
 	"USER_INFO_MOD",
@@ -123,7 +123,6 @@ format_strs = {
 	types.ERR_ALREADY_UPVOTED: em("You already upvoted this message."),
 	types.ERR_UPVOTE_OWN_MESSAGE: em("You can't upvote your own message."),
 	types.ERR_SPAMMY: em("Your message has not been sent. Avoid sending messages too fast, try again later."),
-	types.ERR_INVALID_FLAG: "{flag!x} <i>is not a valid flag</i>",
 	types.ERR_INVALID_TRIP_FORMAT:
 		em("You tried to set an invalid tripcode, the format is ")+
 		"<code>name#pass</code>" + em("."),
