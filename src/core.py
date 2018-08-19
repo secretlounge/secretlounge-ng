@@ -7,7 +7,7 @@ import src.replies as rp
 from src.globals import *
 from src.database import User, SystemConfig
 from src.cache import CachedMessage
-from src.util import genTripcode
+from src.util import gen_tripcode
 
 db = None
 ch = None
@@ -218,12 +218,15 @@ def get_info(user):
 		"username": user.getFormattedName(),
 		"rank_i": user.rank,
 		"rank": RANKS.reverse[user.rank],
-		"tripcode": user.tripcode,
 		"karma": user.karma,
 		"warnings": user.warnings,
 		"warnExpiry": user.warnExpiry,
 		"cooldown": user.cooldownUntil if user.isInCooldown() else None,
 	}
+	if enable_signing:
+		params["tripcode"] = user.tripcode
+	else:
+		params['tripcode'] = "disabled"
 	return rp.Reply(rp.types.USER_INFO, **params)
 
 @requireUser
@@ -296,7 +299,7 @@ def set_tripcode(user, text):
 
 	with db.modifyUser(id=user.id) as user:
 		user.tripcode = text
-	return rp.Reply(rp.types.TRIPCODE_SET, trip=genTripcode(text))
+	return rp.Reply(rp.types.TRIPCODE_SET, trip=gen_tripcode(text))
 
 @requireUser
 @requireRank(RANKS.admin)
@@ -433,7 +436,7 @@ def send_signed_user_message(user, msg_score, text, tripcode=False):
 	if tripcode:
 		if user.tripcode is None:
 			return rp.Reply(rp.types.ERR_NO_TRIPCODE)
-		m = rp.Reply(rp.types.TSIGNED_MSG, text=text, user_id=user.id, tripcode=genTripcode(user.tripcode))
+		m = rp.Reply(rp.types.TSIGNED_MSG, text=text, user_id=user.id, tripcode=gen_tripcode(user.tripcode))
 	else:
 		m = rp.Reply(rp.types.SIGNED_MSG, text=text, user_id=user.id, user_text=user.getFormattedName())
 

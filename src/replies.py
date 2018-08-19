@@ -126,8 +126,8 @@ format_strs = {
 
 	types.USER_INFO: lambda warnings, cooldown, tripcode, **_:
 		"<b>id</b>: {id}, <b>username</b>: {username!x}, <b>rank</b>: {rank_i} ({rank})\n"+
-		"<b>karma</b>: {karma}, "+
-		"<b>tripcode</b>: " + ("{tripcode!x}" if tripcode is not None else "unset" ) + "\n"+
+		"<b>karma</b>: {karma}"+
+		(", <b>tripcode</b>: " + ("{tripcode!x}" if tripcode is not None else "unset" ) if tripcode != "disabled" else "") + "\n"+
 		"<b>warnings</b>: {warnings} " + smiley(warnings)+
 		( " (one warning will be removed on {warnExpiry!t})" if warnings > 0 else "" ) + ", "+
 		"<b>cooldown</b>: "+

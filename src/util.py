@@ -73,7 +73,7 @@ class Enum():
 	def values(self):
 		return self._m.values()
 
-def genTripcode(tripcode):
+def gen_tripcode(tripcode):
 	# doesn't actually match 4chan's algorithm exactly
 	pos = tripcode.find("#")
 	trname = tripcode[:pos]
