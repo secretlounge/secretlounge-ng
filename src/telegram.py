@@ -41,7 +41,7 @@ def init(config, _db, _ch):
 
 	cmds = [
 		"start", "stop", "users", "info", "motd", "toggledebug", "togglekarma",
-		"version", "modhelp", "adminhelp", "modsay", "adminsay", "mod",
+		"version", "source", "modhelp", "adminhelp", "modsay", "adminsay", "mod",
 		"admin", "warn", "delete", "uncooldown", "blacklist", "s", "sign",
 		"settripcode", "t", "tsign"
 	]
@@ -345,6 +345,8 @@ def cmd_adminhelp(ev):
 
 def cmd_version(ev):
 	send_answer(ev, rp.Reply(rp.types.PROGRAM_VERSION, version=VERSION), True)
+
+cmd_source = cmd_version # alias
 
 
 @takesArgument()
