@@ -94,4 +94,4 @@ def genTripcode(tripcode):
 
 	trip_final = crypt(trpass[:8], salt)
 
-	return trname + " !" + trip_final[-10:]
+	return trname, "!" + trip_final[-10:]

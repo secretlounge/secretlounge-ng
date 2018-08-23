@@ -296,7 +296,8 @@ def set_tripcode(user, text):
 
 	with db.modifyUser(id=user.id) as user:
 		user.tripcode = text
-	return rp.Reply(rp.types.TRIPCODE_SET, trip=genTripcode(text))
+	tripname, tripcode = genTripcode(user.tripcode)
+	return rp.Reply(rp.types.TRIPCODE_SET, tripname=tripname, tripcode=tripcode)
 
 @requireUser
 @requireRank(RANKS.admin)
@@ -433,7 +434,8 @@ def send_signed_user_message(user, msg_score, text, tripcode=False):
 	if tripcode:
 		if user.tripcode is None:
 			return rp.Reply(rp.types.ERR_NO_TRIPCODE)
-		m = rp.Reply(rp.types.TSIGNED_MSG, text=text, user_id=user.id, tripcode=genTripcode(user.tripcode))
+		tripname, tripcode = genTripcode(user.tripcode)
+		m = rp.Reply(rp.types.TSIGNED_MSG, text=text, user_id=user.id, tripname=tripname, tripcode=tripcode)
 	else:
 		m = rp.Reply(rp.types.SIGNED_MSG, text=text, user_id=user.id, user_text=user.getFormattedName())
 
