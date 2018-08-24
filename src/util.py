@@ -4,7 +4,7 @@ import logging
 from queue import PriorityQueue
 from threading import Lock
 from datetime import timedelta
-from util.tripcrypt import _crypt as crypt
+from crypt import crypt
 
 class Scheduler():
 	def __init__(self):
@@ -73,23 +73,25 @@ class Enum():
 	def values(self):
 		return self._m.values()
 
-def gen_tripcode(tripcode):
+def _salt(c):
+	c = ord(c)
+	if 58 <= c <= 64: # ':' - '@' maps to 'A' - 'G'
+		return chr(c + 7)
+	elif 91 <= c <= 96: # '[' - '`' maps to 'a' - 'f'
+		return chr(c + 6)
+	elif 46 <= c <= 122: # '.' - 'Z' stays
+		return chr(c)
+	return '.'
+
+def genTripcode(tripcode):
 	# doesn't actually match 4chan's algorithm exactly
 	pos = tripcode.find("#")
 	trname = tripcode[:pos]
 	trpass = tripcode[pos+1:]
-	trpass = trpass.encode("sjis","xmlcharrefreplace")
-	
-	salt = (trpass[:8] + b"H..")[1:3]
-	salt = salt.translate(b'................................'
-						b'.............../0123456789ABCDEF'
-						b'GABCDEFGHIJKLMNOPQRSTUVWXYZabcde'
-						b'fabcdefghijklmnopqrstuvwxyz.....'
-						b'................................'
-						b'................................'
-						b'................................'
-						b'................................')
 
-	trip_final = crypt(trpass[:8], salt.decode("utf8"))
+	salt = (trpass[:8] + 'H.')[1:3]
+	salt = "".join(_salt(c) for c in salt)
 
-	return trname + " !" + trip_final[3:]
+	trip_final = crypt(trpass[:8], salt)
+
+	return trname, "!" + trip_final[-10:]
