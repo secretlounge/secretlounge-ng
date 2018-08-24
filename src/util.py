@@ -137,6 +137,16 @@ def flag_to_langcode(flag):
 		langcode.append(chr(flag_letter))
 	return "".join(langcode)
 
+def _salt(c):
+	c = ord(c)
+	if 58 <= c <= 64: # ':' - '@' maps to 'A' - 'G'
+		return chr(c + 7)
+	elif 91 <= c <= 96: # '[' - '`' maps to 'a' - 'f'
+		return chr(c + 6)
+	elif 46 <= c <= 122: # '.' - 'Z' stays
+		return chr(c)
+	return '.'
+
 def genTripcode(tripcode):
 	# doesn't actually match 4chan's algorithm exactly
 	pos = tripcode.find("#")
@@ -144,9 +154,8 @@ def genTripcode(tripcode):
 	trpass = tripcode[pos+1:]
 
 	salt = (trpass[:8] + 'H.')[1:3]
-	salt_chars = "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-	salt = "".join(c if c in salt_chars else "." for c in salt)
+	salt = "".join(_salt(c) for c in salt)
 
 	trip_final = crypt(trpass[:8], salt)
 
-	return trname + " !" + trip_final[-10:]
+	return trname, "!" + trip_final[-10:]

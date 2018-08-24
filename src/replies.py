@@ -90,7 +90,7 @@ format_strs = {
 	types.BOOLEAN_CONFIG: lambda enabled, **_:
 		"<b>{description!x}</b>: " + (enabled and "enabled" or "disabled"),
 	types.SIGNED_MSG: "{text!x} <a href=\"tg://user?id={user_id}\">~~{user_text!x}</a>",
-	types.TSIGNED_MSG: "<b>{tripcode!x}</b>:\n"+
+	types.TSIGNED_MSG: "<b>{tripname!x}</b> <code>{tripcode!x}</code>:\n"+
 			"{text!x}",
 
 	types.CHAT_JOIN: em("You joined the chat!"),
@@ -106,7 +106,7 @@ format_strs = {
 	types.KARMA_NOTIFICATION:
 		em( "You've just been given sweet karma! (check /info to see your karma"+
 			" or /toggleKarma to turn these notifications off)" ),
-	types.TRIPCODE_SET: em("Tripcode set. It will appear as: ") + "{trip!x}",
+	types.TRIPCODE_SET: em("Tripcode set. It will appear as: ") + "<b>{tripname!x}</b> <code>{tripcode!x}</code>",
 	types.SET_FLAG: "<b>Flag set to</b>: {flag!x}",
 
 	types.ERR_COMMAND_DISABLED: em("This command has been disabled."),
@@ -132,8 +132,8 @@ format_strs = {
 	types.USER_INFO: lambda warnings, cooldown, tripcode, flag, **_:
 		"<b>id</b>: {id}, <b>username</b>: {username!x}, <b>rank</b>: {rank_i} ({rank})\n"+
 		"<b>karma</b>: {karma}" + ( ", <b>flag</b>: {flag}" if flag is not None else "" ) + "\n" +
-		"<b>tripcode</b>: " + ("{tripcode!x}" if tripcode is not None else "unset" )  + "\n"+
-		"<b>warnings</b>: {warnings} " + smiley(warnings) +
+		"<b>tripcode</b>: " + ("<code>{tripcode!x}</code>" if tripcode is not None else "unset" ) + "\n"+
+		"<b>warnings</b>: {warnings} " + smiley(warnings)+
 		( " (one warning will be removed on {warnExpiry!t})" if warnings > 0 else "" ) + ", "+
 		"<b>cooldown</b>: "+
 		( cooldown and "yes, until {cooldown!t}" or "no" ),
