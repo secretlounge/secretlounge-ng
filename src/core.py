@@ -287,6 +287,13 @@ def toggle_karma(user):
 	return rp.Reply(rp.types.BOOLEAN_CONFIG, description="Karma notifications", enabled=not new)
 
 @requireUser
+def get_tripcode(user):
+	if not enable_signing:
+		return rp.Reply(rp.types.ERR_COMMAND_DISABLED)
+
+	return rp.Reply(rp.types.TRIPCODE_INFO, tripcode=user.tripcode)
+
+@requireUser
 def set_tripcode(user, text):
 	if not enable_signing:
 		return rp.Reply(rp.types.ERR_COMMAND_DISABLED)
