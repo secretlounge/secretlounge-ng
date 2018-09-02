@@ -300,6 +300,8 @@ def set_tripcode(user, text):
 
 	if not (0 < text.find("#") < len(text) - 1):
 		return rp.Reply(rp.types.ERR_INVALID_TRIP_FORMAT)
+	if "\n" in text or len(text) > 30:
+		return rp.Reply(rp.types.ERR_INVALID_TRIP_FORMAT)
 
 	with db.modifyUser(id=user.id) as user:
 		user.tripcode = text
