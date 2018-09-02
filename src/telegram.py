@@ -47,7 +47,7 @@ def init(config, _db, _ch):
 		"start", "stop", "users", "info", "motd", "toggledebug", "togglekarma",
 		"version", "source", "modhelp", "adminhelp", "modsay", "adminsay", "mod",
 		"admin", "warn", "delete", "uncooldown", "blacklist", "s", "sign",
-		"settripcode", "t", "tsign", "setflag"
+		"tripcode", "settripcode", "t", "tsign", "flag"
 	]
 	for c in cmds: # maps /<c> to the function cmd_<c>
 		c = c.lower()
@@ -336,11 +336,17 @@ def cmd_motd(ev, arg):
 cmd_toggledebug = wrap_core(core.toggle_debug)
 cmd_togglekarma = wrap_core(core.toggle_karma)
 
-
-@takesArgument()
-def cmd_settripcode(ev, arg):
+@takesArgument(optional=True)
+def cmd_tripcode(ev, arg):
 	c_user = UserContainer(ev.from_user)
-	return send_answer(ev, core.set_tripcode(c_user, arg), True)
+
+	if arg == "":
+		send_answer(ev, core.get_tripcode(c_user))
+	else:
+		send_answer(ev, core.set_tripcode(c_user, arg))
+
+cmd_settripcode = cmd_tripcode # legacy alias
+
 
 @takesArgument()
 def cmd_setflag(ev, arg):

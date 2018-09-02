@@ -329,6 +329,13 @@ def set_flag(user, flag):
 	return rp.Reply(rp.types.SET_FLAG, flag=langcode_to_flag(flag))
 
 @requireUser
+def get_tripcode(user):
+	if not enable_signing:
+		return rp.Reply(rp.types.ERR_COMMAND_DISABLED)
+
+	return rp.Reply(rp.types.TRIPCODE_INFO, tripcode=user.tripcode)
+
+@requireUser
 def set_tripcode(user, text):
 	if not enable_signing:
 		return rp.Reply(rp.types.ERR_COMMAND_DISABLED)
