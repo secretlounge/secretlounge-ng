@@ -468,8 +468,13 @@ def relay(ev):
 @takesArgument()
 def cmd_sign(ev, arg):
 	c_user = UserContainer(ev.from_user)
+	reply_msid = None
+	if ev.reply_to_message is not None:
+		reply_msid = ch.lookupMapping(ev.from_user.id, data=ev.reply_to_message.message_id)
+		if reply_msid is None:
+			logging.warning("Message replied to not found in cache")
 
-	msid = core.send_signed_user_message(c_user, calc_spam_score(ev), arg)
+	msid = core.send_signed_user_message(c_user, calc_spam_score(ev), arg, reply_msid)
 	if type(msid) == rp.Reply:
 		return send_answer(ev, msid, True)
 
@@ -482,8 +487,13 @@ cmd_s = cmd_sign # alias
 @takesArgument()
 def cmd_tsign(ev, arg):
 	c_user = UserContainer(ev.from_user)
+	reply_msid = None
+	if ev.reply_to_message is not None:
+		reply_msid = ch.lookupMapping(ev.from_user.id, data=ev.reply_to_message.message_id)
+		if reply_msid is None:
+			logging.warning("Message replied to not found in cache")
 
-	msid = core.send_signed_user_message(c_user, calc_spam_score(ev), arg, tripcode=True)
+	msid = core.send_signed_user_message(c_user, calc_spam_score(ev), arg, reply_msid, tripcode=True)
 	if type(msid) == rp.Reply:
 		return send_answer(ev, msid, True)
 

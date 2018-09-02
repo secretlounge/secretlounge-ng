@@ -429,7 +429,7 @@ def prepare_user_message(user, msg_score):
 	return ch.assignMessageId(CachedMessage(user.id))
 
 @requireUser
-def send_signed_user_message(user, msg_score, text, tripcode=False):
+def send_signed_user_message(user, msg_score, text, reply_msid=None, tripcode=False):
 	if not enable_signing:
 		return rp.Reply(rp.types.ERR_COMMAND_DISABLED)
 	if user.isInCooldown():
@@ -447,7 +447,7 @@ def send_signed_user_message(user, msg_score, text, tripcode=False):
 		m = rp.Reply(rp.types.SIGNED_MSG, text=text, user_id=user.id, user_text=user.getFormattedName())
 
 	msid = ch.assignMessageId(CachedMessage(user.id))
-	Sender.reply(m, msid, None, user, None)
+	Sender.reply(m, msid, None, user, reply_msid)
 	return msid
 
 # who is None -> to everyone except the user <except_who> (if applicable)
