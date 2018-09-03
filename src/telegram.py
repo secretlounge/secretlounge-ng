@@ -47,7 +47,7 @@ def init(config, _db, _ch):
 		"start", "stop", "users", "info", "motd", "toggledebug", "togglekarma",
 		"version", "source", "modhelp", "adminhelp", "modsay", "adminsay", "mod",
 		"admin", "warn", "delete", "uncooldown", "blacklist", "s", "sign",
-		"tripcode", "settripcode", "t", "tsign", "flag"
+		"tripcode", "settripcode", "t", "tsign", "setflag"
 	]
 	for c in cmds: # maps /<c> to the function cmd_<c>
 		c = c.lower()
