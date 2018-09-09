@@ -1,12 +1,16 @@
 netdataDashboard.submenu = {
+	'secretlounge.active_users': {
+		decimalDigits: 0,
+		valueRange: "[0, null]"
+	},
 	'secretlounge.users': {
-		height: 2.0,
+		height: 1.5,
 		decimalDigits: 0,
 		valueRange: "[0, null]"
 	},
 
-	'secretlounge.messages_sent': {
-		height: 2.0
+	'secretlounge.message_types': {
+		height: 1.2
 	},
 
 	'secretlounge.queue_size': {
