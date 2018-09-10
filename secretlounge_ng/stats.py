@@ -3,7 +3,7 @@ import os
 import socket
 import json
 
-sources = {}
+sources = []
 
 def serve(configpath):
 	if "/" in configpath and not configpath.startswith("./"):
@@ -29,9 +29,9 @@ def serve(configpath):
 			if not data: break
 
 			res = {}
-			for name, callback in sources.items():
+			for callback in sources:
 				try:
-					res[name] = callback()
+					res.update( callback() )
 				except Exception as e:
 					logging.exception("Exception in stat callback")
 
@@ -43,8 +43,8 @@ def serve(configpath):
 
 	ssock.close()
 
-def register_source(name, callback):
-	sources[name] = callback
+def register_source(callback):
+	sources.append(callback)
 
 def countable_source(name):
 	value = 0
@@ -55,8 +55,8 @@ def countable_source(name):
 		nonlocal value
 		ret = value
 		value = 0
-		return ret
-	register_source(name, callback)
+		return {name: ret}
+	register_source(callback)
 	return push
 
 def settable_source(name):
@@ -64,8 +64,5 @@ def settable_source(name):
 	def set(n):
 		nonlocal value
 		value = n
-	def callback():
-		nonlocal value
-		return value
-	register_source(name, callback)
+	register_source(lambda: {name: value})
 	return set

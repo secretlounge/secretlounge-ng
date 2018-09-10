@@ -340,10 +340,12 @@ def get_priority_for(user):
 def put_into_queue(user, msid, f):
 	message_queue.put(get_priority_for(user), QueueItem(user, msid, f))
 
+s_api_calls = stats.countable_source("api_calls")
 def send_thread():
 	while True:
 		item = message_queue.get()
 		item.call()
+		s_api_calls(1)
 
 # https://stackoverflow.com/questions/2374640/#answer-2753343
 def percentile(N, percent):
@@ -355,29 +357,19 @@ def percentile(N, percent):
 	d1 = N[int(c)] * (k-f)
 	return d0 + d1
 
-def queue_stat(x):
-	if x == "queue_size":
-		return len(message_queue.items)
-	elif x == "queue_latency_avg":
-		sum, count = 0, 0
-		def func(item):
-			nonlocal sum, count
-			sum += ( datetime.now() - item.created ).total_seconds()
-			count += 1
-			return False # dont actually delete
-		message_queue.delete(func)
-		return 0 if count == 0 else (sum / count)
-	elif x == "queue_latency_95":
-		a = []
-		def func(item):
-			nonlocal a
-			a.append(( datetime.now() - item.created ).total_seconds())
-			return False # dont actually delete
-		message_queue.delete(func)
-		return percentile(sorted(a), 0.95)
-
-for x in ("queue_size", "queue_latency_avg", "queue_latency_95"):
-	stats.register_source(x, lambda x=x: queue_stat(x))
+def queue_stat():
+	a = []
+	def func(item):
+		nonlocal a
+		a.append(( datetime.now() - item.created ).total_seconds())
+		return False # dont actually delete
+	message_queue.delete(func)
+	return {
+		"queue_size": len(a),
+		"queue_latency_avg": 0 if len(a) == 0 else ( sum(a) / len(a) ),
+		"queue_latency_95": percentile(sorted(a), 0.95),
+	}
+stats.register_source(queue_stat)
 
 ###
 

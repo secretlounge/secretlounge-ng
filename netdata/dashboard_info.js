@@ -16,6 +16,9 @@ netdataDashboard.submenu = {
 	'secretlounge.queue_size': {
 		decimalDigits: 0
 	},
+	'secretlounge.api_calls': {
+		decimalDigits: 0
+	},
 
 	'secretlounge.cache_size': {
 		decimalDigits: 0

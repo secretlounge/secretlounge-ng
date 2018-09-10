@@ -29,14 +29,8 @@ CHARTS = {
 		]
 	},
 
-	'messages_sent': {
-		'options': [None, 'Messages Sent', 'messages', 'messages', 'secretlounge.messages_sent', 'line'],
-		'lines': [
-			['messages_sent', 'count', 'incremental', 1, 1],
-		]
-	},
 	'message_types': {
-		'options': [None, 'Message Types', 'messages', 'messages', 'secretlounge.message_types', 'stacked'],
+		'options': [None, 'Messages Sent by Type', 'messages', 'messages', 'secretlounge.message_types', 'stacked'],
 		'lines': [
 			['message_type_text', 'text', 'incremental', 1, 1],
 			['message_type_sticker', 'sticker', 'incremental', 1, 1],
@@ -58,6 +52,12 @@ CHARTS = {
 			['queue_latency_95', '95th', 'absolute', 1, 1],
 		]
 	},
+	'api_calls': {
+		'options': [None, 'API Calls', 'calls', 'queue', 'secretlounge.api_calls', 'line'],
+		'lines': [
+			['api_calls', 'count', 'absolute', 1, 1],
+		]
+	},
 
 	'cache_size': {
 		'options': [None, 'Cache Size', 'messages', 'other', 'secretlounge.cache_size', 'line'],
@@ -72,7 +72,7 @@ CHARTS = {
 		]
 	},
 	'karma_given': {
-		'options': [None, 'Karma given', 'karema', 'other', 'secretlounge.karma_given', 'line'],
+		'options': [None, 'Karma given', 'karma', 'other', 'secretlounge.karma_given', 'line'],
 		'lines': [
 			['karma_given', 'count', 'incremental', 1, 1],
 		]
@@ -100,12 +100,12 @@ class Service(SimpleService):
 		self.abs_props = (
 			"users_total", "users_joined", "active_users_15m", "active_users_1h", "active_users_12h",
 			#
-			"queue_size", "queue_latency_avg", "queue_latency_95",
+			"api_calls", "queue_size", "queue_latency_avg", "queue_latency_95",
 			"cache_size",
 		)
 		self.incr_props = (
 			#
-			"messages_sent", "message_type_text", "message_type_sticker", "message_type_gif", "message_type_media",
+			"message_type_text", "message_type_sticker", "message_type_gif", "message_type_media",
 			#
 			"warnings_given", "karma_given",
 		)
@@ -125,17 +125,13 @@ class Service(SimpleService):
 		except socket.error as e:
 			self.socket.close()
 			self.socket = None
-			return self._read_data()
+			return self._read_data() # retry
 		return json.loads(self.socket.recv(1024).decode('utf-8'))
 
 	def check(self):
-		if self.socket is not None:
-			return True
-		self.socket = try_connect(self.sockpath)
 		if self.socket is None:
-			self.error('failed to connect to socket')
-			return False
-		return True
+			self.socket = try_connect(self.sockpath)
+		return True # assume it's working to avoid plugin reloads
 
 	def get_data(self):
 		j = self._read_data()
@@ -144,8 +140,8 @@ class Service(SimpleService):
 			return None
 
 		for p in self.abs_props:
-			self.data[p] = j[p]
+			self.data[p] = j.get(p, None)
 		for p in self.incr_props:
-			self.data[p] += j[p]
+			self.data[p] += j.get(p, 0)
 
 		return self.data
