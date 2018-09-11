@@ -67,6 +67,24 @@ def run():
 			logging.warning("%s while polling Telegram, retrying.", type(e).__name__)
 			time.sleep(1)
 
+def register_tasks(sched):
+	# cache expiration
+	def task():
+		ids = ch.expire()
+		if len(ids) == 0:
+			return
+		n = 0
+		def f(item):
+			nonlocal n
+			if item.msid in ids:
+				n += 1
+				return True
+			return False
+		message_queue.delete(f)
+		if n > 0:
+			logging.warning("Failed to deliver %d messages before they expired from cache.", n)
+	sched.register(task, hours=6) # (1/4) * cache duration
+
 class UserContainer():
 	def __init__(self, u):
 		self.id = u.id

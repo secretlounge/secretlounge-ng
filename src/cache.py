@@ -52,17 +52,15 @@ class Cache():
 			except StopIteration as e:
 				return None
 	def expire(self):
-		n = 0
+		ids = set()
 		with self.lock:
 			for msid in list(self.msgs.keys()):
 				if not self.msgs[msid].isExpired():
 					continue
-				n += 1
+				ids.add(msid)
 				del self.msgs[msid] # delete from primary cache
 				for d in self.idmap.values(): # delete from id mapping
 					d.pop(msid, None)
-		if n > 0:
-			logging.debug("Expired %d entries from cache", n)
-		return n
-	def register_tasks(self, sched):
-		sched.register(self.expire, hours=6) # (1/4) * cache duration
+		if len(ids) > 0:
+			logging.debug("Expired %d entries from cache", len(ids))
+		return ids
