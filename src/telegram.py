@@ -266,7 +266,7 @@ def check_telegram_exc(e, user):
 
 	if "Too Many Requests" in e.result.text:
 		d = json.loads(e.result.text)["parameters"]["retry_after"]
-		d = min(d, 10) # supposedly this is in seconds, but you sometimes get 100 or even 2000
+		d = min(d, 30) # supposedly this is in seconds, but you sometimes get 100 or even 2000
 		logging.warning("API rate limit hit, waiting for %ds", d)
 		time.sleep(d)
 		return True # retry
