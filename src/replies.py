@@ -94,8 +94,8 @@ format_strs = {
 
 	types.CHAT_JOIN: em("You joined the chat!"),
 	types.CHAT_LEAVE: em("You left the chat!"),
-	types.USER_IN_CHAT: em("You're already in the chat!"),
-	types.USER_NOT_IN_CHAT: em("You're not in the chat yet! Use /start to join."),
+	types.USER_IN_CHAT: em("You're already in the chat."),
+	types.USER_NOT_IN_CHAT: em("You're not in the chat yet. Use /start to join!"),
 	types.GIVEN_COOLDOWN: lambda deleted, **_:
 		em( "You've been handed a cooldown of {duration!d} for this message"+
 			(deleted and " (message also deleted)" or "") ),
@@ -113,19 +113,19 @@ format_strs = {
 	types.ERR_NO_REPLY: em("You need to reply to a message to use this command."),
 	types.ERR_NOT_IN_CACHE: em("Message not found in cache... (24h passed or bot was restarted)"),
 	types.ERR_NO_USER: em("No user found by that name!"),
-	types.ERR_NO_USER_BY_ID: em("No user found by that id, note that IDs rotate every 24 hours."),
+	types.ERR_NO_USER_BY_ID: em("No user found by that id! Note that all ids rotate every 24 hours."),
 	types.ERR_COOLDOWN: em("Your cooldown expires at {until!t}"),
 	types.ERR_ALREADY_WARNED: em("A warning has already been issued for this message."),
 	types.ERR_NOT_IN_COOLDOWN: em("This user is not in a cooldown right now."),
 	types.ERR_BLACKLISTED: lambda reason, contact, **_:
 		em( "You've been blacklisted" + (reason and " for {reason!x}" or "") )+
 		( em("\ncontact:") + " {contact}" ) if contact else "",
-	types.ERR_ALREADY_UPVOTED: em("You already upvoted this message."),
+	types.ERR_ALREADY_UPVOTED: em("You have already upvoted this message."),
 	types.ERR_UPVOTE_OWN_MESSAGE: em("You can't upvote your own message."),
 	types.ERR_SPAMMY: em("Your message has not been sent. Avoid sending messages too fast, try again later."),
-	types.ERR_SPAMMY_SIGN: em("Your message has not been sent. Avoid using /s too often, try again later."),
+	types.ERR_SPAMMY_SIGN: em("Your message has not been sent. Avoid using /sign too often, try again later."),
 	types.ERR_INVALID_TRIP_FORMAT:
-		em("You tried to set an invalid tripcode, the format is ")+
+		em("Given tripcode is not valid, the format is ")+
 		"<code>name#pass</code>" + em("."),
 	types.ERR_NO_TRIPCODE: em("You don't have a tripcode set."),
 
