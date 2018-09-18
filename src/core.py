@@ -1,6 +1,6 @@
 import logging
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from threading import Lock
 
 import src.replies as rp
@@ -12,6 +12,7 @@ from src.util import genTripcode
 db = None
 ch = None
 spam_scores = None
+sign_last_used = {} # uid -> datetime
 
 blacklist_contact = None
 enable_signing = None
@@ -436,9 +437,15 @@ def send_signed_user_message(user, msg_score, text, reply_msid=None, tripcode=Fa
 		return rp.Reply(rp.types.ERR_COMMAND_DISABLED)
 	if user.isInCooldown():
 		return rp.Reply(rp.types.ERR_COOLDOWN, until=user.cooldownUntil)
+
 	ok = spam_scores.increaseSpamScore(user.id, msg_score)
 	if not ok:
 		return rp.Reply(rp.types.ERR_SPAMMY)
+	if not tripcode:
+		last_used = sign_last_used.get(user.id, None)
+		if last_used and (datetime.now() - last_used) < timedelta(seconds=SIGN_INTERVAL_SECONDS):
+			return rp.Reply(rp.types.ERR_SPAMMY_SIGN)
+		sign_last_used[user.id] = datetime.now()
 
 	if tripcode:
 		if user.tripcode is None:
