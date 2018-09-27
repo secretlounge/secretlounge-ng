@@ -229,11 +229,12 @@ def resend_message(chat_id, ev, reply_to=None):
 
 def send_to_single_inner(chat_id, ev, **kwargs):
 	if type(ev) == rp.Reply:
+		kwargs2 = {}
 		if "reply_to" in kwargs.keys():
-			kwargs = {"reply_to_message_id": kwargs["reply_to"]}
-		else:
-			kwargs = {}
-		return bot.send_message(chat_id, rp.formatForTelegram(ev), parse_mode="HTML", **kwargs)
+			kwargs2["reply_to_message_id"] = kwargs["reply_to"]
+		if ev.type == rp.types.CUSTOM:
+			kwargs2["disable_web_page_preview"] = True
+		return bot.send_message(chat_id, rp.formatForTelegram(ev), parse_mode="HTML", **kwargs2)
 	else:
 		return resend_message(chat_id, ev, **kwargs)
 
