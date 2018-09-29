@@ -168,7 +168,9 @@ class QueueItem():
 
 def get_priority_for(user):
 	if user is None:
-		return 2**32 # lowest priority
+		# user doesn't exist (yet): handle as rank=0, lastActive=<now>
+		# cf. User.getMessagePriority in database.py
+		return max(RANKS.values()) << 16
 	return user.getMessagePriority()
 
 def put_into_queue(user, msid, f):
