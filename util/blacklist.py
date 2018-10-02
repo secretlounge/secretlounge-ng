@@ -4,7 +4,7 @@ import os
 import logging
 import sqlite3
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from time import sleep
 
 def open_db(path):
@@ -94,7 +94,7 @@ def sync(d):
 	last_update = datetime.utcfromtimestamp(0.0)
 	logging.info("Running periodic blacklist sync (every %ds)", interval)
 	while True:
-		now = datetime.now()
+		now = datetime.now() - timedelta(seconds=5)
 		# find all blacklists that happened since our last update
 		l = []
 		for name, db in d.items():
