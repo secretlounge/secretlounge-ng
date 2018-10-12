@@ -79,12 +79,13 @@ class User():
 		self.rank = RANKS.banned
 		self.blacklistReason = reason
 	def addWarning(self):
-		cooldownTime = timedelta(minutes=BASE_COOLDOWN_MINUTES ** self.warnings)
 		self.warnings += 1
 		self.warnExpiry = datetime.now() + timedelta(hours=WARN_EXPIRE_HOURS)
 		try:
+			cooldownTime = timedelta(minutes=BASE_COOLDOWN_MINUTES ** self.warnings)
 			self.cooldownUntil = datetime.now() + cooldownTime
 		except OverflowError: # should never happen if people behave
+			cooldownTime = timedelta(days=9999)
 			self.cooldownUntil = datetime(4400, 1, 1, 0, 0, 0)
 		return cooldownTime
 	def removeWarning(self):
