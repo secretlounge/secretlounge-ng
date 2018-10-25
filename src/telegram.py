@@ -15,12 +15,15 @@ db = None
 ch = None
 message_queue = None
 registered_commands = {}
+lounge_links = None
 
 # settings regarding message relaying
 allow_documents = None
 
+allow_lounge_linking = None
+
 def init(config, _db, _ch):
-	global bot, db, ch, message_queue, allow_documents
+	global bot, db, ch, message_queue, allow_documents, allow_lounge_linking, lounge_links
 	if config["bot_token"] == "":
 		logging.error("No telegram token specified.")
 		exit(1)
@@ -33,6 +36,9 @@ def init(config, _db, _ch):
 
 	allow_contacts = config["allow_contacts"]
 	allow_documents = config["allow_documents"]
+	allow_lounge_linking = config["allow_lounge_linking"]
+	
+	lounge_links = config["lounge_links"]
 
 	types = ["text", "location", "venue"]
 	if allow_contacts:
@@ -196,7 +202,11 @@ def resend_message(chat_id, ev, reply_to=None):
 
 	# re-send message based on content type
 	if ev.content_type == "text":
-		return bot.send_message(chat_id, ev.text, **kwargs)
+		try:
+			if ev.haslink:
+				return bot.send_message(chat_id, ev.text, parse_mode="markdown", **kwargs)
+		except AttributeError:
+			return bot.send_message(chat_id, ev.text, **kwargs)
 	elif ev.content_type == "photo":
 		photo = sorted(ev.photo, key=lambda e: e.width*e.height, reverse=True)[0]
 		return bot.send_photo(chat_id, photo.file_id, caption=ev.caption, **kwargs)
@@ -457,6 +467,18 @@ def relay(ev):
 		return
 	elif ev.content_type == "text" and ev.text.strip() == "+1":
 		return cmd_plusone(ev)
+	elif ev.content_type == "text" and allow_lounge_linking:
+		lounge_name_regex = ">{3}\/([^\/]+)\/"
+		lounge_matches = re.findall(lounge_name_regex, ev.text)
+		if lounge_matches is not None:
+			for m in re.finditer(lounge_name_regex, ev.text):
+				split_text = re.split("(" + m.group(0) + ")", ev.text)
+				lounge_index = split_text.index(m.group(0))
+				lounge_name = m.group(1)
+				lounge_link = lounge_links[lounge_name]
+				split_text[lounge_index] = f"[{m.group(0)!s}]({lounge_link!s})"
+				ev.text = "".join(split_text)
+				ev.haslink = True
 
 	# filter disallowed media types
 	if not allow_documents and ev.content_type == "document" and ev.document.mime_type not in ("image/gif", "video/mp4"):

@@ -14,3 +14,15 @@ allow_documents: true
 enable_signing: false
 # point of contact shown to blacklisted users
 #blacklist_contact: http://t.me/invite/something
+
+# Make `>>>/N/` be converted to links to another bot specified
+allow_lounge_linking: false
+# Names used for lounge links
+lounge_links:
+    a: t.me/animeloungebot
+    b: t.me/secretloungebot
+    bier: t.me/bierloungebot
+    f: t.me/furryloungebot
+    g: t.me/techloungebot
+    lgbt: t.me/lgbtloungbot
+    pol: t.me/politicsloungebot
