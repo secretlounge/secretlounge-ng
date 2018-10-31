@@ -204,7 +204,7 @@ def resend_message(chat_id, ev, reply_to=None):
 	if ev.content_type == "text":
 		try:
 			if ev.haslink:
-				return bot.send_message(chat_id, ev.text, parse_mode="markdown", **kwargs)
+				return bot.send_message(chat_id, ev.text, parse_mode="markdown", disable_web_page_preview=True, **kwargs)
 		except AttributeError:
 			return bot.send_message(chat_id, ev.text, **kwargs)
 	elif ev.content_type == "photo":
