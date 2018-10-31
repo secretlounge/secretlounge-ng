@@ -246,7 +246,8 @@ def send_to_single_inner(chat_id, ev, **kwargs):
 			kwargs2["reply_to_message_id"] = kwargs["reply_to"]
 		if ev.type == rp.types.CUSTOM:
 			kwargs2["disable_web_page_preview"] = True
-		return bot.send_message(chat_id, rp.formatForTelegram(ev), parse_mode="HTML", **kwargs2)
+		formatted_text = linkboard(rp.formatForTelegram(ev), ev, fromsign=True)
+		return bot.send_message(chat_id, formatted_text, parse_mode="HTML", **kwargs2)
 	else:
 		return resend_message(chat_id, ev, **kwargs)
 
@@ -468,18 +469,9 @@ def relay(ev):
 	elif ev.content_type == "text" and ev.text.strip() == "+1":
 		return cmd_plusone(ev)
 	elif ev.content_type == "text" and allow_lounge_linking:
-		lounge_name_regex = ">{3}\/([^\/]+)\/"
-		lounge_matches = re.findall(lounge_name_regex, ev.text)
-		if lounge_matches is not None:
-			for m in re.finditer(lounge_name_regex, ev.text):
-				split_text = re.split("(" + m.group(0) + ")", ev.text)
-				lounge_index = split_text.index(m.group(0))
-				lounge_name = m.group(1)
-				lounge_link = lounge_links[lounge_name]
-				split_text[lounge_index] = f"[{m.group(0)!s}]({lounge_link!s})"
-				ev.text = "".join(split_text)
-				ev.haslink = True
-
+		new_text = linkboard(ev.text, ev)
+		if new_text is not None:
+			ev.text = new_text
 	# filter disallowed media types
 	if not allow_documents and ev.content_type == "document" and ev.document.mime_type not in ("image/gif", "video/mp4"):
 		return
@@ -535,7 +527,6 @@ def cmd_tsign(ev, arg):
 		reply_msid = ch.lookupMapping(ev.from_user.id, data=ev.reply_to_message.message_id)
 		if reply_msid is None:
 			logging.warning("Message replied to not found in cache")
-
 	msid = core.send_signed_user_message(c_user, calc_spam_score(ev), arg, reply_msid, tripcode=True)
 	if type(msid) == rp.Reply:
 		return send_answer(ev, msid, True)
@@ -543,3 +534,25 @@ def cmd_tsign(ev, arg):
 	ch.saveMapping(c_user.id, msid, ev.message_id)
 
 cmd_t = cmd_tsign # alias
+
+def linkboard(linking_msg, ev, fromsign=False):
+	lounge_name_regex = "(?:>|&#62;){3}\/([^\/]+)\/"
+	lounge_matches = re.findall(lounge_name_regex, linking_msg)
+	if lounge_matches is not None:
+		if fromsign == False:
+			linking_msg = re.sub("(?:```|[*_`])|\\[(.*?)\\]\\(.*?\\)", "", linking_msg)
+		for m in re.finditer(lounge_name_regex, linking_msg):
+			split_text = re.split("(" + m.group(0) + ")", linking_msg)
+			lounge_index = split_text.index(m.group(0))
+			lounge_name = m.group(1)
+			if lounge_name in lounge_links:
+				lounge_link = lounge_links[lounge_name]
+			else:
+				continue
+			if fromsign == False:
+				split_text[lounge_index] = f"[{m.group(0)!s}]({lounge_link!s})"
+			else:
+				split_text[lounge_index] = f"<a href='{lounge_link!s}'>{m.group(0)!s}</a>"
+			linking_msg = "".join(split_text)
+		ev.haslink = True
+		return linking_msg
