@@ -48,7 +48,9 @@ RANKS = Enum({
 })
 
 # Cooldown related
-BASE_COOLDOWN_MINUTES = 5
+COOLDOWN_TIME_BEGIN = [1, 5, 25, 120, 720, 4320] # begins with 1m, 5m, 25m, 2h, 12h, 3d
+COOLDOWN_TIME_LINEAR_M = 4320 # continues 7d, 10d, 13d, 16d, ... (linear)
+COOLDOWN_TIME_LINEAR_B = 10080
 WARN_EXPIRE_HOURS = 7 * 24
 
 # Karma related
