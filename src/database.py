@@ -32,7 +32,7 @@ class User():
 		self.karma = None # int
 		self.hideKarma = None # bool
 		self.debugEnabled = None # bool
-		self.tripcode = None # str
+		self.tripcode = None # str?
 	def __eq__(self, other):
 		if type(other) == User:
 			return self.id == other.id
@@ -120,7 +120,7 @@ class Database():
 		...
 	def close(self):
 		...
-	def getUser(self, id=None, username=None):
+	def getUser(self, id=None):
 		...
 	def setUser(self, id, user):
 		...
@@ -209,14 +209,11 @@ class JSONDatabase(Database):
 			with open(self.path + "~", "w") as f:
 				json.dump(self.db, f)
 			os.replace(self.path + "~", self.path)
-	def getUser(self, id=None, username=None):
+	def getUser(self, id=None):
+		if id is None:
+			raise ValueError()
 		with self.lock:
-			if id is not None:
-				gen = (u for u in self.db["users"] if u["id"] == id)
-			elif username is not None:
-				gen = (u for u in self.db["users"] if u["username"] == username)
-			else:
-				raise ValueError()
+			gen = (u for u in self.db["users"] if u["id"] == id)
 			try:
 				return JSONDatabase._userFromDict(next(gen))
 			except StopIteration as e:
@@ -322,16 +319,11 @@ CREATE TABLE IF NOT EXISTS `users` (
 			# migration
 			if not row_exists("users", "tripcode"):
 				self.db.execute("ALTER TABLE `users` ADD `tripcode` TEXT")
-	def getUser(self, id=None, username=None):
-		sql = "SELECT * FROM users WHERE "
-		if id is not None:
-			sql += "id = ?"
-			param = id
-		elif username is not None:
-			sql += "username = ?"
-			param = username
-		else:
+	def getUser(self, id=None):
+		if id is None:
 			raise ValueError()
+		sql = "SELECT * FROM users WHERE id = ?"
+		param = id
 		with self.lock:
 			cur = self.db.execute(sql, (param, ))
 			row = cur.fetchone()

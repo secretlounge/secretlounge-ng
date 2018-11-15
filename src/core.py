@@ -71,16 +71,21 @@ def getUserByOid(oid):
 
 def requireUser(func):
 	def wrapper(c_user, *args, **kwargs):
-		# fetch user from db
-		try:
-			user = db.getUser(id=c_user.id)
-		except KeyError as e:
-			return rp.Reply(rp.types.USER_NOT_IN_CHAT)
+		if isinstance(c_user, User):
+			user = c_user
+		else:
+			# fetch user from db
+			try:
+				user = db.getUser(id=c_user.id)
+			except KeyError as e:
+				return rp.Reply(rp.types.USER_NOT_IN_CHAT)
+
 		# check for blacklist or absence
 		if user.isBlacklisted():
 			return rp.Reply(rp.types.ERR_BLACKLISTED, reason=user.blacklistReason, contact=blacklist_contact)
 		elif not user.isJoined():
 			return rp.Reply(rp.types.USER_NOT_IN_CHAT)
+
 		# keep db entry up to date
 		with db.modifyUser(id=user.id) as user:
 			updateUserFromEvent(user, c_user)
@@ -146,20 +151,23 @@ class Receiver():
 class Sender(Receiver): # flawless class hierachy I know...
 	receivers = []
 	@staticmethod
-	def reply(*args):
+	def reply(m, msid, who, except_who, reply_to):
+		logging.debug("reply(m.type=%s, msid=%r, reply_to=%r)", rp.types.reverse[m.type], msid, reply_to)
 		for r in Sender.receivers:
-			r.reply(*args)
+			r.reply(m, msid, who, except_who, reply_to)
 	@staticmethod
-	def delete(*args):
+	def delete(msid):
+		logging.debug("delete(msid=%d)", msid)
 		for r in Sender.receivers:
-			r.delete(*args)
+			r.delete(msid)
 	@staticmethod
-	def stop_invoked(*args):
+	def stop_invoked(who):
+		logging.debug("stop_invoked(who=%s)", user)
 		for r in Sender.receivers:
-			r.stop_invoked(*args)
+			r.stop_invoked(who)
 
 def registerReceiver(obj):
-	assert(issubclass(obj, Receiver))
+	assert issubclass(obj, Receiver)
 	Sender.receivers.append(obj)
 	return obj
 
@@ -219,7 +227,6 @@ def get_info(user):
 		"username": user.getFormattedName(),
 		"rank_i": user.rank,
 		"rank": RANKS.reverse[user.rank],
-		"tripcode": user.tripcode,
 		"karma": user.karma,
 		"warnings": user.warnings,
 		"warnExpiry": user.warnExpiry,

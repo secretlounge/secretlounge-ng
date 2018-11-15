@@ -26,6 +26,21 @@ class Cache():
 		self.counter = itertools.count()
 		self.msgs = {} # dict(msid -> CachedMessage)
 		self.idmap = {} # dict(uid -> dict(msid -> opaque))
+	def _saveMapping(self, x, uid, msid, data):
+		if uid not in x.keys():
+			x[uid] = {}
+		x[uid][msid] = data
+	def _lookupMapping(self, x, uid, msid, data):
+		if uid not in x.keys():
+			return None
+		if msid is not None:
+			return x[uid].get(msid, None)
+		# data is not None
+		try:
+			return next(msid for msid, _data in x[uid].items() if _data == data)
+		except StopIteration as e:
+			return None
+
 	def assignMessageId(self, cm):
 		with self.lock:
 			ret = next(self.counter)
@@ -36,21 +51,12 @@ class Cache():
 			return self.msgs.get(msid, None)
 	def saveMapping(self, uid, msid, data):
 		with self.lock:
-			if uid not in self.idmap.keys():
-				self.idmap[uid] = {}
-			self.idmap[uid][msid] = data
+			self._saveMapping(self.idmap, uid, msid, data)
 	def lookupMapping(self, uid, msid=None, data=None):
+		if msid is None and data is None:
+			raise ValueError()
 		with self.lock:
-			if uid not in self.idmap.keys():
-				return None
-			if msid is not None:
-				return self.idmap[uid].get(msid, None)
-			elif data is None:
-				raise ValueError("no lookup criteria")
-			try:
-				return next(msid for msid, _data in self.idmap[uid].items() if _data == data)
-			except StopIteration as e:
-				return None
+			return self._lookupMapping(self.idmap, uid, msid, data)
 	def expire(self):
 		ids = set()
 		with self.lock:

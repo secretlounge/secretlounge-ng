@@ -287,7 +287,6 @@ def check_telegram_exc(e, user):
 class MyReceiver(core.Receiver):
 	@staticmethod
 	def reply(m, msid, who, except_who, reply_msid):
-		logging.debug("reply(m.type=%s, msid=%r, reply_msid=%r)", rp.types.reverse[m.type], msid, reply_msid)
 		if who is not None:
 			return send_to_single(m, msid, who, reply_msid)
 
@@ -299,16 +298,16 @@ class MyReceiver(core.Receiver):
 			send_to_single(m, msid, user, reply_msid)
 	@staticmethod
 	def delete(msid):
-		logging.debug("delete(msid=%d)", msid)
 		tmp = ch.getMessage(msid)
 		except_id = None if tmp is None else tmp.user_id
-		# FIXME: there's a hard to avoid race condition with currently being processed messages here
 		message_queue.delete(lambda item, msid=msid: item.msid == msid)
+		# FIXME: there's a hard to avoid race condition with currently being sent messages here
 		for user in db.iterateUsers():
 			if not user.isJoined():
 				continue
 			if user.id == except_id:
 				continue
+
 			id = ch.lookupMapping(user.id, msid=msid)
 			if id is None:
 				continue
@@ -318,8 +317,6 @@ class MyReceiver(core.Receiver):
 			put_into_queue(user, None, f)
 	@staticmethod
 	def stop_invoked(user):
-		logging.debug("stop_invoked(%s)", user)
-		# FIXME: same race cond as above, but it doesn't matter as much here
 		message_queue.delete(lambda item, user_id=user.id: item.user_id == user_id)
 
 ####
