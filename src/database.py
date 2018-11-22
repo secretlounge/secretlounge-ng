@@ -34,7 +34,7 @@ class User():
 		self.debugEnabled = None # bool
 		self.tripcode = None # str?
 	def __eq__(self, other):
-		if type(other) == User:
+		if isinstance(other, User):
 			return self.id == other.id
 		return NotImplemented
 	def __str__(self):
@@ -118,21 +118,21 @@ class Database():
 		self.lock = RLock()
 		assert self.__class__ != Database # do not instantiate directly
 	def register_tasks(self, sched):
-		...
+		raise NotImplementedError()
 	def close(self):
-		...
+		raise NotImplementedError()
 	def getUser(self, id=None):
-		...
+		raise NotImplementedError()
 	def setUser(self, id, user):
-		...
+		raise NotImplementedError()
 	def addUser(self, user):
-		...
+		raise NotImplementedError()
 	def iterateUserIds(self):
-		...
+		raise NotImplementedError()
 	def getSystemConfig(self):
-		...
+		raise NotImplementedError()
 	def setSystemConfig(self, config):
-		...
+		raise NotImplementedError()
 	def iterateUsers(self):
 		with self.lock:
 			l = list(self.getUser(id=id) for id in self.iterateUserIds())
@@ -181,14 +181,14 @@ class JSONDatabase(Database):
 		d = {}
 		for prop in props:
 			value = getattr(user, prop)
-			if type(value) == datetime:
+			if isinstance(value, datetime):
 				value = int(value.replace(tzinfo=timezone.utc).timestamp())
 			d[prop] = value
 		return d
 	@staticmethod
 	def _userFromDict(d):
 		if d is None: return None
-		props = ["id", "username", "realname", "rank", "blacklistReason", 
+		props = ["id", "username", "realname", "rank", "blacklistReason",
 			"warnings", "karma", "hideKarma", "debugEnabled"]
 		props_d = [("tripcode", None)]
 		dateprops = ["joined", "left", "lastActive", "cooldownUntil", "warnExpiry"]

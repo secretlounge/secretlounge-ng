@@ -3,7 +3,6 @@ import logging
 import time
 import re
 import json
-from queue import PriorityQueue
 
 import src.core as core
 import src.replies as rp
@@ -114,7 +113,7 @@ def wrap_core(func, reply_to=False):
 def send_answer(ev, m, reply_to=False):
 	if m is None:
 		return
-	elif type(m) == list:
+	elif isinstance(m, list):
 		for m2 in m:
 			send_answer(ev, m2, reply_to)
 		return
@@ -230,7 +229,7 @@ def resend_message(chat_id, ev, reply_to=None):
 		raise NotImplementedError("content_type = %s" % ev.content_type)
 
 def send_to_single_inner(chat_id, ev, **kwargs):
-	if type(ev) == rp.Reply:
+	if isinstance(ev, rp.Reply):
 		kwargs2 = {}
 		if "reply_to" in kwargs.keys():
 			kwargs2["reply_to_message_id"] = kwargs["reply_to"]
@@ -460,7 +459,7 @@ def relay(ev):
 		return
 
 	msid = core.prepare_user_message(UserContainer(ev.from_user), calc_spam_score(ev))
-	if type(msid) == rp.Reply: # don't relay message, instead reply with something
+	if isinstance(msid, rp.Reply): # don't relay message, instead reply with something
 		return send_answer(ev, msid)
 
 	user = db.getUser(id=ev.from_user.id)
@@ -493,7 +492,7 @@ def cmd_sign(ev, arg):
 			logging.warning("Message replied to not found in cache")
 
 	msid = core.send_signed_user_message(c_user, calc_spam_score(ev), arg, reply_msid)
-	if type(msid) == rp.Reply:
+	if isinstance(msid, rp.Reply):
 		return send_answer(ev, msid, True)
 
 	# save the original message in the mapping, this isn't done inside MyReceiver.reply()
@@ -512,7 +511,7 @@ def cmd_tsign(ev, arg):
 			logging.warning("Message replied to not found in cache")
 
 	msid = core.send_signed_user_message(c_user, calc_spam_score(ev), arg, reply_msid, tripcode=True)
-	if type(msid) == rp.Reply:
+	if isinstance(msid, rp.Reply):
 		return send_answer(ev, msid, True)
 
 	ch.saveMapping(c_user.id, msid, ev.message_id)

@@ -156,7 +156,7 @@ format_strs = {
 		"  /info - get info about the user that sent this message\n"+
 		"  /warn - warn the user that sent this message (cooldown)\n"+
 		"  /delete - delete a message and warn the user",
-	types.HELP_ADMIN: 
+	types.HELP_ADMIN:
 		"<i>Admins can use the following commands</i>:\n"+
 		"  /adminhelp - show this text\n"+
 		"  /adminsay &lt;message&gt; - send an official admin message\n"+
@@ -174,4 +174,3 @@ def formatForTelegram(m):
 	if type(s).__name__ == "function":
 		s = s(**m.kwargs)
 	return CustomFormatter().format(s, **m.kwargs)
-

@@ -1,8 +1,6 @@
 import logging
-import threading
 import itertools
 from datetime import datetime, timedelta
-from time import sleep
 from threading import Lock
 
 from src.globals import *

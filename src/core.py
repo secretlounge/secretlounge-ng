@@ -1,5 +1,4 @@
 import logging
-import time
 from datetime import datetime, timedelta
 from threading import Lock
 
@@ -96,7 +95,7 @@ def requireUser(func):
 def requireRank(need_rank):
 	def f(func):
 		def wrapper(user, *args, **kwargs):
-			if type(user) != User:
+			if not isinstance(user, User):
 				raise SyntaxError("you fucked up the decorator order")
 			if user.rank < need_rank:
 				return
@@ -136,17 +135,15 @@ class ScoreKeeper():
 # Event receiver template and Sender class that fwds to all registered event receivers
 
 class Receiver():
-	def __init__(self):
-		raise NotImplementedError()
 	@staticmethod
 	def reply(m, msid, who, except_who, reply_to):
-		...
+		raise NotImplementedError()
 	@staticmethod
 	def delete(msid):
-		...
+		raise NotImplementedError()
 	@staticmethod
 	def stop_invoked(who):
-		...
+		raise NotImplementedError()
 
 class Sender(Receiver): # flawless class hierachy I know...
 	receivers = []
@@ -162,7 +159,7 @@ class Sender(Receiver): # flawless class hierachy I know...
 			r.delete(msid)
 	@staticmethod
 	def stop_invoked(who):
-		logging.debug("stop_invoked(who=%s)", user)
+		logging.debug("stop_invoked(who=%s)", who)
 		for r in Sender.receivers:
 			r.stop_invoked(who)
 
