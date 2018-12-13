@@ -142,7 +142,7 @@ def calc_spam_score(ev):
 		pass
 	else:
 		return SCORE_MESSAGE
-	s = SCORE_MESSAGE + len(ev.text) * SCORE_CHARACTER
+	s = SCORE_MESSAGE + len(ev.text) * SCORE_CHARACTER + ev.text.count("\n") * SCORE_LINEBREAK
 	regex = re.compile(r"(https?:\/\/|\b)[a-z0-9-_]+\.[a-z]{2,}", flags=re.I)
 	if re.search(regex, ev.text) is not None:
 		s += len(re.findall(regex, ev.text)) * SCORE_LINK
