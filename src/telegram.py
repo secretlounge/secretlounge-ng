@@ -136,16 +136,17 @@ def send_answer(ev, m, reply_to=False):
 	put_into_queue(user, None, f)
 
 def calc_spam_score(ev):
+	s = SCORE_BASE_FORWARD if ev.forward_from_chat is not None else SCORE_BASE_MESSAGE
 	if ev.content_type == "sticker":
 		return SCORE_STICKER
 	elif ev.content_type == "text":
 		pass
 	else:
-		return SCORE_MESSAGE
-	s = SCORE_MESSAGE + len(ev.text) * SCORE_CHARACTER + ev.text.count("\n") * SCORE_LINEBREAK
+		return s
+	s += len(ev.text) * SCORE_TEXT_CHARACTER + ev.text.count("\n") * SCORE_TEXT_LINEBREAK
 	regex = re.compile(r"(https?:\/\/|\b)[a-z0-9-_]+\.[a-z]{2,}", flags=re.I)
 	if re.search(regex, ev.text) is not None:
-		s += len(re.findall(regex, ev.text)) * SCORE_LINK
+		s += len(re.findall(regex, ev.text)) * SCORE_TEXT_LINK
 	return s
 
 ###
