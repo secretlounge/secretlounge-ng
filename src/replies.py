@@ -59,6 +59,7 @@ types = NumericEnum([
 	"ERR_SPAMMY_SIGN",
 	"ERR_INVALID_TRIP_FORMAT",
 	"ERR_NO_TRIPCODE",
+	"ERR_MEDIA_LIMIT",
 
 	"USER_INFO",
 	"USER_INFO_MOD",
@@ -128,6 +129,7 @@ format_strs = {
 		em("Given tripcode is not valid, the format is ")+
 		"<code>name#pass</code>" + em("."),
 	types.ERR_NO_TRIPCODE: em("You don't have a tripcode set."),
+	types.ERR_MEDIA_LIMIT: em("You can't send media or forward messages at this time, try again later."),
 
 	types.USER_INFO: lambda warnings, cooldown, **_:
 		"<b>id</b>: {id}, <b>username</b>: {username!x}, <b>rank</b>: {rank_i} ({rank})\n"+

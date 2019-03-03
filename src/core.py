@@ -15,15 +15,18 @@ sign_last_used = {} # uid -> datetime
 
 blacklist_contact = None
 enable_signing = None
+media_limit_period = None
 
 def init(config, _db, _ch):
-	global db, ch, spam_scores, blacklist_contact, enable_signing
+	global db, ch, spam_scores, blacklist_contact, enable_signing, media_limit_period
 	db = _db
 	ch = _ch
 	spam_scores = ScoreKeeper()
 
 	blacklist_contact = config.get("blacklist_contact", "")
 	enable_signing = config["enable_signing"]
+	if "media_limit_period" in config.keys():
+		media_limit_period = timedelta(hours=int(config["media_limit_period"]))
 
 	# initialize db if empty
 	if db.getSystemConfig() is None:
@@ -435,9 +438,12 @@ def give_karma(user, msid):
 
 
 @requireUser
-def prepare_user_message(user, msg_score):
+def prepare_user_message(user, msg_score, is_media):
 	if user.isInCooldown():
 		return rp.Reply(rp.types.ERR_COOLDOWN, until=user.cooldownUntil)
+	if is_media and user.rank < RANKS.mod and media_limit_period is not None:
+		if (datetime.now() - user.joined) < media_limit_period:
+			return rp.Reply(rp.types.ERR_MEDIA_LIMIT)
 	ok = spam_scores.increaseSpamScore(user.id, msg_score)
 	if not ok:
 		return rp.Reply(rp.types.ERR_SPAMMY)

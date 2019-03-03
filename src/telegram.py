@@ -491,9 +491,12 @@ def relay(ev):
 	if not allow_documents and ev.content_type == "document" and ev.document.mime_type not in ("image/gif", "video/mp4"):
 		return
 
-	msid = core.prepare_user_message(UserContainer(ev.from_user), calc_spam_score(ev))
-	if isinstance(msid, rp.Reply): # don't relay message, instead reply with something
-		return send_answer(ev, msid)
+	is_media = (ev.forward_from is not None or
+		ev.forward_from_chat is not None or
+		ev.content_type in ("photo", "document", "video", "sticker"))
+	msid = core.prepare_user_message(UserContainer(ev.from_user), calc_spam_score(ev), is_media)
+	if msid is None or isinstance(msid, rp.Reply):
+		return send_answer(ev, msid) # don't relay message, instead reply
 
 	user = db.getUser(id=ev.from_user.id)
 
