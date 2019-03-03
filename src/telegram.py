@@ -136,7 +136,10 @@ def send_answer(ev, m, reply_to=False):
 	put_into_queue(user, None, f)
 
 def calc_spam_score(ev):
-	s = SCORE_BASE_FORWARD if ev.forward_from_chat is not None else SCORE_BASE_MESSAGE
+	s = SCORE_BASE_MESSAGE
+	if ev.forward_from is not None or ev.forward_from_chat is not None:
+		s = SCORE_BASE_FORWARD
+
 	if ev.content_type == "sticker":
 		return SCORE_STICKER
 	elif ev.content_type == "text":
