@@ -5,7 +5,7 @@ Rewrite of [secretlounge](https://github.com/6697/secretlounge), a bot to make a
 ## Setup
 ```
 $ pip3 install -r requirements.txt
-$ cp conf.yaml.example config.yaml
+$ cp config.yaml.example config.yaml
 Edit config.yaml with your favorite text editor.
 $ ./secretlounge-ng
 ```
@@ -21,7 +21,7 @@ Message [@BotFather](https://t.me/BotFather) to configure your bot as follows:
 ```
 start - Join the chat (start receiving messages)
 stop - Leave the chat (stop receiving messages)
-users - Get list of users
+users - Find out how many users are in the chat
 info - Get info about your account
 sign - Sign a message with your username
 s - Alias of sign
