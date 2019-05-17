@@ -425,6 +425,24 @@ def give_karma(user, msid):
 		_push_system_message(rp.Reply(rp.types.KARMA_NOTIFICATION), who=user2, reply_to=msid)
 	return rp.Reply(rp.types.KARMA_THANK_YOU)
 
+@requireUser
+def take_karma(user, msid):
+	cm = ch.getMessage(msid)
+	if cm is None or cm.user_id is None:
+		return rp.Reply(rp.types.ERR_NOT_IN_CACHE)
+
+	if cm.hasUpvoted(user):
+		return rp.Reply(rp.types.ERR_ALREADY_UPVOTED)
+	elif user.id == cm.user_id:
+		return rp.Reply(rp.types.ERR_UPVOTE_OWN_MESSAGE)
+	cm.addUpvote(user)
+	user2 = db.getUser(id=cm.user_id)
+	with db.modifyUser(id=cm.user_id) as user2:
+		user2.karma += KARMA_MINUS_ONE
+	if not user2.hideKarma:
+		_push_system_message(rp.Reply(rp.types.KARMA_NOTIFICATION_NEG), who=user2, reply_to=msid)
+	return rp.Reply(rp.types.KARMA_THANK_YOU_NEG)
+
 
 @requireUser
 def prepare_user_message(user, msg_score):
