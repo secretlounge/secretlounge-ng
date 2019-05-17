@@ -463,6 +463,8 @@ def relay(ev):
 		return
 	elif ev.content_type == "text" and ev.text.strip() == "+1":
 		return cmd_plusone(ev)
+	elif ev.content_type == "text" and ev.text.strip() == "-1":
+		return cmd_minusone(ev)
 
 	# filter disallowed media types
 	if not allow_documents and ev.content_type == "document" and ev.document.mime_type not in ("image/gif", "video/mp4"):
