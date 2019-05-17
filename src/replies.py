@@ -104,8 +104,12 @@ format_strs = {
 	types.PROMOTED_MOD: em("You've been promoted to moderator, run /modhelp for a list of commands."),
 	types.PROMOTED_ADMIN: em("You've been promoted to admin, run /adminhelp for a list of commands."),
 	types.KARMA_THANK_YOU: em("You just gave this user some sweet karma, awesome!"),
+	types.KARMA_THANK_YOU_NEG: em("You just subtracted some karma from this user, hopefully their content will improve."),
 	types.KARMA_NOTIFICATION:
 		em( "You've just been given sweet karma! (check /info to see your karma"+
+			" or /toggleKarma to turn these notifications off)" ),
+	types.KARMA_NOTIFICATION_NEG:
+		em( "You've just lost some karma! (check /info to see your karma"+
 			" or /toggleKarma to turn these notifications off)" ),
 	types.TRIPCODE_INFO: lambda tripcode, **_:
 		"<b>tripcode</b>: " + ("<code>{tripcode!x}</code>" if tripcode is not None else "unset" ),
