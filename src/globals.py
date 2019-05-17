@@ -55,6 +55,7 @@ WARN_EXPIRE_HOURS = 7 * 24
 
 # Karma related
 KARMA_PLUS_ONE = 1
+KARMA_MINUS_ONE = -1
 KARMA_WARN_PENALTY = 10
 
 # Spam limits
