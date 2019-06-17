@@ -137,7 +137,8 @@ def send_answer(ev, m, reply_to=False):
 
 def calc_spam_score(ev):
 	s = SCORE_BASE_MESSAGE
-	if ev.forward_from is not None or ev.forward_from_chat is not None:
+	if (ev.forward_from is not None or ev.forward_from_chat is not None
+		or ev.json.get("forward_sender_name") is not None):
 		s = SCORE_BASE_FORWARD
 
 	if ev.content_type == "sticker":
@@ -186,7 +187,8 @@ def send_thread():
 # Message sending (functions)
 
 def resend_message(chat_id, ev, reply_to=None):
-	if ev.forward_from is not None or ev.forward_from_chat is not None:
+	if (ev.forward_from is not None or ev.forward_from_chat is not None
+		or ev.json.get("forward_sender_name") is not None):
 		# forward message instead of re-sending the contents
 		return bot.forward_message(chat_id, ev.chat.id, ev.message_id)
 
