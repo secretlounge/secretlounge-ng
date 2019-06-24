@@ -180,9 +180,12 @@ def user_join(c_user):
 		if user.isBlacklisted():
 			return rp.Reply(rp.types.ERR_BLACKLISTED, reason=user.blacklistReason, contact=blacklist_contact)
 		elif user.isJoined():
+			with db.modifyUser(id=user.id) as user:
+				updateUserFromEvent(user, c_user)
 			return rp.Reply(rp.types.USER_IN_CHAT)
 		# user rejoins
 		with db.modifyUser(id=user.id) as user:
+			updateUserFromEvent(user, c_user)
 			user.setLeft(False)
 		logging.info("%s rejoined chat", user)
 		return rp.Reply(rp.types.CHAT_JOIN)
