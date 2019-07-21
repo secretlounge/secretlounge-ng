@@ -37,6 +37,7 @@ class MutablePriorityQueue():
 	def __init__(self):
 		self.queue = PriorityQueue() # contains (prio, iid)
 		self.items = {} # maps iid -> opaque
+		self.times = {}
 		self.counter = itertools.count()
 		# protects `items` and `counter`, `queue` has its own lock
 		self.lock = Lock()
@@ -46,11 +47,13 @@ class MutablePriorityQueue():
 			with self.lock:
 				# skip deleted entries
 				if iid in self.items.keys():
+					self.times.pop(iid)
 					return self.items.pop(iid)
 	def put(self, prio, data):
 		with self.lock:
 			iid = next(self.counter)
 			self.items[iid] = data
+			self.times[iid] = int(time.time())
 		self.queue.put((prio, iid))
 	def delete(self, selector):
 		with self.lock:
@@ -58,6 +61,10 @@ class MutablePriorityQueue():
 			for iid in keys:
 				if selector(self.items[iid]):
 					del self.items[iid]
+					del self.times[iid]
+	def getstats(self, now):
+		with self.lock:
+			return list(now - t for t in self.times.values())
 
 class Enum():
 	def __init__(self, m, reverse=True):

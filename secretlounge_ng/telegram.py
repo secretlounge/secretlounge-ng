@@ -316,14 +316,13 @@ def formatter_tripcoded_message(user: core.User, fmt: FormattedMessageBuilder):
 # Message sending (queue-related)
 
 class QueueItem():
-	__slots__ = ("user_id", "msid", "func", "created")
+	__slots__ = ("user_id", "msid", "func")
 	def __init__(self, user, msid, func):
 		self.user_id = None # who this item is being delivered to
 		if user is not None:
 			self.user_id = user.id
 		self.msid = msid # message id connected to this item
 		self.func = func
-		self.created = datetime.now() # for stats
 	def call(self):
 		try:
 			self.func()
@@ -358,12 +357,8 @@ def percentile(N, percent):
 	return d0 + d1
 
 def queue_stat():
-	a = []
-	def func(item):
-		nonlocal a
-		a.append(( datetime.now() - item.created ).total_seconds())
-		return False # dont actually delete
-	message_queue.delete(func)
+	now = int(datetime.now().timestamp())
+	a = message_queue.getstats(now)
 	return {
 		"queue_size": len(a),
 		"queue_latency_avg": 0 if len(a) == 0 else ( sum(a) / len(a) ),
