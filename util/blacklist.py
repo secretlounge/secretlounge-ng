@@ -140,8 +140,8 @@ def find_user(db, term):
 	c = db.execute(sql, args)
 	ret = {}
 	for row in c:
-		ret[row[0]] = dict(zip(attrs, row[1:]))
-	return ret
+		ret[row[0]] = row[1:]
+	return ret, attrs
 
 # frontend
 
@@ -193,15 +193,14 @@ def c_find(d, argv):
 
 		any_ = False
 		for dbname in sorted(d.keys()):
-			ret = find_user(d[dbname], p)
+			ret, attrs = find_user(d[dbname], p)
 			if len(ret) == 0:
 				continue
 			any_ = True
 			print("In %s:" % dbname)
-			tmp = next(ret.values().__iter__()).keys()
-			print( ("%-10s" % "ID") + "|".join(tmp) )
+			print( ("%-10s" % "ID") + "|".join(attrs) )
 			for id, data in ret.items():
-				tmp = (str_helper(x) for x in data.values())
+				tmp = (str_helper(x) for x in data)
 				print( ("%-10s" % id) + "|".join(tmp) )
 
 		if any_:
