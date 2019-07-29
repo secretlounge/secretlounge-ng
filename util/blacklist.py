@@ -3,11 +3,11 @@ import sys
 import os
 import logging
 import sqlite3
-
 from datetime import datetime, timedelta
 from time import sleep
 
 # database
+# NOTE: a few other utilities import this code
 
 class Database():
 	def __init__(self, path):
@@ -163,11 +163,12 @@ def c_sync(d, argv):
 def usage(actions):
 	print("Utility for managing blacklists (sqlite only)")
 	print("Usage: blacklist.py <action> [arguments...]")
-	fmt = "%-" + str( max(len(f.__doc__.split("\n")[0]) for f in actions.values()) + 4 ) + "s%s"
+	fmt = "    %-" + str( max(len(f.__doc__.split("\n")[0]) for f in actions.values()) + 4 ) + "s%s"
 	print("Actions:")
 	for f in actions.values():
-		a, b = f.__doc__.split("\n")
-		print("  " + fmt % (a, b))
+		s = list(x.strip() for x in f.__doc__.split("\n"))
+		for i, text in enumerate(s[1:]):
+			print(fmt % (s[0] if i == 0 else "", text))
 
 def main(argv):
 	logging.basicConfig(format="[%(asctime)s] %(message)s", datefmt="%Y-%m-%d %H:%M", level=logging.INFO)
