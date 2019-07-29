@@ -7,13 +7,34 @@ import sqlite3
 from datetime import datetime, timedelta
 from time import sleep
 
-def open_db(path):
-	db = sqlite3.connect(path,
-		detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
-	db.row_factory = sqlite3.Row
-	return db
+# database
+
+class Database():
+	def __init__(self, path):
+		t = sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES
+		self.db = sqlite3.connect(path, detect_types=t)
+		self.db.row_factory = sqlite3.Row
+	def modify_custom(self, func):
+		while True:
+			try:
+				func()
+			except sqlite3.OperationalError as e:
+				if "database is locked" in str(e):
+					continue # just retry, sqlite will do the waiting for us
+				raise
+			break
+		self.db.commit()
+	def modify(self, sql, args=()):
+		self.modify_custom(lambda: self.db.execute(sql, args))
+	# eh...
+	def execute(self, *args, **kwargs):
+		return self.db.execute(*args, **kwargs)
+	def commit(self, *args, **kwargs):
+		return self.db.commit(*args, **kwargs)
 
 def detect_dbs():
+	if os.path.exists("./db.sqlite"): # no fancy structure...
+		return {"default": Database("./db.sqlite")}
 	d = {}
 	# expects the following directory structure:
 	#   root dir
@@ -30,19 +51,10 @@ def detect_dbs():
 		if e.is_dir():
 			path = os.path.join(e.path, "db.sqlite")
 			if os.path.exists(path):
-				d[e.name] = open_db(path)
+				d[e.name] = Database(path)
 	return d
 
-def modify_db(db, f):
-	while True:
-		try:
-			f()
-		except sqlite3.OperationalError as e:
-			if "database is locked" in str(e):
-				continue # just retry, sqlite will do the waiting for us
-			raise
-		break
-	db.commit()
+# backend
 
 def ban_user(db, id, reason):
 	c = db.execute("SELECT COUNT(*) FROM users WHERE id = ?", (id, ))
@@ -63,8 +75,7 @@ def ban_user(db, id, reason):
 			"debugEnabled": 0,
 		}
 		sql = "INSERT INTO users (" + ( ", ".join(u.keys()) ) + ") VALUES (" + ( ", ".join("?" for _ in u) ) + ")"
-		f = lambda: db.execute(sql, tuple(u.values()))
-		modify_db(db, f)
+		db.modify(sql, tuple(u.values()))
 		return 0, 1
 	# is this user already banned?
 	c = db.execute("SELECT COUNT(*) FROM users WHERE id = ? AND rank > ?", (id, -10))
@@ -72,8 +83,7 @@ def ban_user(db, id, reason):
 		return 0, 0
 	# update user values to ban them
 	param = (-10, datetime.now(), reason, id)
-	f = lambda: db.execute("UPDATE users SET rank = ?, left = ?, blacklistReason = ? WHERE id = ?", param)
-	modify_db(db, f)
+	db.modify("UPDATE users SET rank = ?, left = ?, blacklistReason = ? WHERE id = ?", param)
 	return 1, 0
 
 def unban_user(db, id):
@@ -83,10 +93,9 @@ def unban_user(db, id):
 		return 0
 	if row[0] == "" and row[1] == datetime.utcfromtimestamp(0):
 		# this is a placeholder entry, just delete it instead
-		f = lambda: db.execute("DELETE FROM users WHERE id = ?", (id, ))
+		db.modify("DELETE FROM users WHERE id = ?", (id, ))
 	else:
-		f = lambda: db.execute("UPDATE users SET rank = ?, blacklistReason = NULL WHERE id = ?", (0, id))
-	modify_db(db, f)
+		db.modify("UPDATE users SET rank = ?, blacklistReason = NULL WHERE id = ?", (0, id))
 	return 1
 
 def sync(d):
@@ -117,48 +126,72 @@ def sync(d):
 		last_update = now
 		sleep(interval)
 
-def usage():
+# frontend
+
+def c_ban(d, argv):
+	"""ban <user id> [reason]\nManually blacklist specified user"""
+	if len(argv) < 2:
+		return Exception
+	id = int(argv[0])
+	reason = " ".join(argv[1:])
+	stat1, stat2 = 0, 0
+	for db in d.values():
+		a, b = ban_user(db, id, reason)
+		stat1 += a; stat2 += b
+	logging.info("Success (%d-%d)", stat1, stat2)
+
+def c_unban(d, argv):
+	"""unban <user id>\nUnban specified user"""
+	if len(argv) != 1:
+		return Exception
+	id = int(argv[0])
+	stat = 0
+	for db in d.values():
+		stat += unban_user(db, id)
+	if stat == 0:
+		return logging.warning("This user wasn't blacklisted anywhere.")
+	logging.info("Success (%d)", stat)
+
+def c_sync(d, argv):
+	"""sync\nSynchronize blacklisted users (runs in foreground)"""
+	if len(argv) != 0:
+		return Exception
+	if len(d) < 2:
+		return logging.error("You have only one database, syncing makes no sense!")
+	sync(d)
+
+def usage(actions):
 	print("Utility for managing blacklists (sqlite only)")
 	print("Usage: blacklist.py <action> [arguments...]")
+	fmt = "%-" + str( max(len(f.__doc__.split("\n")[0]) for f in actions.values()) + 4 ) + "s%s"
 	print("Actions:")
-	print("  ban <user id> [reason]    Manually blacklist specified user")
-	print("  unban <user id>           Unban specified user")
-	print("  sync                      Synchronize blacklisted users (runs as daemon)")
+	for f in actions.values():
+		a, b = f.__doc__.split("\n")
+		print("  " + fmt % (a, b))
 
 def main(argv):
 	logging.basicConfig(format="[%(asctime)s] %(message)s", datefmt="%Y-%m-%d %H:%M", level=logging.INFO)
 
-	d = detect_dbs()
-	if len(d) == 0:
-		logging.error("No databases detected, exiting!")
-		exit(1)
-	else:
-		logging.info("Detected %d databases: %s", len(d), ", ".join(d.keys()))
+	actions = {
+		"ban": c_ban, "unban": c_unban, "sync": c_sync
+	}
 
-	action = "" if len(argv) < 1 else argv[0].lower()
-	if action == "ban":
-		if len(argv) >= 2:
-			id = int(argv[1])
-			reason = " ".join(argv[2:])
-			stat1, stat2 = 0, 0
-			for db in d.values():
-				a, b = ban_user(db, id, reason)
-				stat1 += a; stat2 += b
-			return logging.info("Success. (%d-%d)", stat1, stat2)
-	elif action == "unban":
-		if len(argv) >= 2:
-			id = int(argv[1])
-			stat = 0
-			for db in d.values():
-				stat += unban_user(db, id)
-			if stat == 0:
-				return logging.warning("This user wasn't blacklisted anywhere.")
-			return logging.info("Success. (%d)", stat)
-	elif action == "sync":
-		return sync(d)
+	if len(argv) > 0:
+		d = detect_dbs()
+		if len(d) == 0:
+			logging.error("No databases detected, exiting!")
+			exit(1)
+		logging.info("Detected %d database(s): %s", len(d), ", ".join(d.keys()))
 
-	# something went wrong
-	usage()
+		action = argv[0].lower()
+		if action not in actions.keys():
+			logging.error("Unknown action")
+		else:
+			ret = actions[action](d, argv[1:])
+			if ret is not Exception: # lol
+				exit(0)
+
+	usage(actions)
 	exit(1)
 		
 if __name__ == "__main__":
