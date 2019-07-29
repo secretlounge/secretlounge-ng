@@ -3,6 +3,7 @@ import sys
 import os
 import logging
 import sqlite3
+import readline # for input()
 from datetime import datetime, timedelta
 from time import sleep
 
@@ -126,6 +127,22 @@ def sync(d):
 		last_update = now
 		sleep(interval)
 
+def find_user(db, term):
+	attrs = ("username", "realname", "rank", "joined", "left", "lastActive",
+		 "cooldownUntil", "blacklistReason", "warnings", "warnExpiry", "karma")
+	sql = "SELECT id, " + ",".join(attrs) + " FROM users WHERE"
+	sql += " username LIKE ? OR realname LIKE ?"
+	args = ["%" + term + "%", "%" + term + "%"]
+	# numeric argument also searches for ID match
+	if term.isdigit():
+		sql += " OR id = ?"
+		args += [int(term)]
+	c = db.execute(sql, args)
+	ret = {}
+	for row in c:
+		ret[row[0]] = dict(zip(attrs, row[1:]))
+	return ret
+
 # frontend
 
 def c_ban(d, argv):
@@ -152,6 +169,44 @@ def c_unban(d, argv):
 		return logging.warning("This user wasn't blacklisted anywhere.")
 	logging.info("Success (%d)", stat)
 
+def c_find(d, argv):
+	"""find\nInteractive prompt that searches users"""
+	if len(argv) != 0:
+		return Exception
+	def str_helper(x):
+		if x is None:
+			return "NULL"
+		if isinstance(x, datetime):
+			return str(x)[:19]
+		return str(x)
+	if sys.platform == 'linux':
+		prompt_str = "\033[35mfind>\033[0m "
+	else:
+		prompt_str = "find> "
+	while True:
+		try:
+			p = input(prompt_str).strip()
+		except (KeyboardInterrupt, EOFError):
+			p = ""
+		if not p:
+			break
+
+		any_ = False
+		for dbname in sorted(d.keys()):
+			ret = find_user(d[dbname], p)
+			if len(ret) == 0:
+				continue
+			any_ = True
+			print("In %s:" % dbname)
+			tmp = next(ret.values().__iter__()).keys()
+			print( ("%-10s" % "ID") + "|".join(tmp) )
+			for id, data in ret.items():
+				tmp = (str_helper(x) for x in data.values())
+				print( ("%-10s" % id) + "|".join(tmp) )
+
+		if any_:
+			print("")
+
 def c_sync(d, argv):
 	"""sync\nSynchronize blacklisted users (runs in foreground)"""
 	if len(argv) != 0:
@@ -174,7 +229,7 @@ def main(argv):
 	logging.basicConfig(format="[%(asctime)s] %(message)s", datefmt="%Y-%m-%d %H:%M", level=logging.INFO)
 
 	actions = {
-		"ban": c_ban, "unban": c_unban, "sync": c_sync
+		"ban": c_ban, "unban": c_unban, "find": c_find, "sync": c_sync
 	}
 
 	if len(argv) > 0:
