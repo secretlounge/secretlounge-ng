@@ -37,7 +37,7 @@ def dump(obj, name=None, r=False):
 			print("%s%s = %r" % (name, e, ev))
 
 # Program version
-VERSION = "1.5"
+VERSION = "1.6"
 
 # Ranks
 RANKS = Enum({
