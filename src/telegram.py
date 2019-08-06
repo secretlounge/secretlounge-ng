@@ -198,7 +198,7 @@ def resend_message(chat_id, ev, reply_to=None):
 
 	# re-send message based on content type
 	if ev.content_type == "text":
-		return bot.send_message(chat_id, ev.text, **kwargs)
+		pass
 	elif ev.content_type == "photo":
 		photo = sorted(ev.photo, key=lambda e: e.width*e.height, reverse=True)[0]
 		return bot.send_photo(chat_id, photo.file_id, caption=ev.caption, **kwargs)
@@ -230,6 +230,14 @@ def resend_message(chat_id, ev, reply_to=None):
 		return bot.send_sticker(chat_id, ev.sticker.file_id, **kwargs)
 	else:
 		raise NotImplementedError("content_type = %s" % ev.content_type)
+
+	# for text
+	s = ev.text
+	if ev.entities is not None:
+		for ent in ev.entities:
+			if ent.type == "text_link":
+				s += "\n(%s)" % ent.url
+	return bot.send_message(chat_id, s, **kwargs)
 
 def send_to_single_inner(chat_id, ev, **kwargs):
 	if isinstance(ev, rp.Reply):
