@@ -135,7 +135,19 @@ def send_answer(ev, m, reply_to=False):
 		user = None # happens on e.g. /start
 	put_into_queue(user, None, f)
 
+# TODO: find a better place for this
+def allow_message_text(text):
+	if text is None or text == "":
+		return True
+	# Mathematical Alphanumeric Symbols: has convincing looking bold text
+	if any(0x1D400 <= ord(c) <= 0x1D7FF for c in text):
+		return False
+	return True
+
 def calc_spam_score(ev):
+	if not allow_message_text(ev.text) or not allow_message_text(ev.caption):
+		return 999
+
 	s = SCORE_BASE_MESSAGE
 	if (ev.forward_from is not None or ev.forward_from_chat is not None
 		or ev.json.get("forward_sender_name") is not None):
