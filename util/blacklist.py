@@ -27,11 +27,18 @@ class Database():
 		self.db.commit()
 	def modify(self, sql, args=()):
 		self.modify_custom(lambda: self.db.execute(sql, args))
-	# eh...
+	# wrappers for standard functions
 	def execute(self, *args, **kwargs):
-		return self.db.execute(*args, **kwargs)
-	def commit(self, *args, **kwargs):
-		return self.db.commit(*args, **kwargs)
+		while True:
+			try:
+				return self.db.execute(*args, **kwargs)
+			except sqlite3.OperationalError as e:
+				if "database is locked" in str(e):
+					logging.warn("Database read blocked by lock, retrying")
+					continue
+				raise
+	def commit(self):
+		return self.db.commit()
 
 def detect_dbs():
 	if os.path.exists("./db.sqlite"): # no fancy structure...
@@ -198,10 +205,10 @@ def c_find(d, argv):
 				continue
 			any_ = True
 			print("In %s:" % dbname)
-			print( ("%-10s" % "ID") + "|".join(attrs) )
+			print( ("%-12s" % "ID") + "|".join(attrs) )
 			for id, data in ret.items():
 				tmp = (str_helper(x) for x in data)
-				print( ("%-10s" % id) + "|".join(tmp) )
+				print( ("%-12s" % id) + "|".join(tmp) )
 
 		if any_:
 			print("")

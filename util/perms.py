@@ -38,7 +38,7 @@ def c_list(d, argv):
 		t = list_privileged_users(db)
 	if len(t) == 0:
 		return print("No results")
-	fmt = "{:<10s} {:<28s} {:>4s} {:^18s}"
+	fmt = "{:<12s} {:<28s} {:>4s} {:^18s}"
 	print(fmt.format("ID", "username", "rank", "last active"))
 	for id, e in t.items():
 		active = str(e[2] or "(left chat)")[:16]
