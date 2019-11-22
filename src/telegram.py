@@ -338,8 +338,18 @@ class MyReceiver(core.Receiver):
 			# queued message has msid=None here since this is a deletion, not a message being sent
 			put_into_queue(user, None, f)
 	@staticmethod
-	def stop_invoked(user):
+	def stop_invoked(user, delete_out):
 		message_queue.delete(lambda item, user_id=user.id: item.user_id == user_id)
+		if not delete_out:
+			return
+		def f(item):
+			if item.msid is None:
+				return False
+			cm = ch.getMessage(item.msid)
+			if cm is None:
+				return False
+			return cm.user_id == user.id
+		message_queue.delete(f)
 
 ####
 

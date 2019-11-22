@@ -142,7 +142,7 @@ class Receiver():
 	def delete(msid):
 		raise NotImplementedError()
 	@staticmethod
-	def stop_invoked(who):
+	def stop_invoked(who, delete_out):
 		raise NotImplementedError()
 
 class Sender(Receiver): # flawless class hierachy I know...
@@ -158,10 +158,10 @@ class Sender(Receiver): # flawless class hierachy I know...
 		for r in Sender.receivers:
 			r.delete(msid)
 	@staticmethod
-	def stop_invoked(who):
+	def stop_invoked(who, delete_out=False):
 		logging.debug("stop_invoked(who=%s)", who)
 		for r in Sender.receivers:
-			r.stop_invoked(who)
+			r.stop_invoked(who, delete_out)
 
 def registerReceiver(obj):
 	assert issubclass(obj, Receiver)
@@ -360,7 +360,9 @@ def warn_user(user, msid, delete=False):
 		with db.modifyUser(id=cm.user_id) as user2:
 			d = user2.addWarning()
 			user2.karma -= KARMA_WARN_PENALTY
-		_push_system_message(rp.Reply(rp.types.GIVEN_COOLDOWN, duration=d, deleted=delete), who=user2, reply_to=msid)
+		_push_system_message(
+			rp.Reply(rp.types.GIVEN_COOLDOWN, duration=d, deleted=delete),
+			who=user2, reply_to=msid)
 		cm.warned = True
 	else:
 		user2 = db.getUser(id=cm.user_id)
@@ -404,8 +406,11 @@ def blacklist_user(user, msid, reason):
 	with db.modifyUser(id=cm.user_id) as user2:
 		if user2.rank >= user.rank: return
 		user2.setBlacklisted(reason)
-	Sender.stop_invoked(user2) # do this before queueing new messages below
-	_push_system_message(rp.Reply(rp.types.ERR_BLACKLISTED, reason=reason, contact=blacklist_contact), who=user2, reply_to=msid)
+	cm.warned = True
+	Sender.stop_invoked(user2, True) # do this before queueing new messages below
+	_push_system_message(
+		rp.Reply(rp.types.ERR_BLACKLISTED, reason=reason, contact=blacklist_contact),
+		who=user2, reply_to=msid)
 	Sender.delete(msid)
 	logging.info("%s was blacklisted by %s for: %s", user2, user, reason)
 	return rp.Reply(rp.types.SUCCESS)
