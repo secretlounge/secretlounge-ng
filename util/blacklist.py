@@ -29,12 +29,15 @@ class Database():
 		self.modify_custom(lambda: self.db.execute(sql, args))
 	# wrappers for standard functions
 	def execute(self, *args, **kwargs):
+		n = 1
 		while True:
 			try:
 				return self.db.execute(*args, **kwargs)
 			except sqlite3.OperationalError as e:
 				if "database is locked" in str(e):
-					logging.warn("Database read blocked by lock, retrying")
+					msg = "Database read blocked by lock, retrying"
+					logging.warn(msg + (" (%d)" % n) if n > 1 else "")
+					n += 1
 					continue
 				raise
 	def commit(self):
