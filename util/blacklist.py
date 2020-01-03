@@ -68,8 +68,9 @@ def detect_dbs():
 # backend
 
 def ban_user(db, id, reason):
-	c = db.execute("SELECT COUNT(*) FROM users WHERE id = ?", (id, ))
-	if c.fetchone()[0] == 0:
+	c = db.execute("SELECT rank FROM users WHERE id = ?", (id, ))
+	row = c.fetchone()
+	if row is None:
 		# user was never here, add an placeholder entry to still ban them
 		nodate = datetime.utcfromtimestamp(0)
 		u = {
@@ -88,10 +89,8 @@ def ban_user(db, id, reason):
 		sql = "INSERT INTO users (" + ( ", ".join(u.keys()) ) + ") VALUES (" + ( ", ".join("?" for _ in u) ) + ")"
 		db.modify(sql, tuple(u.values()))
 		return 0, 1
-	# is this user already banned?
-	c = db.execute("SELECT COUNT(*) FROM users WHERE id = ? AND rank > ?", (id, -10))
-	if c.fetchone()[0] == 0:
-		return 0, 0
+	elif row[0] == -10:
+		return 0, 0 # user was already banned
 	# update user values to ban them
 	param = (-10, datetime.now(), reason, id)
 	db.modify("UPDATE users SET rank = ?, left = ?, blacklistReason = ? WHERE id = ?", param)
