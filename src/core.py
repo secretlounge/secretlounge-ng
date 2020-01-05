@@ -372,6 +372,18 @@ def warn_user(user, msid, delete=False):
 	return rp.Reply(rp.types.SUCCESS)
 
 @requireUser
+@requireRank(RANKS.mod)
+def delete_message(user, msid):
+	cm = ch.getMessage(msid)
+	if cm is None or cm.user_id is None:
+		return rp.Reply(rp.types.ERR_NOT_IN_CACHE)
+
+	user2 = db.getUser(id=cm.user_id)
+	Sender.delete(msid)
+	logging.info("%s deleted a message from [%s]", user, user2.getObfuscatedId())
+	return rp.Reply(rp.types.SUCCESS)
+
+@requireUser
 @requireRank(RANKS.admin)
 def uncooldown_user(user, oid2=None, username2=None):
 	if oid2 is not None:
