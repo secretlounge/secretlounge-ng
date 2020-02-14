@@ -231,7 +231,9 @@ def resend_message(chat_id, ev, reply_to=None):
 			kwargs[prop] = getattr(ev.location, prop)
 		return bot.send_location(chat_id, **kwargs)
 	elif ev.content_type == "venue":
-		for prop in ["latitude", "longitude", "title", "address", "foursquare_id"]:
+		kwargs["latitude"] = ev.venue.location.latitude
+		kwargs["longitude"] = ev.venue.location.longitude
+		for prop in ["title", "address", "foursquare_id"]:
 			kwargs[prop] = getattr(ev.venue, prop)
 		return bot.send_venue(chat_id, **kwargs)
 	elif ev.content_type == "contact":
