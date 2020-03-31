@@ -117,11 +117,11 @@ def send_answer(ev, m, reply_to=False):
 		for m2 in m:
 			send_answer(ev, m2, reply_to)
 		return
-	kwargs = {"reply_to": ev.message_id} if reply_to else {}
+	reply_to = ev.message_id if reply_to else None
 	def f(ev=ev, m=m):
 		while True:
 			try:
-				send_to_single_inner(ev.chat.id, m, **kwargs)
+				send_to_single_inner(ev.chat.id, m, reply_to=reply_to)
 			except telebot.apihelper.ApiException as e:
 				retry = check_telegram_exc(e, None)
 				if retry:
@@ -167,6 +167,7 @@ def calc_spam_score(ev):
 # Message sending (queue-related)
 
 class QueueItem():
+	__slots__ = ("user_id", "msid", "func")
 	def __init__(self, user, msid, func):
 		self.user_id = None
 		if user is not None:
@@ -253,27 +254,27 @@ def resend_message(chat_id, ev, reply_to=None):
 				s += "\n(%s)" % ent.url
 	return bot.send_message(chat_id, s, **kwargs)
 
-def send_to_single_inner(chat_id, ev, **kwargs):
+def send_to_single_inner(chat_id, ev, reply_to=None):
 	if isinstance(ev, rp.Reply):
 		kwargs2 = {}
-		if "reply_to" in kwargs.keys():
-			kwargs2["reply_to_message_id"] = kwargs["reply_to"]
+		if reply_to is not None:
+			kwargs2["reply_to_message_id"] = reply_to
 		if ev.type == rp.types.CUSTOM:
 			kwargs2["disable_web_page_preview"] = True
 		return bot.send_message(chat_id, rp.formatForTelegram(ev), parse_mode="HTML", **kwargs2)
 	else:
-		return resend_message(chat_id, ev, **kwargs)
+		return resend_message(chat_id, ev, reply_to=reply_to)
 
 def send_to_single(ev, msid, user, reply_msid):
 	# set reply_to_message_id if applicable
-	kwargs = {}
+	reply_to = None
 	if reply_msid is not None:
-		kwargs["reply_to"] = ch.lookupMapping(user.id, msid=reply_msid)
+		reply_to = ch.lookupMapping(user.id, msid=reply_msid)
 
 	def f(ev=ev, msid=msid, user=user):
 		while True:
 			try:
-				ev2 = send_to_single_inner(user.id, ev, **kwargs)
+				ev2 = send_to_single_inner(user.id, ev, reply_to=reply_to)
 			except telebot.apihelper.ApiException as e:
 				retry = check_telegram_exc(e, user)
 				if retry:

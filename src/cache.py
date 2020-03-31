@@ -6,6 +6,7 @@ from threading import Lock
 from src.globals import *
 
 class CachedMessage():
+	__slots__ = ('user_id', 'time', 'warned', 'upvoted')
 	def __init__(self, user_id=None):
 		self.user_id = user_id # who has sent this message
 		self.time = datetime.now() # when was this message seen?
@@ -34,10 +35,8 @@ class Cache():
 		if msid is not None:
 			return x[uid].get(msid, None)
 		# data is not None
-		try:
-			return next(msid for msid, _data in x[uid].items() if _data == data)
-		except StopIteration as e:
-			return None
+		gen = ( msid for msid, _data in x[uid].items() if _data == data )
+		return next(gen, None)
 
 	def assignMessageId(self, cm):
 		with self.lock:

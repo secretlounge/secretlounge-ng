@@ -16,7 +16,14 @@ class SystemConfig():
 	def defaults(self):
 		self.motd = ""
 
+USER_PROPS = (
+	"id", "username", "realname", "rank", "joined", "left", "lastActive",
+	"cooldownUntil", "blacklistReason", "warnings", "warnExpiry", "karma",
+	"hideKarma", "debugEnabled", "tripcode"
+)
+
 class User():
+	__slots__ = USER_PROPS
 	def __init__(self):
 		self.id = None # int
 		self.username = None # str?
@@ -274,10 +281,7 @@ class SQLiteDatabase(Database):
 		return config
 	@staticmethod
 	def _userToDict(user):
-		props = ["id", "username", "realname", "rank", "joined", "left",
-			"lastActive", "cooldownUntil", "blacklistReason", "warnings",
-			"warnExpiry", "karma", "hideKarma", "debugEnabled", "tripcode"]
-		return {prop: getattr(user, prop) for prop in props}
+		return {prop: getattr(user, prop) for prop in USER_PROPS}
 	@staticmethod
 	def _userFromRow(r):
 		user = User()
