@@ -285,7 +285,8 @@ def send_to_single(ev, msid, user, reply_msid):
 	put_into_queue(user, msid, f)
 
 def check_telegram_exc(e, user):
-	errmsgs = ["bot was blocked by the user", "user is deactivated", "PEER_ID_INVALID"]
+	errmsgs = ["bot was blocked by the user", "user is deactivated",
+		"PEER_ID_INVALID", "bot can't initiate conversation"]
 	if any(msg in e.result.text for msg in errmsgs):
 		if user is not None:
 			logging.warning("Force leaving %s because bot is blocked", user)
