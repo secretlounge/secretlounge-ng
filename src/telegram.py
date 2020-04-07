@@ -327,7 +327,9 @@ class MyReceiver(core.Receiver):
 		tmp = ch.getMessage(msid)
 		except_id = None if tmp is None else tmp.user_id
 		message_queue.delete(lambda item, msid=msid: item.msid == msid)
-		# FIXME: there's a hard to avoid race condition with currently being sent messages here
+		# FIXME: there's a hard to avoid race condition here:
+		# if a message is currently being sent, but finishes after we grab the
+		# message ids it will never be deleted
 		for user in db.iterateUsers():
 			if not user.isJoined():
 				continue
@@ -337,8 +339,16 @@ class MyReceiver(core.Receiver):
 			id = ch.lookupMapping(user.id, msid=msid)
 			if id is None:
 				continue
-			def f(user=user, id=id):
-				bot.delete_message(user.id, id)
+			def f(user_id=user.id, id=id):
+				while True:
+					try:
+						bot.delete_message(user_id, id)
+					except telebot.apihelper.ApiException as e:
+						retry = check_telegram_exc(e, None)
+						if retry:
+							continue
+						return
+					break
 			# queued message has msid=None here since this is a deletion, not a message being sent
 			put_into_queue(user, None, f)
 	@staticmethod
