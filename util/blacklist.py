@@ -189,6 +189,8 @@ def c_find(d, argv):
 			return "NULL"
 		if isinstance(x, datetime):
 			return str(x)[:19]
+		elif isinstance(x, str):
+			return "\u202a" + x + "\u202c" # embed RTL text correctly
 		return str(x)
 	if sys.platform == 'linux':
 		prompt_str = "\033[35mfind>\033[0m "
