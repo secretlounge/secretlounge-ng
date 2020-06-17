@@ -271,26 +271,26 @@ def send_to_single(ev, msid, user, reply_msid):
 	if reply_msid is not None:
 		reply_to = ch.lookupMapping(user.id, msid=reply_msid)
 
-	def f(ev=ev, msid=msid, user=user):
+	user_id = user.id
+	def f():
 		while True:
 			try:
-				ev2 = send_to_single_inner(user.id, ev, reply_to=reply_to)
+				ev2 = send_to_single_inner(user_id, ev, reply_to=reply_to)
 			except telebot.apihelper.ApiException as e:
-				retry = check_telegram_exc(e, user)
+				retry = check_telegram_exc(e, user_id)
 				if retry:
 					continue
 				return
 			break
-		ch.saveMapping(user.id, msid, ev2.message_id)
+		ch.saveMapping(user_id, msid, ev2.message_id)
 	put_into_queue(user, msid, f)
 
-def check_telegram_exc(e, user):
+def check_telegram_exc(e, user_id):
 	errmsgs = ["bot was blocked by the user", "user is deactivated",
 		"PEER_ID_INVALID", "bot can't initiate conversation"]
 	if any(msg in e.result.text for msg in errmsgs):
-		if user is not None:
-			logging.warning("Force leaving %s because bot is blocked", user)
-			core.force_user_leave(user)
+		if user_id is not None:
+			core.force_user_leave(user_id)
 		return False
 
 	if "Too Many Requests" in e.result.text:

@@ -211,9 +211,10 @@ def user_join(c_user):
 
 	return ret
 
-def force_user_leave(user):
-	with db.modifyUser(id=user.id) as user:
+def force_user_leave(user_id):
+	with db.modifyUser(id=user_id) as user:
 		user.setLeft()
+	logging.warning("Force leaving %s because bot is blocked", user)
 	Sender.stop_invoked(user)
 
 @requireUser
