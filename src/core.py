@@ -211,15 +211,16 @@ def user_join(c_user):
 
 	return ret
 
-def force_user_leave(user_id):
+def force_user_leave(user_id, blocked=True):
 	with db.modifyUser(id=user_id) as user:
 		user.setLeft()
-	logging.warning("Force leaving %s because bot is blocked", user)
+	if blocked:
+		logging.warning("Force leaving %s because bot is blocked", user)
 	Sender.stop_invoked(user)
 
 @requireUser
 def user_leave(user):
-	force_user_leave(user)
+	force_user_leave(user.id, blocked=False)
 	logging.info("%s left chat", user)
 
 	return rp.Reply(rp.types.CHAT_LEAVE)
