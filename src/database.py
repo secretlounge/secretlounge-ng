@@ -103,6 +103,8 @@ class User():
 			self.warnExpiry = datetime.now() + timedelta(hours=WARN_EXPIRE_HOURS)
 		else:
 			self.warnExpiry = None
+	def addCooldownOnly(self, seconds):
+		self.cooldownUntil = datetime.now() + timedelta(seconds=seconds)
 
 # abstract db
 

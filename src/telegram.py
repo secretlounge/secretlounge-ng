@@ -6,6 +6,7 @@ import json
 
 import src.core as core
 import src.replies as rp
+import src.dups as dups
 from src.util import MutablePriorityQueue
 from src.globals import *
 
@@ -18,8 +19,11 @@ registered_commands = {}
 # settings regarding message relaying
 allow_documents = None
 
+dupdb = None
+infractions = {}
+
 def init(config, _db, _ch):
-	global bot, db, ch, message_queue, allow_documents
+	global bot, db, ch, message_queue, allow_documents, dupdb
 	if config["bot_token"] == "":
 		logging.error("No telegram token specified.")
 		exit(1)
@@ -29,6 +33,7 @@ def init(config, _db, _ch):
 	db = _db
 	ch = _ch
 	message_queue = MutablePriorityQueue()
+	dupdb = dups.DuplicateDb("./duplicates.db")
 
 	allow_contacts = config["allow_contacts"]
 	allow_documents = config["allow_documents"]
@@ -83,6 +88,10 @@ def register_tasks(sched):
 		if n > 0:
 			logging.warning("Failed to deliver %d messages before they expired from cache.", n)
 	sched.register(task, hours=6) # (1/4) * cache duration
+	# dups db sync
+	def task2():
+		dupdb.sync()
+	sched.register(task2, seconds=30)
 
 class UserContainer():
 	def __init__(self, u):
@@ -161,6 +170,36 @@ def calc_spam_score(ev):
 		return s
 	s += len(ev.text) * SCORE_TEXT_CHARACTER + ev.text.count("\n") * SCORE_TEXT_LINEBREAK
 	return s
+
+def check_and_add_duplicate(ev, user_id):
+	if ev.content_type == "text":
+		args = (dups.IDENT_TEXT, dups.fold_and_hash(ev.text))
+	else:
+		file_unique_id = None
+		if ev.content_type == "photo":
+			idx = len(ev.json["photo"]) - 1 # idc
+			file_unique_id = ev.json["photo"][idx]["file_unique_id"]
+		elif ev.content_type in ("audio", "document", "video", "voice", "video_note", "sticker"):
+			file_unique_id = ev.json[ev.content_type]["file_unique_id"]
+		else:
+			return 0
+		args = (dups.IDENT_FILEID, dups.hash(file_unique_id))
+
+	ok = True
+	if ev.caption:
+		args2 = (dups.IDENT_TEXT, dups.fold_and_hash(ev.caption))
+		ok = not dupdb.exists(*args2)
+		if ok:
+			dupdb.add(*args2)
+	if ok:
+		ok = not dupdb.exists(*args)
+		if ok:
+			dupdb.add(*args)
+
+	if ok:
+		return 0
+	infractions[user_id] = infractions.get(user_id, 0) + 1
+	return infractions[user_id]
 
 ###
 
@@ -505,10 +544,19 @@ def relay(ev):
 	if not allow_documents and ev.content_type == "document" and ev.document.mime_type not in ("image/gif", "video/mp4"):
 		return
 
+	def precheck(user):
+		n = check_and_add_duplicate(ev, user.id)
+		if n > 0:
+			d = 5 * n
+			with db.modifyUser(id=user.id) as user:
+				user.addCooldownOnly(d)
+			#logging.debug("[%s] auto-muted for %d seconds", user.getObfuscatedId(), d)
+			return rp.Reply(rp.types.MUTED_UNORIGINAL, duration=d)
+
 	is_media = (ev.forward_from is not None or
 		ev.forward_from_chat is not None or
 		ev.content_type in ("photo", "document", "video", "sticker"))
-	msid = core.prepare_user_message(UserContainer(ev.from_user), calc_spam_score(ev), is_media)
+	msid = core.prepare_user_message(UserContainer(ev.from_user), calc_spam_score(ev), is_media, precheck)
 	if msid is None or isinstance(msid, rp.Reply):
 		return send_answer(ev, msid) # don't relay message, instead reply
 

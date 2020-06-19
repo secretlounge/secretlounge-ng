@@ -440,7 +440,7 @@ def give_karma(user, msid):
 
 
 @requireUser
-def prepare_user_message(user, msg_score, is_media):
+def prepare_user_message(user, msg_score, is_media, precheck):
 	if user.isInCooldown():
 		return rp.Reply(rp.types.ERR_COOLDOWN, until=user.cooldownUntil)
 	if is_media and user.rank < RANKS.mod and media_limit_period is not None:
@@ -449,6 +449,9 @@ def prepare_user_message(user, msg_score, is_media):
 	ok = spam_scores.increaseSpamScore(user.id, msg_score)
 	if not ok:
 		return rp.Reply(rp.types.ERR_SPAMMY)
+	err = precheck(user)
+	if err:
+		return err
 	return ch.assignMessageId(CachedMessage(user.id))
 
 @requireUser
