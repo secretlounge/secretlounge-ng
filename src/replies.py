@@ -107,7 +107,7 @@ format_strs = {
 		em( "You've just been given sweet karma! (check /info to see your karma"+
 			" or /toggleKarma to turn these notifications off)" ),
 	types.TRIPCODE_INFO: lambda tripcode, **_:
-		"<b>tripcode</b>: " + ("<code>{tripcode!x}</code>" if tripcode is not None else "unset" ),
+		"<b>tripcode</b>: " + ("<code>{tripcode!x}</code>" if tripcode is not None else "unset"),
 	types.TRIPCODE_SET: em("Tripcode set. It will appear as: ") + "<b>{tripname!x}</b> <code>{tripcode!x}</code>",
 
 	types.ERR_COMMAND_DISABLED: em("This command has been disabled."),
@@ -120,7 +120,7 @@ format_strs = {
 	types.ERR_NOT_IN_COOLDOWN: em("This user is not in a cooldown right now."),
 	types.ERR_BLACKLISTED: lambda reason, contact, **_:
 		em( "You've been blacklisted" + (reason and " for {reason!x}" or "") )+
-		( em("\ncontact:") + " {contact}" ) if contact else "",
+		( em("\ncontact:") + " {contact}" if contact else "" ),
 	types.ERR_ALREADY_UPVOTED: em("You have already upvoted this message."),
 	types.ERR_UPVOTE_OWN_MESSAGE: em("You can't upvote your own message."),
 	types.ERR_SPAMMY: em("Your message has not been sent. Avoid sending messages too fast, try again later."),
