@@ -5,7 +5,7 @@ import sys
 import os
 import getopt
 
-from . import core, telegram
+from . import core, telegram, stats
 from .globals import *
 from .database import JSONDatabase, SQLiteDatabase
 from .cache import Cache
@@ -100,6 +100,7 @@ def main():
 	# Start all threads
 	start_new_thread(telegram.send_thread)
 	start_new_thread(sched.run)
+	start_new_thread(stats.serve, args=(configpath, ))
 
 	try:
 		start_new_thread(telegram.run, join=True)

@@ -1,3 +1,5 @@
+from . import stats # imports it into everything
+
 from .util import Enum
 
 # a few utility functions
