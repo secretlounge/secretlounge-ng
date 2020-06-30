@@ -3,8 +3,10 @@ import logging
 import time
 import json
 import re
+import math
 from typing import Optional
 from functools import partial
+from datetime import datetime
 
 from . import core
 from . import replies as rp
@@ -39,6 +41,15 @@ registered_commands = {}
 
 # settings
 linked_network: dict = None
+
+# stats
+s_users_total = stats.settable_source("users_total")
+s_users_joined = stats.settable_source("users_joined")
+s_message_type = {}
+for t in ("text", "sticker", "gif", "media"):
+	s_message_type[t] = stats.countable_source("message_type_" + t)
+s_api_forwarded = stats.countable_source("api_forwarded")
+
 
 def init(config: dict, _db, _ch):
 	global bot, db, ch, message_queue, linked_network
@@ -92,6 +103,13 @@ def init(config: dict, _db, _ch):
 	)(partial(wrap, relay))
 	if message_reaction_upvote:
 		bot.message_reaction_handler()(partial(wrap, message_reaction))
+
+	nt, nj = 0, 0
+	for user in db.iterateUsers():
+		nt += 1
+		nj += 1 if user.isJoined() else 0
+	s_users_total(nt)
+	s_users_joined(nj)
 
 def run():
 	assert not bot.threaded
@@ -342,10 +360,32 @@ def get_priority_for(user):
 def put_into_queue(user, msid, f):
 	message_queue.put(get_priority_for(user), QueueItem(user, msid, f))
 
+s_api_calls = stats.countable_source("api_calls")
 def send_thread():
 	while True:
 		item = message_queue.get()
 		item.call()
+		s_api_calls(1)
+
+# https://stackoverflow.com/questions/2374640/#answer-2753343
+def percentile(N, percent):
+	if not N: return 0
+	k = (len(N) - 1) * percent
+	f, c = math.floor(k), math.ceil(k)
+	if f == c: return N[int(k)]
+	d0 = N[int(f)] * (c-k)
+	d1 = N[int(c)] * (k-f)
+	return d0 + d1
+
+def queue_stat():
+	now = int(datetime.now().timestamp())
+	a = message_queue.getstats(now)
+	return {
+		"queue_size": len(a),
+		"queue_latency_avg": 0 if len(a) == 0 else ( sum(a) / len(a) ),
+		"queue_latency_95": percentile(sorted(a), 0.95),
+	}
+stats.register_source(queue_stat)
 
 ###
 
@@ -370,6 +410,7 @@ def resend_message(chat_id, ev: TMessage, reply_to=None, force_caption: Optional
 		pass
 	elif is_forward(ev):
 		# forward message instead of re-sending the contents
+		s_api_forwarded(1)
 		return bot.forward_message(chat_id, ev.chat.id, ev.message_id)
 
 	kwargs = {}
@@ -508,12 +549,17 @@ class MyReceiver(core.Receiver):
 		if who is not None:
 			return send_to_single(m, msid, who, reply_msid=reply_msid)
 
+		nt, nj = 0, 0
 		for user in db.iterateUsers():
+			nt += 1
 			if not user.isJoined():
 				continue
+			nj += 1
 			if user == except_who and not user.debugEnabled:
 				continue
 			send_to_single(m, msid, user, reply_msid=reply_msid)
+		s_users_total(nt)
+		s_users_joined(nj)
 
 	@staticmethod
 	def delete(msids):
@@ -703,7 +749,6 @@ def plusone(ev: TMessage):
 		return send_answer(ev, rp.Reply(rp.types.ERR_NOT_IN_CACHE), True)
 	return send_answer(ev, core.give_karma(c_user, reply_msid), True)
 
-
 def relay(ev: TMessage):
 	# handle commands and karma giving
 	if ev.content_type == "text":
@@ -773,17 +818,31 @@ def relay_inner(ev: TMessage, *, caption_text=None, signed=False, tripcode=False
 		if reply_msid is None:
 			logging.warning("Message replied to not found in cache")
 
+	if ev.content_type == "text":
+		s_message_type["text"](1)
+	elif ev.content_type == "animation":
+		s_message_type["gif"](1)
+	elif ev.content_type == "sticker":
+		s_message_type["sticker"](1)
+	else:
+		s_message_type["media"](1)
+
 	# relay message to all other users
 	logging.debug("relay(): msid=%d reply_msid=%r", msid, reply_msid)
+	nt, nj = 0, 0
 	for user2 in db.iterateUsers():
+		nt += 1
 		if not user2.isJoined():
 			continue
+		nj += 1
 		if user2 == user and not user.debugEnabled:
 			ch.saveMapping(user2.id, msid, ev.message_id)
 			continue
 
 		send_to_single(ev_tosend, msid, user2,
 			reply_msid=reply_msid, force_caption=force_caption)
+	s_users_total(nt)
+	s_users_joined(nj)
 
 @takesArgument()
 def cmd_sign(ev: TMessage, arg):

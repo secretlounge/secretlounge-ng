@@ -34,6 +34,7 @@ class Cache():
 		self.counter = itertools.count()
 		self.msgs = {} # dict(msid -> CachedMessage)
 		self.idmap = {} # dict(uid -> dict(msid -> opaque))
+		stats.register_source(lambda: {"cache_size": len(self.msgs)})
 
 	def assignMessageId(self, cm: CachedMessage) -> int:
 		with self.lock:
