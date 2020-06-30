@@ -328,7 +328,8 @@ def promote_user(user, username2, rank):
 	if user2 is None:
 		return rp.Reply(rp.types.ERR_NO_USER)
 
-	if user2.rank >= rank: return
+	if user2.rank >= rank:
+		return
 	with db.modifyUser(id=user2.id) as user2:
 		user2.rank = rank
 	if rank >= RANKS.admin:
@@ -409,7 +410,8 @@ def blacklist_user(user, msid, reason):
 		return rp.Reply(rp.types.ERR_NOT_IN_CACHE)
 
 	with db.modifyUser(id=cm.user_id) as user2:
-		if user2.rank >= user.rank: return
+		if user2.rank >= user.rank:
+			return
 		user2.setBlacklisted(reason)
 	cm.warned = True
 	Sender.stop_invoked(user2, True) # do this before queueing new messages below

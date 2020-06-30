@@ -1,7 +1,6 @@
 import telebot
 import logging
 import time
-import re
 import json
 
 import src.core as core
@@ -169,10 +168,10 @@ def calc_spam_score(ev):
 class QueueItem():
 	__slots__ = ("user_id", "msid", "func")
 	def __init__(self, user, msid, func):
-		self.user_id = None
+		self.user_id = None # who this item is being delivered to
 		if user is not None:
 			self.user_id = user.id
-		self.msid = msid
+		self.msid = msid # message id connected to this item
 		self.func = func
 	def call(self):
 		try:
@@ -339,7 +338,8 @@ class MyReceiver(core.Receiver):
 			id = ch.lookupMapping(user.id, msid=msid)
 			if id is None:
 				continue
-			def f(user_id=user.id, id=id):
+			user_id = user.id
+			def f(user_id=user_id, id=id):
 				while True:
 					try:
 						bot.delete_message(user_id, id)
@@ -356,6 +356,7 @@ class MyReceiver(core.Receiver):
 		message_queue.delete(lambda item, user_id=user.id: item.user_id == user_id)
 		if not delete_out:
 			return
+		# delete all (pending) outgoing messages written by the user in question
 		def f(item):
 			if item.msid is None:
 				return False
@@ -545,8 +546,8 @@ def cmd_sign(ev, arg):
 	if isinstance(msid, rp.Reply):
 		return send_answer(ev, msid, True)
 
-	# save the original message in the mapping, this isn't done inside MyReceiver.reply()
-	# since there's no "original message" at that point
+	# save the original message in the mapping
+	# this isn't done inside MyReceiver.reply() since there's no "original message" at that point
 	ch.saveMapping(c_user.id, msid, ev.message_id)
 
 cmd_s = cmd_sign # alias
