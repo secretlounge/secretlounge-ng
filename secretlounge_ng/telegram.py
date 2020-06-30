@@ -3,7 +3,9 @@ import logging
 import time
 import json
 import re
+import math
 from functools import partial
+from datetime import datetime
 
 from . import core
 from . import replies as rp
@@ -35,6 +37,12 @@ registered_commands = {}
 # settings
 allow_documents = None
 linked_network: dict = None
+
+
+s_users_total = stats.settable_source("users_total")
+s_users_joined = stats.settable_source("users_joined")
+# these stats are updated "drive-by" when we are iterating all users anyway
+
 
 def init(config, _db, _ch):
 	global bot, db, ch, message_queue, allow_documents, linked_network
@@ -74,6 +82,13 @@ def init(config, _db, _ch):
 		c = c.lower()
 		registered_commands[c] = globals()["cmd_" + c]
 	set_handler(relay, content_types=types)
+
+	nt, nj = 0, 0
+	for user in db.iterateUsers():
+		nt += 1
+		nj += 1 if user.isJoined() else 0
+	s_users_total(nt)
+	s_users_joined(nj)
 
 def set_handler(func, *args, **kwargs):
 	def wrapper(*args, **kwargs):
@@ -301,13 +316,14 @@ def formatter_tripcoded_message(user: core.User, fmt: FormattedMessageBuilder):
 # Message sending (queue-related)
 
 class QueueItem():
-	__slots__ = ("user_id", "msid", "func")
+	__slots__ = ("user_id", "msid", "func", "created")
 	def __init__(self, user, msid, func):
 		self.user_id = None # who this item is being delivered to
 		if user is not None:
 			self.user_id = user.id
 		self.msid = msid # message id connected to this item
 		self.func = func
+		self.created = datetime.now() # for stats
 	def call(self):
 		try:
 			self.func()
@@ -328,6 +344,40 @@ def send_thread():
 	while True:
 		item = message_queue.get()
 		item.call()
+
+# https://stackoverflow.com/questions/2374640/#answer-2753343
+def percentile(N, percent):
+	if not N: return 0
+	k = (len(N) - 1) * percent
+	f, c = math.floor(k), math.ceil(k)
+	if f == c: return N[int(k)]
+	d0 = N[int(f)] * (c-k)
+	d1 = N[int(c)] * (k-f)
+	return d0 + d1
+
+def queue_stat(x):
+	if x == "queue_size":
+		return len(message_queue.items)
+	elif x == "queue_latency_avg":
+		sum, count = 0, 0
+		def func(item):
+			nonlocal sum, count
+			sum += ( datetime.now() - item.created ).total_seconds()
+			count += 1
+			return False # dont actually delete
+		message_queue.delete(func)
+		return 0 if count == 0 else (sum / count)
+	elif x == "queue_latency_95":
+		a = []
+		def func(item):
+			nonlocal a
+			a.append(( datetime.now() - item.created ).total_seconds())
+			return False # dont actually delete
+		message_queue.delete(func)
+		return percentile(sorted(a), 0.95)
+
+for x in ("queue_size", "queue_latency_avg", "queue_latency_95"):
+	stats.register_source(x, lambda x=x: queue_stat(x))
 
 ###
 
@@ -497,12 +547,17 @@ class MyReceiver(core.Receiver):
 		if who is not None:
 			return send_to_single(m, msid, who, reply_msid=reply_msid)
 
+		nt, nj = 0, 0
 		for user in db.iterateUsers():
+			nt += 1
 			if not user.isJoined():
 				continue
+			nj += 1
 			if user == except_who and not user.debugEnabled:
 				continue
 			send_to_single(m, msid, user, reply_msid=reply_msid)
+		s_users_total(nt)
+		s_users_joined(nj)
 	@staticmethod
 	def delete(msids):
 		msids_set = set(msids)
@@ -682,6 +737,9 @@ def plusone(ev):
 	return send_answer(ev, core.give_karma(c_user, reply_msid), True)
 
 
+s_message_type = {}
+for typ in ("text", "sticker", "gif", "media"):
+	s_message_type[typ] = stats.countable_source("message_type_" + typ)
 def relay(ev):
 	# handle commands and karma giving
 	if ev.content_type == "text":
@@ -748,17 +806,31 @@ def relay_inner(ev, *, caption_text=None, signed=False, tripcode=False):
 		if reply_msid is None:
 			logging.warning("Message replied to not found in cache")
 
+	if ev.content_type == "text":
+		s_message_type["text"](1)
+	elif ev.content_type == "animation":
+		s_message_type["gif"](1)
+	elif ev.content_type == "sticker":
+		s_message_type["sticker"](1)
+	else:
+		s_message_type["media"](1)
+
 	# relay message to all other users
 	logging.debug("relay(): msid=%d reply_msid=%r", msid, reply_msid)
+	nt, nj = 0, 0
 	for user2 in db.iterateUsers():
+		nt += 1
 		if not user2.isJoined():
 			continue
+		nj += 1
 		if user2 == user and not user.debugEnabled:
 			ch.saveMapping(user2.id, msid, ev.message_id)
 			continue
 
 		send_to_single(ev_tosend, msid, user2,
 			reply_msid=reply_msid, force_caption=force_caption)
+	s_users_total(nt)
+	s_users_joined(nj)
 
 @takesArgument()
 def cmd_sign(ev, arg):

@@ -56,10 +56,29 @@ def register_tasks(sched):
 					user.removeWarning()
 	sched.register(task, minutes=15)
 
+
+s_active_users = {}
+def active_user_stat(x):
+	if x == "active_users_15m":
+		d = timedelta(minutes=15)
+	elif x == "active_users_1h":
+		d = timedelta(hours=1)
+	elif x == "active_users_12h":
+		d = timedelta(hours=12)
+	n = 0
+	for last_active in s_active_users.values():
+		if datetime.now() - last_active <= d:
+			n += 1
+	return n
+
+for x in ("active_users_15m", "active_users_1h", "active_users_12h"):
+	stats.register_source(x, lambda x=x: active_user_stat(x))
+
 def updateUserFromEvent(user, c_user):
 	user.username = c_user.username
 	user.realname = c_user.realname
 	user.lastActive = datetime.now()
+	s_active_users[user.id] = datetime.now()
 
 def getUserByName(username):
 	username = username.lower()
@@ -369,6 +388,7 @@ def send_admin_message(user, arg):
 	_push_system_message(m)
 	logging.info("%s sent admin message: %s", user, arg)
 
+s_warnings_given = stats.countable_source("warnings_given")
 @requireUser
 @requireRank(RANKS.mod)
 def warn_user(user, msid, delete=False):
@@ -391,6 +411,7 @@ def warn_user(user, msid, delete=False):
 	if delete:
 		Sender.delete([msid])
 	logging.info("%s warned [%s]%s", user, user2.getObfuscatedId(), delete and " (message deleted)" or "")
+	s_warnings_given(1)
 	return rp.Reply(rp.types.SUCCESS)
 
 @requireUser
@@ -470,6 +491,7 @@ def blacklist_user(user, msid, reason):
 	logging.info("%s was blacklisted by %s for: %s", user2, user, reason)
 	return rp.Reply(rp.types.SUCCESS)
 
+s_karma_given = stats.countable_source("karma_given")
 @requireUser
 def give_karma(user, msid):
 	cm = ch.getMessage(msid)
@@ -484,11 +506,13 @@ def give_karma(user, msid):
 	user2 = db.getUser(id=cm.user_id)
 	with db.modifyUser(id=cm.user_id) as user2:
 		user2.karma += KARMA_PLUS_ONE
+	s_karma_given(1)
 	if not user2.hideKarma:
 		_push_system_message(rp.Reply(rp.types.KARMA_NOTIFICATION), who=user2, reply_to=msid)
 	return rp.Reply(rp.types.KARMA_THANK_YOU)
 
 
+s_messages_sent = stats.countable_source("messages_sent")
 @requireUser
 def prepare_user_message(user: User, msg_score, *, is_media=False, signed=False, tripcode=False):
 	# prerequisites
@@ -513,6 +537,7 @@ def prepare_user_message(user: User, msg_score, *, is_media=False, signed=False,
 			return rp.Reply(rp.types.ERR_SPAMMY_SIGN)
 		sign_last_used[user.id] = datetime.now()
 
+	s_messages_sent(1)
 	return ch.assignMessageId(CachedMessage(user.id))
 
 # who is None -> to everyone except the user <except_who> (if applicable)
