@@ -41,7 +41,7 @@ def init(config, _db, _ch):
 	cmds = [
 		"start", "stop", "users", "info", "motd", "toggledebug", "togglekarma",
 		"version", "source", "modhelp", "adminhelp", "modsay", "adminsay", "mod",
-		"admin", "warn", "delnocd", "delete", "uncooldown", "blacklist", "s", "sign",
+		"admin", "warn", "delete", "remove", "uncooldown", "blacklist", "s", "sign",
 		"tripcode", "settripcode", "t", "tsign"
 	]
 	for c in cmds: # maps /<c> to the function cmd_<c>
@@ -419,7 +419,7 @@ def cmd_admin(ev, arg):
 	arg = arg.lstrip("@")
 	send_answer(ev, core.promote_user(c_user, arg, RANKS.admin), True)
 
-def cmd_warn(ev, delete=False):
+def cmd_warn(ev, delete=False, only_delete=False):
 	c_user = UserContainer(ev.from_user)
 
 	if ev.reply_to_message is None:
@@ -428,20 +428,15 @@ def cmd_warn(ev, delete=False):
 	reply_msid = ch.lookupMapping(ev.from_user.id, data=ev.reply_to_message.message_id)
 	if reply_msid is None:
 		return send_answer(ev, rp.Reply(rp.types.ERR_NOT_IN_CACHE), True)
-	send_answer(ev, core.warn_user(c_user, reply_msid, delete), True)
+	if only_delete:
+		r = core.delete_message(c_user, reply_msid)
+	else:
+		r = core.warn_user(c_user, reply_msid, delete)
+	send_answer(ev, r, True)
 
-cmd_delete = lambda ev: cmd_warn(ev, True)
+cmd_delete = lambda ev: cmd_warn(ev, delete=True)
 
-def cmd_delnocd(ev):
-	c_user = UserContainer(ev.from_user)
-
-	if ev.reply_to_message is None:
-		return send_answer(ev, rp.Reply(rp.types.ERR_NO_REPLY), True)
-
-	reply_msid = ch.lookupMapping(ev.from_user.id, data=ev.reply_to_message.message_id)
-	if reply_msid is None:
-		return send_answer(ev, rp.Reply(rp.types.ERR_NOT_IN_CACHE), True)
-	send_answer(ev, core.delete_message(c_user, reply_msid), True)
+cmd_remove = lambda ev: cmd_warn(ev, only_delete=True)
 
 @takesArgument()
 def cmd_uncooldown(ev, arg):

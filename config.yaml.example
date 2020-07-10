@@ -12,5 +12,7 @@ allow_documents: true
 
 # enable signing messages using /sign or /tsign as well as setting a tripcode
 enable_signing: false
+# allow mods to remove message without issuing a cooldown
+allow_remove_command: false
 # point of contact shown to blacklisted users
 #blacklist_contact: http://t.me/invite/something

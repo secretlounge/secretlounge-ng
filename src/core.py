@@ -15,15 +15,17 @@ sign_last_used = {} # uid -> datetime
 
 blacklist_contact = None
 enable_signing = None
+allow_remove_command = None
 
 def init(config, _db, _ch):
-	global db, ch, spam_scores, blacklist_contact, enable_signing
+	global db, ch, spam_scores, blacklist_contact, enable_signing, allow_remove_command
 	db = _db
 	ch = _ch
 	spam_scores = ScoreKeeper()
 
 	blacklist_contact = config.get("blacklist_contact", "")
 	enable_signing = config["enable_signing"]
+	allow_remove_command = config["allow_remove_command"]
 
 	# initialize db if empty
 	if db.getSystemConfig() is None:
@@ -374,11 +376,15 @@ def warn_user(user, msid, delete=False):
 @requireUser
 @requireRank(RANKS.mod)
 def delete_message(user, msid):
+	if not allow_remove_command:
+		return rp.Reply(rp.types.ERR_COMMAND_DISABLED)
+
 	cm = ch.getMessage(msid)
 	if cm is None or cm.user_id is None:
 		return rp.Reply(rp.types.ERR_NOT_IN_CACHE)
 
 	user2 = db.getUser(id=cm.user_id)
+	_push_system_message(rp.Reply(rp.types.MESSAGE_DELETED), who=user2, reply_to=msid)
 	Sender.delete(msid)
 	logging.info("%s deleted a message from [%s]", user, user2.getObfuscatedId())
 	return rp.Reply(rp.types.SUCCESS)
