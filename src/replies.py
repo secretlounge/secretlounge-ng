@@ -60,6 +60,7 @@ types = NumericEnum([
 	"ERR_SPAMMY_SIGN",
 	"ERR_INVALID_TRIP_FORMAT",
 	"ERR_NO_TRIPCODE",
+	"ERR_MEDIA_LIMIT",
 
 	"USER_INFO",
 	"USER_INFO_MOD",
@@ -110,7 +111,7 @@ format_strs = {
 		em( "You've just been given sweet karma! (check /info to see your karma"+
 			" or /toggleKarma to turn these notifications off)" ),
 	types.TRIPCODE_INFO: lambda tripcode, **_:
-		"<b>tripcode</b>: " + ("<code>{tripcode!x}</code>" if tripcode is not None else "unset" ),
+		"<b>tripcode</b>: " + ("<code>{tripcode!x}</code>" if tripcode is not None else "unset"),
 	types.TRIPCODE_SET: em("Tripcode set. It will appear as: ") + "<b>{tripname!x}</b> <code>{tripcode!x}</code>",
 
 	types.ERR_COMMAND_DISABLED: em("This command has been disabled."),
@@ -123,7 +124,7 @@ format_strs = {
 	types.ERR_NOT_IN_COOLDOWN: em("This user is not in a cooldown right now."),
 	types.ERR_BLACKLISTED: lambda reason, contact, **_:
 		em( "You've been blacklisted" + (reason and " for {reason!x}" or "") )+
-		( em("\ncontact:") + " {contact}" ) if contact else "",
+		( em("\ncontact:") + " {contact}" if contact else "" ),
 	types.ERR_ALREADY_UPVOTED: em("You have already upvoted this message."),
 	types.ERR_UPVOTE_OWN_MESSAGE: em("You can't upvote your own message."),
 	types.ERR_SPAMMY: em("Your message has not been sent. Avoid sending messages too fast, try again later."),
@@ -132,6 +133,7 @@ format_strs = {
 		em("Given tripcode is not valid, the format is ")+
 		"<code>name#pass</code>" + em("."),
 	types.ERR_NO_TRIPCODE: em("You don't have a tripcode set."),
+	types.ERR_MEDIA_LIMIT: em("You can't send media or forward messages at this time, try again later."),
 
 	types.USER_INFO: lambda warnings, cooldown, **_:
 		"<b>id</b>: {id}, <b>username</b>: {username!x}, <b>rank</b>: {rank_i} ({rank})\n"+
@@ -165,7 +167,7 @@ format_strs = {
 		"<i>Admins can use the following commands</i>:\n"+
 		"  /adminhelp - show this text\n"+
 		"  /adminsay &lt;message&gt; - send an official admin message\n"+
-		"  /motd &lt;message&gt; - set the welcome message\n"+
+		"  /motd &lt;message&gt; - set the welcome message (HTML formatted)\n"+
 		"  /uncooldown &lt;id | username&gt; - remove cooldown from an user\n"+
 		"  /mod &lt;username&gt; - promote an user to the moderator rank\n"+
 		"  /admin &lt;username&gt; - promote an user to the admin rank\n"+

@@ -1,7 +1,6 @@
 import telebot
 import logging
 import time
-import re
 import json
 
 import src.core as core
@@ -117,11 +116,11 @@ def send_answer(ev, m, reply_to=False):
 		for m2 in m:
 			send_answer(ev, m2, reply_to)
 		return
-	kwargs = {"reply_to": ev.message_id} if reply_to else {}
+	reply_to = ev.message_id if reply_to else None
 	def f(ev=ev, m=m):
 		while True:
 			try:
-				send_to_single_inner(ev.chat.id, m, **kwargs)
+				send_to_single_inner(ev.chat.id, m, reply_to=reply_to)
 			except telebot.apihelper.ApiException as e:
 				retry = check_telegram_exc(e, None)
 				if retry:
@@ -167,11 +166,12 @@ def calc_spam_score(ev):
 # Message sending (queue-related)
 
 class QueueItem():
+	__slots__ = ("user_id", "msid", "func")
 	def __init__(self, user, msid, func):
-		self.user_id = None
+		self.user_id = None # who this item is being delivered to
 		if user is not None:
 			self.user_id = user.id
-		self.msid = msid
+		self.msid = msid # message id connected to this item
 		self.func = func
 	def call(self):
 		try:
@@ -231,7 +231,9 @@ def resend_message(chat_id, ev, reply_to=None):
 			kwargs[prop] = getattr(ev.location, prop)
 		return bot.send_location(chat_id, **kwargs)
 	elif ev.content_type == "venue":
-		for prop in ["latitude", "longitude", "title", "address", "foursquare_id"]:
+		kwargs["latitude"] = ev.venue.location.latitude
+		kwargs["longitude"] = ev.venue.location.longitude
+		for prop in ["title", "address", "foursquare_id"]:
 			kwargs[prop] = getattr(ev.venue, prop)
 		return bot.send_venue(chat_id, **kwargs)
 	elif ev.content_type == "contact":
@@ -251,42 +253,43 @@ def resend_message(chat_id, ev, reply_to=None):
 				s += "\n(%s)" % ent.url
 	return bot.send_message(chat_id, s, **kwargs)
 
-def send_to_single_inner(chat_id, ev, **kwargs):
+def send_to_single_inner(chat_id, ev, reply_to=None):
 	if isinstance(ev, rp.Reply):
 		kwargs2 = {}
-		if "reply_to" in kwargs.keys():
-			kwargs2["reply_to_message_id"] = kwargs["reply_to"]
+		if reply_to is not None:
+			kwargs2["reply_to_message_id"] = reply_to
 		if ev.type == rp.types.CUSTOM:
 			kwargs2["disable_web_page_preview"] = True
 		return bot.send_message(chat_id, rp.formatForTelegram(ev), parse_mode="HTML", **kwargs2)
 	else:
-		return resend_message(chat_id, ev, **kwargs)
+		return resend_message(chat_id, ev, reply_to=reply_to)
 
 def send_to_single(ev, msid, user, reply_msid):
 	# set reply_to_message_id if applicable
-	kwargs = {}
+	reply_to = None
 	if reply_msid is not None:
-		kwargs["reply_to"] = ch.lookupMapping(user.id, msid=reply_msid)
+		reply_to = ch.lookupMapping(user.id, msid=reply_msid)
 
-	def f(ev=ev, msid=msid, user=user):
+	user_id = user.id
+	def f():
 		while True:
 			try:
-				ev2 = send_to_single_inner(user.id, ev, **kwargs)
+				ev2 = send_to_single_inner(user_id, ev, reply_to=reply_to)
 			except telebot.apihelper.ApiException as e:
-				retry = check_telegram_exc(e, user)
+				retry = check_telegram_exc(e, user_id)
 				if retry:
 					continue
 				return
 			break
-		ch.saveMapping(user.id, msid, ev2.message_id)
+		ch.saveMapping(user_id, msid, ev2.message_id)
 	put_into_queue(user, msid, f)
 
-def check_telegram_exc(e, user):
-	errmsgs = ["bot was blocked by the user", "user is deactivated", "PEER_ID_INVALID"]
+def check_telegram_exc(e, user_id):
+	errmsgs = ["bot was blocked by the user", "user is deactivated",
+		"PEER_ID_INVALID", "bot can't initiate conversation"]
 	if any(msg in e.result.text for msg in errmsgs):
-		if user is not None:
-			logging.warning("Force leaving %s because bot is blocked", user)
-			core.force_user_leave(user)
+		if user_id is not None:
+			core.force_user_leave(user_id)
 		return False
 
 	if "Too Many Requests" in e.result.text:
@@ -323,7 +326,9 @@ class MyReceiver(core.Receiver):
 		tmp = ch.getMessage(msid)
 		except_id = None if tmp is None else tmp.user_id
 		message_queue.delete(lambda item, msid=msid: item.msid == msid)
-		# FIXME: there's a hard to avoid race condition with currently being sent messages here
+		# FIXME: there's a hard to avoid race condition here:
+		# if a message is currently being sent, but finishes after we grab the
+		# message ids it will never be deleted
 		for user in db.iterateUsers():
 			if not user.isJoined():
 				continue
@@ -333,13 +338,33 @@ class MyReceiver(core.Receiver):
 			id = ch.lookupMapping(user.id, msid=msid)
 			if id is None:
 				continue
-			def f(user=user, id=id):
-				bot.delete_message(user.id, id)
+			user_id = user.id
+			def f(user_id=user_id, id=id):
+				while True:
+					try:
+						bot.delete_message(user_id, id)
+					except telebot.apihelper.ApiException as e:
+						retry = check_telegram_exc(e, None)
+						if retry:
+							continue
+						return
+					break
 			# queued message has msid=None here since this is a deletion, not a message being sent
 			put_into_queue(user, None, f)
 	@staticmethod
-	def stop_invoked(user):
+	def stop_invoked(user, delete_out):
 		message_queue.delete(lambda item, user_id=user.id: item.user_id == user_id)
+		if not delete_out:
+			return
+		# delete all (pending) outgoing messages written by the user in question
+		def f(item):
+			if item.msid is None:
+				return False
+			cm = ch.getMessage(item.msid)
+			if cm is None:
+				return False
+			return cm.user_id == user.id
+		message_queue.delete(f)
 
 ####
 
@@ -487,9 +512,12 @@ def relay(ev):
 	if not allow_documents and ev.content_type == "document" and ev.document.mime_type not in ("image/gif", "video/mp4"):
 		return
 
-	msid = core.prepare_user_message(UserContainer(ev.from_user), calc_spam_score(ev))
-	if isinstance(msid, rp.Reply): # don't relay message, instead reply with something
-		return send_answer(ev, msid)
+	is_media = (ev.forward_from is not None or
+		ev.forward_from_chat is not None or
+		ev.content_type in ("photo", "document", "video", "sticker"))
+	msid = core.prepare_user_message(UserContainer(ev.from_user), calc_spam_score(ev), is_media)
+	if msid is None or isinstance(msid, rp.Reply):
+		return send_answer(ev, msid) # don't relay message, instead reply
 
 	user = db.getUser(id=ev.from_user.id)
 
@@ -524,8 +552,8 @@ def cmd_sign(ev, arg):
 	if isinstance(msid, rp.Reply):
 		return send_answer(ev, msid, True)
 
-	# save the original message in the mapping, this isn't done inside MyReceiver.reply()
-	# since there's no "original message" at that point
+	# save the original message in the mapping
+	# this isn't done inside MyReceiver.reply() since there's no "original message" at that point
 	ch.saveMapping(c_user.id, msid, ev.message_id)
 
 cmd_s = cmd_sign # alias

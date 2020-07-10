@@ -30,6 +30,12 @@ def c_list(d, argv):
 		-a to only show admins, -m only mods"""
 	if len(argv) not in (1, 2):
 		return Exception
+	if argv[0] == '*':
+		for name in d.keys():
+			argv[0] = name
+			print("== %s" % name)
+			c_list(d, argv)
+		return
 	db = d[argv[0]]
 	if len(argv) > 1:
 		cond = ({"-a": "rank = 100", "-m": "rank = 10"})[argv[1]]
@@ -50,6 +56,12 @@ def c_set(d, argv):
 		rank defaults to 0 if not given"""
 	if len(argv) not in (2, 3):
 		return Exception
+	if argv[0] == '*':
+		for name in d.keys():
+			argv[0] = name
+			print("== %s" % name)
+			c_set(d, argv)
+		return
 	db = d[argv[0]]
 	id = int(argv[1])
 	rank = "user" if len(argv) < 3 else argv[2]

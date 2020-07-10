@@ -36,7 +36,9 @@ class Database():
 			except sqlite3.OperationalError as e:
 				if "database is locked" in str(e):
 					msg = "Database read blocked by lock, retrying"
-					logging.warn(msg + (" (%d)" % n) if n > 1 else "")
+					if n > 1:
+						msg += " (%d)" % n
+					logging.warn(msg)
 					n += 1
 					continue
 				raise
@@ -187,6 +189,8 @@ def c_find(d, argv):
 			return "NULL"
 		if isinstance(x, datetime):
 			return str(x)[:19]
+		elif isinstance(x, str):
+			return "\u202a" + x + "\u202c" # embed RTL text correctly
 		return str(x)
 	if sys.platform == 'linux':
 		prompt_str = "\033[35mfind>\033[0m "
