@@ -10,11 +10,17 @@ allow_contacts: false
 # relay arbitrary documents (GIFs always work)
 allow_documents: true
 
-# enable signing messages using /sign or /tsign as well as setting a tripcode
-enable_signing: false
 # allow mods to remove message without issuing a cooldown
 allow_remove_command: false
+
+# enable signing messages using /sign or /tsign as well as setting a tripcode
+enable_signing: false
+# limit usage of /sign to once in every interval (seconds)
+# defaults to 600 if not specified, set to 0 to disable
+#sign_limit_interval: 600
+
 # point of contact shown to blacklisted users (optional)
 #blacklist_contact: http://t.me/invite/something
+
 # duration (hours) during which new users can't send media or forwards (optional)
 #media_limit_period: 3

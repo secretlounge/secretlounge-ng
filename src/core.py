@@ -17,9 +17,10 @@ blacklist_contact = None
 enable_signing = None
 allow_remove_command = None
 media_limit_period = None
+sign_interval = None
 
 def init(config, _db, _ch):
-	global db, ch, spam_scores, blacklist_contact, enable_signing, allow_remove_command, media_limit_period
+	global db, ch, spam_scores, blacklist_contact, enable_signing, allow_remove_command, media_limit_period, sign_interval
 	db = _db
 	ch = _ch
 	spam_scores = ScoreKeeper()
@@ -29,6 +30,7 @@ def init(config, _db, _ch):
 	allow_remove_command = config["allow_remove_command"]
 	if "media_limit_period" in config.keys():
 		media_limit_period = timedelta(hours=int(config["media_limit_period"]))
+	sign_interval = timedelta(seconds=int(config.get("sign_limit_interval", 600)))
 
 	# initialize db if empty
 	if db.getSystemConfig() is None:
@@ -481,9 +483,9 @@ def send_signed_user_message(user, msg_score, text, reply_msid=None, tripcode=Fa
 	ok = spam_scores.increaseSpamScore(user.id, msg_score)
 	if not ok:
 		return rp.Reply(rp.types.ERR_SPAMMY)
-	if not tripcode:
+	if not tripcode and sign_interval.total_seconds() > 1:
 		last_used = sign_last_used.get(user.id, None)
-		if last_used and (datetime.now() - last_used) < timedelta(seconds=SIGN_INTERVAL_SECONDS):
+		if last_used and (datetime.now() - last_used) < sign_interval:
 			return rp.Reply(rp.types.ERR_SPAMMY_SIGN)
 		sign_last_used[user.id] = datetime.now()
 
