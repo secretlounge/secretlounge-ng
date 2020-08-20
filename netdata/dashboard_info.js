@@ -1,4 +1,5 @@
-netdataDashboard.submenu = {
+// Replace or append the following definitions to .../share/netdata/web/dashboard_info.js
+netdataDashboard.context = {
 	'secretlounge.active_users': {
 		decimalDigits: 0,
 		valueRange: "[0, null]"
@@ -6,7 +7,8 @@ netdataDashboard.submenu = {
 	'secretlounge.users': {
 		height: 1.5,
 		decimalDigits: 0,
-		valueRange: "[0, null]"
+		valueRange: "[0, null]",
+		colors: NETDATA.colors[1] + " " + NETDATA.colors[13]
 	},
 
 	'secretlounge.message_types': {
@@ -17,7 +19,8 @@ netdataDashboard.submenu = {
 		decimalDigits: 0
 	},
 	'secretlounge.api_calls': {
-		decimalDigits: 0
+		decimalDigits: 0,
+		colors: NETDATA.colors[2] + " " + NETDATA.colors[7]
 	},
 
 	'secretlounge.cache_size': {

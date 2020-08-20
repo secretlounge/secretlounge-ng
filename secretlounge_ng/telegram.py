@@ -382,11 +382,13 @@ def should_hide_forward(ev):
 		return (ev.forward_from.username or "").lower() in HIDE_FORWARD_FROM
 	return False
 
+s_api_forwarded = stats.countable_source("api_forwarded")
 def resend_message(chat_id, ev, reply_to=None, force_caption: FormattedMessage=None):
 	if should_hide_forward(ev):
 		pass
 	elif is_forward(ev):
 		# forward message instead of re-sending the contents
+		s_api_forwarded(1)
 		return bot.forward_message(chat_id, ev.chat.id, ev.message_id)
 
 	kwargs = {}

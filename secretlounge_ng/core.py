@@ -61,13 +61,14 @@ s_active_users = {}
 def active_user_stat():
 	d = {
 		"active_users_15m": timedelta(minutes=15),
-		"active_users_1h": timedelta(hours=1),
+		"active_users_2h": timedelta(hours=2),
 		"active_users_12h": timedelta(hours=12),
 	}
 	res = {key: 0 for key in d.keys()}
+	now = datetime.now()
 	for last_active in s_active_users.values():
 		for key, delta in d.items():
-			res[key] += 1 if (datetime.now() - last_active <= delta) else 0
+			res[key] += 1 if (now - last_active <= delta) else 0
 	return res
 stats.register_source(active_user_stat)
 
@@ -75,7 +76,8 @@ def updateUserFromEvent(user, c_user):
 	user.username = c_user.username
 	user.realname = c_user.realname
 	user.lastActive = datetime.now()
-	s_active_users[user.id] = datetime.now()
+	if user.isJoined():
+		s_active_users[user.id] = datetime.now()
 
 def getUserByName(username):
 	username = username.lower()

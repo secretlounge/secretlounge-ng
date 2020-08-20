@@ -24,7 +24,7 @@ CHARTS = {
 		'options': [None, 'Active Users', 'users', 'users', 'secretlounge.active_users', 'line'],
 		'lines': [
 			['active_users_15m', '15m', 'absolute', 1, 1],
-			['active_users_1h', '1h', 'absolute', 1, 1],
+			['active_users_2h', '2h', 'absolute', 1, 1],
 			['active_users_12h', '12h', 'absolute', 1, 1],
 		]
 	},
@@ -56,6 +56,7 @@ CHARTS = {
 		'options': [None, 'API Calls', 'calls', 'queue', 'secretlounge.api_calls', 'line'],
 		'lines': [
 			['api_calls', 'count', 'absolute', 1, 1],
+			['api_forwarded', 'forwarded msgs', 'absolute', 1, 1],
 		]
 	},
 
@@ -98,9 +99,9 @@ class Service(SimpleService):
 
 		# props by chart type, 'absolute' / 'incremental'
 		self.abs_props = (
-			"users_total", "users_joined", "active_users_15m", "active_users_1h", "active_users_12h",
+			"users_total", "users_joined", "active_users_15m", "active_users_2h", "active_users_12h",
 			#
-			"api_calls", "queue_size", "queue_latency_avg", "queue_latency_95",
+			"api_calls", "api_forwarded", "queue_size", "queue_latency_avg", "queue_latency_95",
 			"cache_size",
 		)
 		self.incr_props = (
@@ -112,7 +113,9 @@ class Service(SimpleService):
 
 		# init data
 		self.data = dict()
-		for p in set(self.abs_props) | set(self.incr_props):
+		for p in self.abs_props:
+			self.data[p] = None
+		for p in self.incr_props:
 			self.data[p] = 0
 
 	def _read_data(self):
