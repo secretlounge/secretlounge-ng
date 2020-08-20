@@ -198,8 +198,23 @@ def send_thread():
 
 # Message sending (functions)
 
+HIDE_FORWARD_FROM = set([
+	"anonymize_bot", "AnonFaceBot", "AnonymousForwarderBot", "anonomiserBot",
+	"anonymous_forwarder_nashenasbot", "anonymous_forward_bot", "mirroring_bot",
+	"anonymizbot", "ForwardsCoverBot", "anonymousmcjnbot", "MirroringBot",
+])
+def should_hide_forward(ev):
+	# Hide forwards from anonymizing bots that have recently become popular.
+	# The main reason is that the bot API heavily penalizes forwarding and the
+	# 'Forwarded from Anonymize Bot' provides no additional/useful information.
+	if ev.forward_from is not None:
+		return ev.forward_from.username in HIDE_FORWARD_FROM
+	return False
+
 def resend_message(chat_id, ev, reply_to=None):
-	if (ev.forward_from is not None or ev.forward_from_chat is not None
+	if should_hide_forward(ev):
+		pass
+	elif (ev.forward_from is not None or ev.forward_from_chat is not None
 		or ev.json.get("forward_sender_name") is not None):
 		# forward message instead of re-sending the contents
 		return bot.forward_message(chat_id, ev.chat.id, ev.message_id)
