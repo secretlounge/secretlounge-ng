@@ -86,15 +86,16 @@ def requireUser(func):
 			except KeyError as e:
 				return rp.Reply(rp.types.USER_NOT_IN_CHAT)
 
+		# keep db entry up to date
+		with db.modifyUser(id=user.id) as user:
+			updateUserFromEvent(user, c_user)
+
 		# check for blacklist or absence
 		if user.isBlacklisted():
 			return rp.Reply(rp.types.ERR_BLACKLISTED, reason=user.blacklistReason, contact=blacklist_contact)
 		elif not user.isJoined():
 			return rp.Reply(rp.types.USER_NOT_IN_CHAT)
 
-		# keep db entry up to date
-		with db.modifyUser(id=user.id) as user:
-			updateUserFromEvent(user, c_user)
 		# call original function
 		return func(user, *args, **kwargs)
 	return wrapper
@@ -184,12 +185,16 @@ def user_join(c_user):
 		user = None
 
 	if user is not None:
+		# check if user can't rejoin
+		err = None
 		if user.isBlacklisted():
-			return rp.Reply(rp.types.ERR_BLACKLISTED, reason=user.blacklistReason, contact=blacklist_contact)
+			err = rp.Reply(rp.types.ERR_BLACKLISTED, reason=user.blacklistReason, contact=blacklist_contact)
 		elif user.isJoined():
+			err = rp.Reply(rp.types.USER_IN_CHAT)
+		if err is not None:
 			with db.modifyUser(id=user.id) as user:
 				updateUserFromEvent(user, c_user)
-			return rp.Reply(rp.types.USER_IN_CHAT)
+			return err
 		# user rejoins
 		with db.modifyUser(id=user.id) as user:
 			updateUserFromEvent(user, c_user)
