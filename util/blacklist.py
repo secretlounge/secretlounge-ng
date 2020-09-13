@@ -46,8 +46,9 @@ class Database():
 		return self.db.commit()
 
 def detect_dbs():
-	if os.path.exists("./db.sqlite"): # no fancy structure...
-		return {"default": Database("./db.sqlite")}
+	single_path = os.environ.get("DATABASE_PATH", "./db.sqlite")
+	if single_path and os.path.isfile(single_path): # no fancy structure...
+		return {"default": Database(single_path)}
 	d = {}
 	# expects the following directory structure:
 	#   root dir
@@ -247,7 +248,9 @@ def main(argv):
 	if len(argv) > 0:
 		d = detect_dbs()
 		if len(d) == 0:
-			logging.error("No databases detected, exiting!")
+			logging.error("No database(s) detected, exiting!")
+			logging.info("If you have a single database you can use the "
+				"DATABASE_PATH environment variable to specify its location")
 			exit(1)
 		logging.info("Detected %d database(s): %s", len(d), ", ".join(d.keys()))
 

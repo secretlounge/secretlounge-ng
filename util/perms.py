@@ -94,7 +94,9 @@ def main(argv):
 	if len(argv) > 0:
 		d = detect_dbs()
 		if len(d) == 0:
-			logging.error("No databases detected, exiting!")
+			logging.error("No database(s) detected, exiting!")
+			logging.info("If you have a single database you can use the "
+				"DATABASE_PATH environment variable to specify its location")
 			exit(1)
 		logging.info("Detected %d database(s): %s", len(d), ", ".join(d.keys()))
 
