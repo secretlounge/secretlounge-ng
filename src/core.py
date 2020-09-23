@@ -126,7 +126,7 @@ class ScoreKeeper():
 				return False
 			elif s + n > SPAM_LIMIT:
 				self.scores[uid] = SPAM_LIMIT_HIT
-				return False
+				return s + n <= SPAM_LIMIT_HIT
 			self.scores[uid] = s + n
 			return True
 	def scheduledTask(self):
