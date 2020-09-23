@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from time import sleep
 
 # database
-# NOTE: a few other utilities import this code
+# NOTE: a few other utilities import these functions from here
 
 class Database():
 	def __init__(self, path):
@@ -38,35 +38,49 @@ class Database():
 					msg = "Database read blocked by lock, retrying"
 					if n > 1:
 						msg += " (%d)" % n
-					logging.warn(msg)
+					logging.warning(msg)
 					n += 1
 					continue
 				raise
 	def commit(self):
 		return self.db.commit()
 
-def detect_dbs():
+def detect_db_paths():
 	single_path = os.environ.get("DATABASE_PATH", "./db.sqlite")
 	if single_path and os.path.isfile(single_path): # no fancy structure...
-		return {"default": Database(single_path)}
+		return {"default": single_path}
 	d = {}
-	# expects the following directory structure:
-	#   root dir
-	#   \ bot1
-	#     \ db.sqlite
-	#     \ ...
-	#   \ bot2
-	#     \ db.sqlite
-	#     \ ...
-	#   \ README.md
-	#   \ secretlounge-ng
-	#   \ ...
+	# dir structure as described in README.md
 	for e in os.scandir("."):
 		if e.is_dir():
 			path = os.path.join(e.path, "db.sqlite")
 			if os.path.exists(path):
-				d[e.name] = Database(path)
+				d[e.name] = path
 	return d
+
+# other utility
+# NOTE: also imported
+
+def detect_dbs():
+	d = detect_db_paths()
+	if len(d) == 0:
+		logging.error("No database(s) detected, exiting!")
+		logging.info("If you have a single database you can use the "
+			"DATABASE_PATH environment variable to specify its location")
+		exit(1)
+	logging.info("Detected %d database%s: %s", len(d),
+		"s" if len(d) > 1 else "", ", ".join(d.keys()))
+	for k, v in d.items():
+		d[k] = Database(v)
+	return d
+
+def print_function_help(table):
+	maxlen = max(len(f.__doc__.split("\n")[0]) for f in table.values())
+	fmt = "    %-" + str(maxlen + 4) + "s%s"
+	for f in table.values():
+		s = list(x.strip() for x in f.__doc__.split("\n"))
+		for i, text in enumerate(s[1:]):
+			print(fmt % (s[0] if i == 0 else "", text))
 
 # backend
 
@@ -134,7 +148,7 @@ def sync(d):
 				a, b = ban_user(db, id, reason)
 				stat1 += a; stat2 += b
 			if stat1 + stat2 > 0:
-				logging.info("Transferred ban of user id %d orignated from %s (%d-%d)", id, from_name, stat1, stat2)
+				logging.info("Transferred ban of user id %d orginated from %s (b:%d p:%d)", id, from_name, stat1, stat2)
 		# Zzz..
 		last_update = now
 		sleep(interval)
@@ -167,7 +181,7 @@ def c_ban(d, argv):
 	for db in d.values():
 		a, b = ban_user(db, id, reason)
 		stat1 += a; stat2 += b
-	logging.info("Success (%d-%d)", stat1, stat2)
+	logging.info("Success (banned:%d placeholder:%d)", stat1, stat2)
 
 def c_unban(d, argv):
 	"""unban <user id>\nUnban specified user"""
@@ -179,7 +193,7 @@ def c_unban(d, argv):
 		stat += unban_user(db, id)
 	if stat == 0:
 		return logging.warning("This user wasn't blacklisted anywhere.")
-	logging.info("Success (%d)", stat)
+	logging.info("Success (unbanned:%d)", stat)
 
 def c_find(d, argv):
 	"""find\nInteractive prompt that searches users"""
@@ -231,12 +245,8 @@ def c_sync(d, argv):
 def usage(actions):
 	print("Utility for managing blacklists (sqlite only)")
 	print("Usage: blacklist.py <action> [arguments...]")
-	fmt = "    %-" + str( max(len(f.__doc__.split("\n")[0]) for f in actions.values()) + 4 ) + "s%s"
 	print("Actions:")
-	for f in actions.values():
-		s = list(x.strip() for x in f.__doc__.split("\n"))
-		for i, text in enumerate(s[1:]):
-			print(fmt % (s[0] if i == 0 else "", text))
+	print_function_help(actions)
 
 def main(argv):
 	logging.basicConfig(format="[%(asctime)s] %(message)s", datefmt="%Y-%m-%d %H:%M", level=logging.INFO)
@@ -247,12 +257,6 @@ def main(argv):
 
 	if len(argv) > 0:
 		d = detect_dbs()
-		if len(d) == 0:
-			logging.error("No database(s) detected, exiting!")
-			logging.info("If you have a single database you can use the "
-				"DATABASE_PATH environment variable to specify its location")
-			exit(1)
-		logging.info("Detected %d database(s): %s", len(d), ", ".join(d.keys()))
 
 		action = argv[0].lower()
 		if action not in actions.keys():
