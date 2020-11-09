@@ -225,6 +225,14 @@ def c_find(d, argv):
 			if len(ret) == 0:
 				continue
 			any_ = True
+			if len(ret) == 1:
+				# check if the only entry we found is a ban placeholder
+				a1 = next(i for i, s in enumerate(attrs) if s == "realname")
+				a2 = next(i for i, s in enumerate(attrs) if s == "left")
+				row = next(ret.values())
+				if row[a1] == "" and row[a2] == datetime.utcfromtimestamp(0):
+					print("In %s: (placeholder)" % dbname)
+					continue
 			print("In %s:" % dbname)
 			print( ("%-12s" % "ID") + "|".join(attrs) )
 			for id, data in ret.items():
