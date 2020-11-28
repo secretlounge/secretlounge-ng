@@ -229,7 +229,7 @@ def c_find(d, argv):
 				# check if the only entry we found is a ban placeholder
 				a1 = next(i for i, s in enumerate(attrs) if s == "realname")
 				a2 = next(i for i, s in enumerate(attrs) if s == "left")
-				row = next(ret.values())
+				row = next(x for x in ret.values())
 				if row[a1] == "" and row[a2] == datetime.utcfromtimestamp(0):
 					print("In %s: (placeholder)" % dbname)
 					continue
