@@ -190,8 +190,10 @@ class FormattedMessage():
 		self.content = content
 
 class FormattedMessageBuilder():
-	def __init__(self, text_content: str):
-		self.text_content = text_content
+	text_content: str
+	# initialize builder with first argument that isn't None
+	def __init__(self, *args):
+		self.text_content = next(filter(lambda x: x is not None, args))
 		self.inserts = {}
 	def insert(self, pos, content, html=False):
 		i = self.inserts.get(pos)
@@ -639,14 +641,15 @@ def relay(ev):
 
 	relay_inner(ev)
 
+# relay the message `ev` to other users in the chat
+# `caption_text` can be a FormattedMessage that overrides the caption of media
+# `signed` and `tripcode` indicate if the message is signed or tripcoded respectively
 def relay_inner(ev, *, caption_text=None, signed=False, tripcode=False):
 	# filter disallowed media types
 	if not allow_documents and ev.content_type == "document" and ev.document.mime_type not in ("image/gif", "video/mp4"):
 		return
 
-	is_media = (ev.forward_from is not None or
-		ev.forward_from_chat is not None or
-		ev.content_type in MEDIA_FILTER_TYPES)
+	is_media = is_forward(ev) or ev.content_type in MEDIA_FILTER_TYPES
 	msid = core.prepare_user_message(UserContainer(ev.from_user), calc_spam_score(ev),
 		is_media=is_media, signed=signed, tripcode=tripcode)
 	if msid is None or isinstance(msid, rp.Reply):
@@ -657,8 +660,10 @@ def relay_inner(ev, *, caption_text=None, signed=False, tripcode=False):
 	# apply message formatting
 	ev_tosend = ev
 	force_caption = None
-	if ev.content_type == "text" or caption_text is not None:
-		fmt = FormattedMessageBuilder(caption_text if caption_text is not None else ev.text)
+	if is_forward(ev):
+		pass # leave message alone
+	elif ev.content_type == "text" or caption_text is not None:
+		fmt = FormattedMessageBuilder(caption_text, ev.text)
 		formatter_replace_links(ev, fmt)
 		if signed:
 			formatter_signed_message(user, fmt)
