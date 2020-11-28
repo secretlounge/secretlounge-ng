@@ -493,7 +493,7 @@ def prepare_user_message(user: User, msg_score, *, is_media=False, signed=False,
 # who is None -> to everyone except the user <except_who> (if applicable)
 # who is not None -> only to the user <who>
 # reply_to: msid the message is in reply to
-def _push_system_message(m, who=None, except_who=None, reply_to=None):
+def _push_system_message(m, *, who=None, except_who=None, reply_to=None):
 	msid = None
 	if who is None: # we only need an ID if multiple people can see the msg
 		msid = ch.assignMessageId(CachedMessage())

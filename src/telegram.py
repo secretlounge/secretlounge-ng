@@ -58,7 +58,7 @@ def init(config, _db, _ch):
 		"start", "stop", "users", "info", "motd", "toggledebug", "togglekarma",
 		"version", "source", "modhelp", "adminhelp", "modsay", "adminsay", "mod",
 		"admin", "warn", "delete", "remove", "uncooldown", "blacklist", "s", "sign",
-		"tripcode", "settripcode", "t", "tsign"
+		"tripcode", "t", "tsign"
 	]
 	for c in cmds: # maps /<c> to the function cmd_<c>
 		c = c.lower()
@@ -100,6 +100,7 @@ def register_tasks(sched):
 			logging.warning("Failed to deliver %d messages before they expired from cache.", n)
 	sched.register(task, hours=6) # (1/4) * cache duration
 
+# Wraps a telegram user in a consistent class (used by core.py)
 class UserContainer():
 	def __init__(self, u):
 		self.id = u.id
@@ -137,7 +138,7 @@ def send_answer(ev, m, reply_to=False):
 		for m2 in m:
 			send_answer(ev, m2, reply_to)
 		return
-	# FIXME: why is there code duplication with send_to_single?
+
 	reply_to = ev.message_id if reply_to else None
 	def f(ev=ev, m=m):
 		while True:
@@ -546,8 +547,6 @@ def cmd_tripcode(ev, arg):
 	else:
 		send_answer(ev, core.set_tripcode(c_user, arg))
 
-cmd_settripcode = cmd_tripcode # legacy alias
-
 
 def cmd_modhelp(ev):
 	send_answer(ev, rp.Reply(rp.types.HELP_MODERATOR), True)
@@ -636,6 +635,7 @@ def plusone(ev):
 	if reply_msid is None:
 		return send_answer(ev, rp.Reply(rp.types.ERR_NOT_IN_CACHE), True)
 	return send_answer(ev, core.give_karma(c_user, reply_msid), True)
+
 
 def relay(ev):
 	# handle commands and karma giving
