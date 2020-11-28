@@ -204,36 +204,43 @@ class FormattedMessageBuilder():
 		self.inserts = {}
 	def get_text(self):
 		return self.text_content
-	def insert(self, pos, content, html=False):
+	# insert `content` at `pos`, `html` indicates HTML or plaintext
+	# if `pre` is set content will be inserted *before* existing insertions
+	def insert(self, pos, content, html=False, pre=False):
 		i = self.inserts.get(pos)
 		if i is not None:
+			cat = lambda a, b: (b + a) if pre else (a + b)
 			# only turn insert into HTML if strictly necessary
 			if i[0] == html:
-				i = (i[0], i[1] + content)
+				i = ( i[0], cat(i[1], content) )
 			elif not i[0]:
-				i = (True, escape_html(i[1]) + content)
+				i = ( True, cat(escape_html(i[1]), content) )
 			else: # not html
-				i = (True, i[1] + escape_html(content))
+				i = ( True, cat(i[1], escape_html(content)) )
 		else:
 			i = (html, content)
 		self.inserts[pos] = i
 	def prepend(self, content, html=False):
-		self.insert(0, content, html)
+		self.insert(0, content, html, True)
 	def append(self, content, html=False):
 		self.insert(len(self.text_content), content, html)
+	def enclose(self, pos1, pos2, content_begin, content_end, html=False):
+		self.insert(pos1, content_begin, html)
+		self.insert(pos2, content_end, html, True)
 	def build(self) -> FormattedMessage:
 		if len(self.inserts) == 0:
 			return
 		html = any(i[0] for i in self.inserts.values())
+		norm = lambda i: i[1] if i[0] == html else escape_html(i[1])
 		s = ""
 		for idx, c in enumerate(self.text_content):
 			i = self.inserts.pop(idx, None)
 			if i is not None:
-				s += i[1] if i[0] == html else escape_html(i[1])
-			s += c
+				s += norm(i)
+			s += escape_html(c) if html else c
 		i = self.inserts.pop(len(self.text_content), None)
 		if i is not None:
-			s += i[1] if i[0] == html else escape_html(i[1])
+			s += norm(i)
 		assert len(self.inserts) == 0
 		return FormattedMessage(html, s)
 
@@ -258,8 +265,8 @@ def formatter_network_links(fmt: FormattedMessageBuilder):
 		link = linked_network.get(m.group(1).lower())
 		if link:
 			# we use a tg:// URL here because it avoids web page preview
-			fmt.insert(m.start(), "<a href=\"tg://resolve?domain=%s\">" % link, True)
-			fmt.insert(m.end(), "</a>", True)
+			fmt.enclose(m.start(), m.end(),
+				"<a href=\"tg://resolve?domain=%s\">" % link, "</a>", True)
 
 # Add signed message formatting for User `user` to `fmt`
 def formatter_signed_message(user: core.User, fmt: FormattedMessageBuilder):
@@ -270,11 +277,12 @@ def formatter_signed_message(user: core.User, fmt: FormattedMessageBuilder):
 # Add tripcode message formatting for User `user` to `fmt`
 def formatter_tripcoded_message(user: core.User, fmt: FormattedMessageBuilder):
 	tripname, tripcode = genTripcode(user.tripcode)
-	fmt.prepend("<b>", True)
-	fmt.prepend(tripname) # appends to the prepended text, a bit confusing I know...
-	fmt.prepend("</b> <code>", True)
-	fmt.prepend(tripcode)
+	# due to how prepend() works the string is built right-to-left
 	fmt.prepend("</code>:\n", True)
+	fmt.prepend(tripcode)
+	fmt.prepend("</b> <code>", True)
+	fmt.prepend(tripname)
+	fmt.prepend("<b>", True)
 
 ###
 
