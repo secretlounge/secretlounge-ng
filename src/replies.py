@@ -29,8 +29,6 @@ types = NumericEnum([
 	"CUSTOM",
 	"SUCCESS",
 	"BOOLEAN_CONFIG",
-	"SIGNED_MSG",
-	"TSIGNED_MSG",
 
 	"CHAT_JOIN",
 	"CHAT_LEAVE",
@@ -90,9 +88,6 @@ format_strs = {
 	types.SUCCESS: "☑",
 	types.BOOLEAN_CONFIG: lambda enabled, **_:
 		"<b>{description!x}</b>: " + (enabled and "enabled" or "disabled"),
-	types.SIGNED_MSG: "{text!x} <a href=\"tg://user?id={user_id}\">~~{user_text!x}</a>",
-	types.TSIGNED_MSG: "<b>{tripname!x}</b> <code>{tripcode!x}</code>:\n"+
-		"{text!x}",
 
 	types.CHAT_JOIN: em("You joined the chat!"),
 	types.CHAT_LEAVE: em("You left the chat!"),

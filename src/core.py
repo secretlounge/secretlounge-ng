@@ -467,44 +467,28 @@ def give_karma(user, msid):
 
 
 @requireUser
-def prepare_user_message(user, msg_score, is_media):
+def prepare_user_message(user: User, msg_score, *, is_media=False, signed=False, tripcode=False):
+	# prerequisites
 	if user.isInCooldown():
 		return rp.Reply(rp.types.ERR_COOLDOWN, until=user.cooldownUntil)
+	if tripcode and user.tripcode is None:
+		return rp.Reply(rp.types.ERR_NO_TRIPCODE)
 	if is_media and user.rank < RANKS.mod and media_limit_period is not None:
 		if (datetime.now() - user.joined) < media_limit_period:
 			return rp.Reply(rp.types.ERR_MEDIA_LIMIT)
-	ok = spam_scores.increaseSpamScore(user.id, msg_score)
-	if not ok:
-		return rp.Reply(rp.types.ERR_SPAMMY)
-	return ch.assignMessageId(CachedMessage(user.id))
-
-@requireUser
-def send_signed_user_message(user, msg_score, text, reply_msid=None, tripcode=False):
-	if not enable_signing:
-		return rp.Reply(rp.types.ERR_COMMAND_DISABLED)
-	if user.isInCooldown():
-		return rp.Reply(rp.types.ERR_COOLDOWN, until=user.cooldownUntil)
 
 	ok = spam_scores.increaseSpamScore(user.id, msg_score)
 	if not ok:
 		return rp.Reply(rp.types.ERR_SPAMMY)
-	if not tripcode and sign_interval.total_seconds() > 1:
+
+	# enforce signing cooldown
+	if signed and sign_interval.total_seconds() > 1:
 		last_used = sign_last_used.get(user.id, None)
 		if last_used and (datetime.now() - last_used) < sign_interval:
 			return rp.Reply(rp.types.ERR_SPAMMY_SIGN)
 		sign_last_used[user.id] = datetime.now()
 
-	if tripcode:
-		if user.tripcode is None:
-			return rp.Reply(rp.types.ERR_NO_TRIPCODE)
-		tripname, tripcode = genTripcode(user.tripcode)
-		m = rp.Reply(rp.types.TSIGNED_MSG, text=text, user_id=user.id, tripname=tripname, tripcode=tripcode)
-	else:
-		m = rp.Reply(rp.types.SIGNED_MSG, text=text, user_id=user.id, user_text=user.getFormattedName())
-
-	msid = ch.assignMessageId(CachedMessage(user.id))
-	Sender.reply(m, msid, None, user, reply_msid)
-	return msid
+	return ch.assignMessageId(CachedMessage(user.id))
 
 # who is None -> to everyone except the user <except_who> (if applicable)
 # who is not None -> only to the user <who>
