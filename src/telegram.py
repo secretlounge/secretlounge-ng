@@ -2,6 +2,7 @@ import telebot
 import logging
 import time
 import json
+import re
 
 import src.core as core
 import src.replies as rp
@@ -25,11 +26,12 @@ ch = None
 message_queue = None
 registered_commands = {}
 
-# settings regarding message relaying
+# settings
 allow_documents = None
+linked_network: dict = None
 
 def init(config, _db, _ch):
-	global bot, db, ch, message_queue, allow_documents
+	global bot, db, ch, message_queue, allow_documents, linked_network
 	if config["bot_token"] == "":
 		logging.error("No telegram token specified.")
 		exit(1)
@@ -42,6 +44,10 @@ def init(config, _db, _ch):
 
 	allow_contacts = config["allow_contacts"]
 	allow_documents = config["allow_documents"]
+	linked_network = config.get("linked_network")
+	if linked_network is not None and not isinstance(linked_network, dict):
+		logging.error("Wrong type for 'linked_network'")
+		exit(1)
 
 	types = ["text", "location", "venue"]
 	if allow_contacts:
@@ -195,6 +201,8 @@ class FormattedMessageBuilder():
 	def __init__(self, *args):
 		self.text_content = next(filter(lambda x: x is not None, args))
 		self.inserts = {}
+	def get_text(self):
+		return self.text_content
 	def insert(self, pos, content, html=False):
 		i = self.inserts.get(pos)
 		if i is not None:
@@ -212,9 +220,6 @@ class FormattedMessageBuilder():
 		self.insert(0, content, html)
 	def append(self, content, html=False):
 		self.insert(len(self.text_content), content, html)
-	def enclose(self, pos, len, content_begin, content_end, html=False):
-		self.insert(pos, content_begin, html)
-		self.insert(pos+len, content_end, html)
 	def build(self) -> FormattedMessage:
 		if len(self.inserts) == 0:
 			return
@@ -243,6 +248,17 @@ def formatter_replace_links(ev, fmt: FormattedMessageBuilder):
 				# deep links are ugly to look at and likely not important
 				continue
 			fmt.append("\n(%s)" % ent.url)
+
+# Add inline links for >>>/name/ syntax depending on configuration
+def formatter_network_links(fmt: FormattedMessageBuilder):
+	if not linked_network:
+		return
+	for m in re.finditer(r'>>>/([a-zA-Z0-9]+)/', fmt.get_text()):
+		link = linked_network.get(m.group(1).lower())
+		if link:
+			# we use a tg:// URL here because it avoids web page preview
+			fmt.insert(m.start(), "<a href=\"tg://resolve?domain=%s\">" % link, True)
+			fmt.insert(m.end(), "</a>", True)
 
 # Add signed message formatting for User `user` to `fmt`
 def formatter_signed_message(user: core.User, fmt: FormattedMessageBuilder):
@@ -657,14 +673,15 @@ def relay_inner(ev, *, caption_text=None, signed=False, tripcode=False):
 
 	user = db.getUser(id=ev.from_user.id)
 
-	# apply message formatting
+	# apply text formatting to text or caption (if media)
 	ev_tosend = ev
 	force_caption = None
 	if is_forward(ev):
 		pass # leave message alone
-	elif ev.content_type == "text" or caption_text is not None:
-		fmt = FormattedMessageBuilder(caption_text, ev.text)
+	elif ev.content_type == "text" or ev.caption is not None or caption_text is not None:
+		fmt = FormattedMessageBuilder(caption_text, ev.caption, ev.text)
 		formatter_replace_links(ev, fmt)
+		formatter_network_links(fmt)
 		if signed:
 			formatter_signed_message(user, fmt)
 		elif tripcode:
