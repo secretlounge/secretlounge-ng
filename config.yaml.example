@@ -24,3 +24,11 @@ enable_signing: false
 
 # duration (hours) during which new users can't send media or forwards (optional)
 #media_limit_period: 3
+
+# map of bots that users can refer to in their messages (optional)
+# e.g. >>>/foo/ would be turned into an inline link to http://t.me/foochatbot
+#linked_network:
+#  foo: foochatbot
+#  bar: barchatbot
+# alternatively the map can also be loaded from another YAML file using this syntax
+#linked_network: "./somewhere/bots.yml"
