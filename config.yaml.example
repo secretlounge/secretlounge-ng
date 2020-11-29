@@ -7,7 +7,7 @@ database: [sqlite, "path/to/secretlounge.db"]
 
 # relay contacts
 allow_contacts: false
-# relay arbitrary documents (GIFs always work)
+# relay arbitrary documents/files (GIFs always work)
 allow_documents: true
 
 # allow mods to remove message without issuing a cooldown

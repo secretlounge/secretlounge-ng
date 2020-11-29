@@ -10,8 +10,8 @@ from src.util import MutablePriorityQueue, genTripcode
 from src.globals import *
 
 # module constants
-MEDIA_FILTER_TYPES = ("photo", "document", "video", "sticker")
-CAPTIONABLE_TYPES = ("photo", "audio", "document", "video", "voice")
+MEDIA_FILTER_TYPES = ("photo", "animation", "document", "video", "sticker")
+CAPTIONABLE_TYPES = ("photo", "audio", "animation", "document", "video", "voice")
 HIDE_FORWARD_FROM = set([
 	"anonymize_bot", "AnonFaceBot", "AnonymousForwarderBot", "anonomiserBot",
 	"anonymous_forwarder_nashenasbot", "anonymous_forward_bot", "mirroring_bot",
@@ -52,7 +52,9 @@ def init(config, _db, _ch):
 	types = ["text", "location", "venue"]
 	if allow_contacts:
 		types += ["contact"]
-	types += ["audio", "document", "photo", "sticker", "video", "video_note", "voice"]
+	if allow_documents:
+		types += ["document"]
+	types += ["animation", "audio", "photo", "sticker", "video", "video_note", "voice"]
 
 	cmds = [
 		"start", "stop", "users", "info", "motd", "toggledebug", "togglekarma",
@@ -361,6 +363,8 @@ def resend_message(chat_id, ev, reply_to=None, force_caption: FormattedMessage=N
 		for prop in ("performer", "title"):
 			kwargs[prop] = getattr(ev.audio, prop)
 		return bot.send_audio(chat_id, ev.audio.file_id **kwargs)
+	elif ev.content_type == "animation":
+		return bot.send_animation(chat_id, ev.animation.file_id, **kwargs)
 	elif ev.content_type == "document":
 		return bot.send_document(chat_id, ev.document.file_id, **kwargs)
 	elif ev.content_type == "video":
@@ -669,10 +673,6 @@ def relay(ev):
 # `caption_text` can be a FormattedMessage that overrides the caption of media
 # `signed` and `tripcode` indicate if the message is signed or tripcoded respectively
 def relay_inner(ev, *, caption_text=None, signed=False, tripcode=False):
-	# filter disallowed media types
-	if not allow_documents and ev.content_type == "document" and ev.document.mime_type not in ("image/gif", "video/mp4"):
-		return
-
 	is_media = is_forward(ev) or ev.content_type in MEDIA_FILTER_TYPES
 	msid = core.prepare_user_message(UserContainer(ev.from_user), calc_spam_score(ev),
 		is_media=is_media, signed=signed, tripcode=tripcode)
