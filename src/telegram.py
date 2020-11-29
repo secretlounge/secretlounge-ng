@@ -16,6 +16,8 @@ HIDE_FORWARD_FROM = set([
 	"anonymize_bot", "AnonFaceBot", "AnonymousForwarderBot", "anonomiserBot",
 	"anonymous_forwarder_nashenasbot", "anonymous_forward_bot", "mirroring_bot",
 	"anonymizbot", "ForwardsCoverBot", "anonymousmcjnbot", "MirroringBot",
+	"anonymousforwarder_bot", "anonymousForwardBot", "anonymous_forwarder_bot",
+	"anonymousforwardsbot", "HiddenlyBot", "ForwardCoveredBot",
 ])
 VENUE_PROPS = ("title", "address", "foursquare_id", "foursquare_type", "google_place_id", "google_place_type")
 
@@ -254,9 +256,10 @@ def formatter_replace_links(ev, fmt: FormattedMessageBuilder):
 		return
 	for ent in entities:
 		if ent.type == "text_link":
+			if ent.url.startswith("tg://"):
+				continue # doubt anyone needs these
 			if "://t.me/" in ent.url and "?start=" in ent.url:
-				# deep links are ugly to look at and likely not important
-				continue
+				continue # deep links look ugly and are likely not important
 			fmt.append("\n(%s)" % ent.url)
 
 # Add inline links for >>>/name/ syntax depending on configuration
@@ -660,7 +663,7 @@ def relay(ev):
 		elif ev.text.strip() == "+1":
 			return plusone(ev)
 	# manually handle signing / tripcodes for media since captions don't count for commands
-	if not is_forward(ev) and ev.content_type in CAPTIONABLE_TYPES and ev.caption.startswith("/"):
+	if not is_forward(ev) and ev.content_type in CAPTIONABLE_TYPES and (ev.caption or "").startswith("/"):
 		c, arg = split_command(ev.caption)
 		if c in ("s", "sign"):
 			return relay_inner(ev, caption_text=arg, signed=True)
