@@ -365,7 +365,7 @@ def resend_message(chat_id, ev, reply_to=None, force_caption: FormattedMessage=N
 	elif ev.content_type == "audio":
 		for prop in ("performer", "title"):
 			kwargs[prop] = getattr(ev.audio, prop)
-		return bot.send_audio(chat_id, ev.audio.file_id **kwargs)
+		return bot.send_audio(chat_id, ev.audio.file_id, **kwargs)
 	elif ev.content_type == "animation":
 		return bot.send_animation(chat_id, ev.animation.file_id, **kwargs)
 	elif ev.content_type == "document":
