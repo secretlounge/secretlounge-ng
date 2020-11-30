@@ -62,7 +62,7 @@ def init(config, _db, _ch):
 		"start", "stop", "users", "info", "motd", "toggledebug", "togglekarma",
 		"version", "source", "modhelp", "adminhelp", "modsay", "adminsay", "mod",
 		"admin", "warn", "delete", "remove", "uncooldown", "blacklist", "s", "sign",
-		"tripcode", "t", "tsign"
+		"tripcode", "t", "tsign", "tripcodetoggle"
 	]
 	for c in cmds: # maps /<c> to the function cmd_<c>
 		c = c.lower()
@@ -552,6 +552,7 @@ def cmd_motd(ev, arg):
 
 cmd_toggledebug = wrap_core(core.toggle_debug)
 cmd_togglekarma = wrap_core(core.toggle_karma)
+cmd_tripcodetoggle = wrap_core(core.toggle_tripcode)
 
 @takesArgument(optional=True)
 def cmd_tripcode(ev, arg):
@@ -695,7 +696,7 @@ def relay_inner(ev, *, caption_text=None, signed=False, tripcode=False):
 		formatter_network_links(fmt)
 		if signed:
 			formatter_signed_message(user, fmt)
-		elif tripcode:
+		elif tripcode or user.tripcodeToggle:
 			formatter_tripcoded_message(user, fmt)
 		fmt = fmt.build()
 		# either replace whole message or just the caption

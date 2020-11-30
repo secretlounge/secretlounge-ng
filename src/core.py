@@ -301,6 +301,14 @@ def toggle_debug(user):
 		new = user.debugEnabled
 	return rp.Reply(rp.types.BOOLEAN_CONFIG, description="Debug mode", enabled=new)
 
+
+@requireUser
+def toggle_tripcode(user):
+	with db.modifyUser(id=user.id) as user:
+		user.tripcodeToggle = not user.tripcodeToggle
+		new = user.tripcodeToggle
+	return rp.Reply(rp.types.BOOLEAN_CONFIG, description="Username (tripcode)", enabled=new)
+
 @requireUser
 def toggle_karma(user):
 	with db.modifyUser(id=user.id) as user:
