@@ -115,7 +115,7 @@ class UserContainer():
 
 def split_command(text):
 	if " " not in text:
-		return text[1:], ""
+		return text[1:].lower(), ""
 	pos = text.find(" ")
 	return text[1:pos].lower(), text[pos+1:].strip()
 
