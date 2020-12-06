@@ -32,6 +32,10 @@ def init(config, _db, _ch):
 		media_limit_period = timedelta(hours=int(config["media_limit_period"]))
 	sign_interval = timedelta(seconds=int(config.get("sign_limit_interval", 600)))
 
+	if config.get("locale"):
+		rp.localization = __import__("src.replies_" + config["locale"],
+			fromlist=["localization"]).localization
+
 	# initialize db if empty
 	if db.getSystemConfig() is None:
 		c = SystemConfig()
