@@ -475,6 +475,8 @@ def prepare_user_message(user: User, msg_score, *, is_media=False, signed=False,
 	# prerequisites
 	if user.isInCooldown():
 		return rp.Reply(rp.types.ERR_COOLDOWN, until=user.cooldownUntil)
+	if (signed or tripcode) and not enable_signing:
+		return rp.Reply(rp.types.ERR_COMMAND_DISABLED)
 	if tripcode and user.tripcode is None:
 		return rp.Reply(rp.types.ERR_NO_TRIPCODE)
 	if is_media and user.rank < RANKS.mod and media_limit_period is not None:
