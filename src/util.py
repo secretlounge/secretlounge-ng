@@ -17,6 +17,7 @@ class Scheduler():
 			logging.exception("Exception raised during scheduled task")
 	def register(self, func, **kwargs):
 		interval = timedelta(**kwargs) // timedelta(seconds=1)
+		assert interval > 0
 		self.tasks.append([interval, 0, func])
 	def run(self):
 		while True:
