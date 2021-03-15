@@ -11,7 +11,7 @@ from src.globals import *
 
 # module constants
 MEDIA_FILTER_TYPES = ("photo", "animation", "document", "video", "sticker")
-CAPTIONABLE_TYPES = ("photo", "audio", "animation", "document", "video", "voice", "poll")
+CAPTIONABLE_TYPES = ("photo", "audio", "animation", "document", "video", "voice")
 HIDE_FORWARD_FROM = set([
 	"anonymize_bot", "AnonFaceBot", "AnonymousForwarderBot", "anonomiserBot",
 	"anonymous_forwarder_nashenasbot", "anonymous_forward_bot", "mirroring_bot",
@@ -58,7 +58,7 @@ def init(config, _db, _ch):
 		types += ["contact"]
 	if allow_documents:
 		types += ["document"]
-	types += ["animation", "audio", "photo", "sticker", "video", "video_note", "voice", "poll"]
+	types += ["animation", "audio", "photo", "sticker", "video", "video_note", "voice"]
 
 	cmds = [
 		"start", "stop", "users", "info", "motd", "toggledebug", "togglekarma",
@@ -394,8 +394,6 @@ def resend_message(chat_id, ev, reply_to=None, force_caption: FormattedMessage=N
 		return bot.send_contact(chat_id, **kwargs)
 	elif ev.content_type == "sticker":
 		return bot.send_sticker(chat_id, ev.sticker.file_id, **kwargs)
-	elif ev.content_type == "poll":
-		return bot.send_poll(chat_id, question=ev.poll.questions, options=ev.poll.options, is_anonymous=ev.poll.is_anonymous, type=ev.poll.type, allows_multiple_answers=ev.poll.allows_multiple_answers, correct_option_id=ev.poll.correct_option_id, explanation=ev.poll.explanation, explanation_parse_mode=ev.poll.explanation_parse_mode, explanation_entities=ev.poll.explanation_entities, open_period=ev.poll.open_period, close_date=ev.poll.close_date, is_closed=ev.poll.is_closed, reply_markup=kwargs)
 	else:
 		raise NotImplementedError("content_type = %s" % ev.content_type)
 
