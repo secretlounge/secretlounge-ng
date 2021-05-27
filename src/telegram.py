@@ -17,7 +17,8 @@ HIDE_FORWARD_FROM = set([
 	"anonymous_forwarder_nashenasbot", "anonymous_forward_bot", "mirroring_bot",
 	"anonymizbot", "ForwardsCoverBot", "anonymousmcjnbot", "MirroringBot",
 	"anonymousforwarder_bot", "anonymousForwardBot", "anonymous_forwarder_bot",
-	"anonymousforwardsbot", "HiddenlyBot", "ForwardCoveredBot",
+	"anonymousforwardsbot", "HiddenlyBot", "ForwardCoveredBot", "anonym2bot",
+	"AntiForwardedBot", "noforward_bot", "Anonymous_telegram_bot",
 ])
 VENUE_PROPS = ("title", "address", "foursquare_id", "foursquare_type", "google_place_id", "google_place_type")
 
