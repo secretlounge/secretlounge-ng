@@ -1,5 +1,5 @@
 # Telegram bot token
-bot_token: "BOT_TOKEN_HERE"
+bot_token: "1837528948:AAFP420kvgB97dc3XQCiw7IDhJmwlHjBCbc"
 
 # supported db types: json, sqlite
 # both take a single argument which is the database path
