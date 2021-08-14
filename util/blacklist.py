@@ -114,11 +114,11 @@ def ban_user(db, id, reason):
 	return 1, 0
 
 def unban_user(db, id):
-	c = db.execute("SELECT realname, left FROM users WHERE id = ? AND rank = ?", (id, -10))
+	c = db.execute("SELECT left FROM users WHERE id = ? AND rank = ?", (id, -10))
 	row = c.fetchone()
 	if row is None:
 		return 0
-	if row[0] == "" and row[1] == datetime.utcfromtimestamp(0):
+	if row[0] == datetime.utcfromtimestamp(0):
 		# this is a placeholder entry, just delete it instead
 		db.modify("DELETE FROM users WHERE id = ?", (id, ))
 	else:
