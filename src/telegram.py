@@ -466,7 +466,7 @@ def check_telegram_exc(e, user_id):
 
 # Event receiver: handles all things the core decides to do "on its own":
 # e.g. karma notifications, deletion of messages, signed messages
-# This does *not* include direct replies to commands or relaying messages.
+# This does *not* include direct replies to commands or relaying of messages.
 
 @core.registerReceiver
 class MyReceiver(core.Receiver):
@@ -511,6 +511,8 @@ class MyReceiver(core.Receiver):
 					break
 			# queued message has msid=None here since this is a deletion, not a message being sent
 			put_into_queue(user, None, f)
+		# drop the mappings for this message so the id doesn't end up used e.g. for replies
+		ch.deleteMappings(msid)
 	@staticmethod
 	def stop_invoked(user, delete_out):
 		message_queue.delete(lambda item, user_id=user.id: item.user_id == user_id)
