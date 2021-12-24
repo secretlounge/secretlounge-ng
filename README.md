@@ -34,6 +34,7 @@ adminhelp - Show commands available to admins
 toggledebug - Toggle debug mode (sends back all messages to you)
 togglekarma - Toggle karma notifications
 tripcode - Show or set a tripcode for your messages
+toggletripcode - toggle your tripcode for your messages
 ```
 
 ## FAQ

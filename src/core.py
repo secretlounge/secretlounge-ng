@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime, timedelta
-from sqlite3.dbapi2 import enable_callback_tracebacks
 from threading import Lock
 
 import src.replies as rp
