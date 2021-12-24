@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timedelta
+from sqlite3.dbapi2 import enable_callback_tracebacks
 from threading import Lock
 
 import src.replies as rp
@@ -20,7 +21,7 @@ media_limit_period = None
 sign_interval = None
 
 def init(config, _db, _ch):
-	global db, ch, spam_scores, blacklist_contact, enable_signing, allow_remove_command, media_limit_period, sign_interval
+	global db, ch, spam_scores, blacklist_contact, enable_signing, allow_remove_command, media_limit_period, sign_interval, enable_tripcode_toggle
 	db = _db
 	ch = _ch
 	spam_scores = ScoreKeeper()
@@ -28,6 +29,7 @@ def init(config, _db, _ch):
 	blacklist_contact = config.get("blacklist_contact", "")
 	enable_signing = config["enable_signing"]
 	allow_remove_command = config["allow_remove_command"]
+	enable_tripcode_toggle = config.get("enable_tripcode_toggle", False)
 	if "media_limit_period" in config.keys():
 		media_limit_period = timedelta(hours=int(config["media_limit_period"]))
 	sign_interval = timedelta(seconds=int(config.get("sign_limit_interval", 600)))
@@ -336,6 +338,9 @@ def set_tripcode(user, text):
 
 @requireUser
 def toggle_tripcode(user):
+	if not enable_tripcode_toggle:
+		return rp.Reply(rp.types.ERR_COMMAND_DISABLED)
+
 	with db.modifyUser(id=user.id) as user:
 		user.toggleTripcode = not user.toggleTripcode
 		new = user.toggleTripcode

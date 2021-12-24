@@ -34,10 +34,12 @@ allow_documents = None
 linked_network: dict = None
 
 def init(config, _db, _ch):
-	global bot, db, ch, message_queue, allow_documents, linked_network
+	global bot, db, ch, message_queue, allow_documents, linked_network, enable_tripcode_toggle
 	if config["bot_token"] == "":
 		logging.error("No telegram token specified.")
 		exit(1)
+
+	enable_tripcode_toggle = config.get("enable_tripcode_toggle", False)
 
 	logging.getLogger("urllib3").setLevel(logging.WARNING) # very noisy with debug otherwise
 	telebot.apihelper.READ_TIMEOUT = 20
@@ -284,15 +286,16 @@ def formatter_signed_message(user: core.User, fmt: FormattedMessageBuilder):
 
 # Add tripcode message formatting for User `user` to `fmt`
 def formatter_tripcoded_message(user: core.User, fmt: FormattedMessageBuilder):
-	tripname, tripcode = genTripcode(user.tripcode)
+	if user.tripcode:
+		tripname, tripcode = genTripcode(user.tripcode)
 	# due to how prepend() works the string is built right-to-left
-	fmt.prepend("</code>:\n", True)
-	fmt.prepend(tripcode)
-	fmt.prepend("</b> <code>", True)
-	fmt.prepend(tripname)
-	fmt.prepend("<b>", True)
+		fmt.prepend("</code>:\n", True)
+		fmt.prepend(tripcode)
+		fmt.prepend("</b> <code>", True)
+		fmt.prepend(tripname)
+		fmt.prepend("<b>", True)
 
-###
+	###
 
 # Message sending (queue-related)
 
@@ -701,7 +704,7 @@ def relay_inner(ev, *, caption_text=None, signed=False, tripcode=False):
 		formatter_network_links(fmt)
 		if signed:
 			formatter_signed_message(user, fmt)
-		elif tripcode or user.toggleTripcode:
+		elif tripcode or (enable_tripcode_toggle and user.toggleTripcode):
 			formatter_tripcoded_message(user, fmt)
 		fmt = fmt.build()
 		# either replace whole message or just the caption
