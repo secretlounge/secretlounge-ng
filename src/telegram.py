@@ -286,16 +286,15 @@ def formatter_signed_message(user: core.User, fmt: FormattedMessageBuilder):
 
 # Add tripcode message formatting for User `user` to `fmt`
 def formatter_tripcoded_message(user: core.User, fmt: FormattedMessageBuilder):
-	if user.tripcode:
-		tripname, tripcode = genTripcode(user.tripcode)
+	tripname, tripcode = genTripcode(user.tripcode)
 	# due to how prepend() works the string is built right-to-left
-		fmt.prepend("</code>:\n", True)
-		fmt.prepend(tripcode)
-		fmt.prepend("</b> <code>", True)
-		fmt.prepend(tripname)
-		fmt.prepend("<b>", True)
+	fmt.prepend("</code>:\n", True)
+	fmt.prepend(tripcode)
+	fmt.prepend("</b> <code>", True)
+	fmt.prepend(tripname)
+	fmt.prepend("<b>", True)
 
-	###
+###
 
 # Message sending (queue-related)
 
@@ -693,6 +692,10 @@ def relay_inner(ev, *, caption_text=None, signed=False, tripcode=False):
 
 	user = db.getUser(id=ev.from_user.id)
 
+	# check tripcode toggle.
+	if enable_tripcode_toggle and user.toggleTripcode:
+		tripcode = True
+
 	# apply text formatting to text or caption (if media)
 	ev_tosend = ev
 	force_caption = None
@@ -704,7 +707,7 @@ def relay_inner(ev, *, caption_text=None, signed=False, tripcode=False):
 		formatter_network_links(fmt)
 		if signed:
 			formatter_signed_message(user, fmt)
-		elif tripcode or (enable_tripcode_toggle and user.toggleTripcode):
+		elif tripcode:
 			formatter_tripcoded_message(user, fmt)
 		fmt = fmt.build()
 		# either replace whole message or just the caption

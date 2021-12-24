@@ -340,6 +340,10 @@ def toggle_tripcode(user):
 	if not enable_tripcode_toggle:
 		return rp.Reply(rp.types.ERR_COMMAND_DISABLED)
 
+	# If the user doesn't have a tripcode, don't enable.
+	if not user.tripcode:
+		return rp.Reply(rp.types.ERR_NO_TRIPCODE)
+
 	with db.modifyUser(id=user.id) as user:
 		user.toggleTripcode = not user.toggleTripcode
 		new = user.toggleTripcode
