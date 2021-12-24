@@ -335,6 +335,14 @@ def set_tripcode(user, text):
 	return rp.Reply(rp.types.TRIPCODE_SET, tripname=tripname, tripcode=tripcode)
 
 @requireUser
+def toggle_tripcode(user):
+	with db.modifyUser(id=user.id) as user:
+		user.toggleTripcode = not user.toggleTripcode
+		new = user.toggleTripcode
+
+	return rp.Reply(rp.types.BOOLEAN_CONFIG, description="Toggle Tripcode", enabled=new)
+
+@requireUser
 @requireRank(RANKS.admin)
 def promote_user(user, username2, rank):
 	user2 = getUserByName(username2)
