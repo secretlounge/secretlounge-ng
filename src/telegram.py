@@ -34,10 +34,12 @@ allow_documents = None
 linked_network: dict = None
 
 def init(config, _db, _ch):
-	global bot, db, ch, message_queue, allow_documents, linked_network
+	global bot, db, ch, message_queue, allow_documents, linked_network, enable_tripcode_toggle
 	if config["bot_token"] == "":
 		logging.error("No telegram token specified.")
 		exit(1)
+
+	enable_tripcode_toggle = config.get("enable_tripcode_toggle", False)
 
 	logging.getLogger("urllib3").setLevel(logging.WARNING) # very noisy with debug otherwise
 	telebot.apihelper.READ_TIMEOUT = 20
@@ -65,7 +67,7 @@ def init(config, _db, _ch):
 		"start", "stop", "users", "info", "motd", "toggledebug", "togglekarma",
 		"version", "source", "modhelp", "adminhelp", "modsay", "adminsay", "mod",
 		"admin", "warn", "delete", "remove", "uncooldown", "blacklist", "s", "sign",
-		"tripcode", "t", "tsign"
+		"tripcode", "t", "tsign", "toggletripcode"
 	]
 	for c in cmds: # maps /<c> to the function cmd_<c>
 		c = c.lower()
@@ -557,6 +559,7 @@ def cmd_motd(ev, arg):
 
 cmd_toggledebug = wrap_core(core.toggle_debug)
 cmd_togglekarma = wrap_core(core.toggle_karma)
+cmd_toggletripcode = wrap_core(core.toggle_tripcode)
 
 @takesArgument(optional=True)
 def cmd_tripcode(ev, arg):
@@ -688,6 +691,10 @@ def relay_inner(ev, *, caption_text=None, signed=False, tripcode=False):
 		return send_answer(ev, msid) # don't relay message, instead reply
 
 	user = db.getUser(id=ev.from_user.id)
+
+	# check tripcode toggle.
+	if enable_tripcode_toggle and user.toggleTripcode:
+		tripcode = True
 
 	# apply text formatting to text or caption (if media)
 	ev_tosend = ev

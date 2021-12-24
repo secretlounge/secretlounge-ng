@@ -19,7 +19,7 @@ class SystemConfig():
 USER_PROPS = (
 	"id", "username", "realname", "rank", "joined", "left", "lastActive",
 	"cooldownUntil", "blacklistReason", "warnings", "warnExpiry", "karma",
-	"hideKarma", "debugEnabled", "tripcode"
+	"hideKarma", "debugEnabled", "tripcode", "toggleTripcode",
 )
 
 class User():
@@ -40,6 +40,8 @@ class User():
 		self.hideKarma = None # bool
 		self.debugEnabled = None # bool
 		self.tripcode = None # str?
+		self.toggleTripcode = None # bool
+
 	def __eq__(self, other):
 		if isinstance(other, User):
 			return self.id == other.id
@@ -54,6 +56,7 @@ class User():
 		self.karma = 0
 		self.hideKarma = False
 		self.debugEnabled = False
+		self.toggleTripcode = False
 	def isJoined(self):
 		return self.left is None
 	def isInCooldown(self):
@@ -185,7 +188,7 @@ class JSONDatabase(Database):
 	def _userToDict(user):
 		props = ["id", "username", "realname", "rank", "joined", "left",
 			"lastActive", "cooldownUntil", "blacklistReason", "warnings",
-			"warnExpiry", "karma", "hideKarma", "debugEnabled", "tripcode"]
+			"warnExpiry", "karma", "hideKarma", "debugEnabled", "tripcode", 'toggleTripcode']
 		d = {}
 		for prop in props:
 			value = getattr(user, prop)
@@ -197,7 +200,7 @@ class JSONDatabase(Database):
 	def _userFromDict(d):
 		if d is None: return None
 		props = ["id", "username", "realname", "rank", "blacklistReason",
-			"warnings", "karma", "hideKarma", "debugEnabled"]
+			"warnings", "karma", "hideKarma", "debugEnabled", 'toggleTripcode']
 		props_d = [("tripcode", None)]
 		dateprops = ["joined", "left", "lastActive", "cooldownUntil", "warnExpiry"]
 		user = User()
@@ -319,12 +322,15 @@ CREATE TABLE IF NOT EXISTS `users` (
 	`hideKarma` TINYINT NOT NULL,
 	`debugEnabled` TINYINT NOT NULL,
 	`tripcode` TEXT,
+	`toggleTripcode` TINYINT NOT NULL, 
 	PRIMARY KEY (`id`)
 );
 			""".strip())
 			# migration
 			if not row_exists("users", "tripcode"):
 				self.db.execute("ALTER TABLE `users` ADD `tripcode` TEXT")
+			if not row_exists("users", "toggleTripcode"):
+				self.db.execute("ALTER TABLE `users` ADD `toggleTripcode` TINYINT NOT NULL DEFAULT 0")
 	def getUser(self, id=None):
 		if id is None:
 			raise ValueError()

@@ -19,6 +19,11 @@ enable_signing: false
 # defaults to 600 if not specified, set to 0 to disable
 #sign_limit_interval: 600
 
+# enable toggling tripcode for messages. 
+# If enabled, tripcodes can be toggle on/off using /toggletripcode. 
+# Otherwise to add a tripcode, messages must always be prefixed with /t 
+enable_tripcode_toggle: false
+
 # point of contact shown to blacklisted users (optional)
 #blacklist_contact: http://t.me/invite/something
 
