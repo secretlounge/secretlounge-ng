@@ -691,6 +691,13 @@ def relay_inner(ev, *, caption_text=None, signed=False, tripcode=False):
 
 	user = db.getUser(id=ev.from_user.id)
 
+	# for signed msgs: check user's forward privacy status first
+	# FIXME? this is a possible bottleneck
+	if signed:
+		tchat = bot.get_chat(user.id)
+		if tchat.has_private_forwards:
+			return send_answer(ev, rp.Reply(rp.types.ERR_SIGN_PRIVACY))
+
 	# apply text formatting to text or caption (if media)
 	ev_tosend = ev
 	force_caption = None
