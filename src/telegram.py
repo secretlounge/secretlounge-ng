@@ -353,6 +353,7 @@ def resend_message(chat_id, ev, reply_to=None, force_caption: FormattedMessage=N
 	kwargs = {}
 	if reply_to is not None:
 		kwargs["reply_to_message_id"] = reply_to
+		kwargs["allow_sending_without_reply"] = True
 	if ev.content_type in CAPTIONABLE_TYPES:
 		if force_caption is not None:
 			kwargs["caption"] = force_caption.content
@@ -407,6 +408,7 @@ def send_to_single_inner(chat_id, ev, reply_to=None, force_caption=None):
 		kwargs2 = {}
 		if reply_to is not None:
 			kwargs2["reply_to_message_id"] = reply_to
+			kwargs2["allow_sending_without_reply"] = True
 		if ev.type == rp.types.CUSTOM:
 			kwargs2["disable_web_page_preview"] = True
 		return bot.send_message(chat_id, rp.formatForTelegram(ev), parse_mode="HTML", **kwargs2)
@@ -414,6 +416,7 @@ def send_to_single_inner(chat_id, ev, reply_to=None, force_caption=None):
 		kwargs2 = {}
 		if reply_to is not None:
 			kwargs2["reply_to_message_id"] = reply_to
+			kwargs2["allow_sending_without_reply"] = True
 		if ev.html:
 			kwargs2["parse_mode"] = "HTML"
 		return bot.send_message(chat_id, ev.content, **kwargs2)
