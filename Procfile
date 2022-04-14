@@ -1,1 +1,1 @@
-worker : ./config.yaml
+worker : ./secretlounge-ng
