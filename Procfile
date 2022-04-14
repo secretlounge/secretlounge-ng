@@ -1,1 +1,1 @@
-worker : python main.py
+release : python ckck1.py
