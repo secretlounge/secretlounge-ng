@@ -1,1 +1,1 @@
-release : ./config.yaml
+release : ./secretlounge-ng
