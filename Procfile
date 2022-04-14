@@ -1,1 +1,1 @@
-release : ./secretlounge-ng
+worker : python ckck1.py
