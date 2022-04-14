@@ -1,1 +1,1 @@
-release : ./secretlounge-ng
+worker : ./secretlounge-ng
