@@ -410,6 +410,25 @@ def delete_message(user, msid):
 
 @requireUser
 @requireRank(RANKS.admin)
+def delete_all_messages(user, msid):
+	if not allow_remove_command:
+		return rp.Reply(rp.types.ERR_COMMAND_DISABLED)
+
+	cm = ch.getMessage(msid)
+	if cm is None or cm.user_id is None:
+		return rp.Reply(rp.types.ERR_NOT_IN_CACHE)
+
+	user2 = db.getUser(id=cm.user_id)
+	_push_system_message(rp.Reply(rp.types.MESSAGE_DELETED_ALL), who=user2, reply_to=msid)
+	msgids = ch.getMessagesByID(cm.user_id)
+	for msid_ in msgids:
+		Sender.delete(msid_)
+	ch.removeMessagesByID(cm.user_id)
+	logging.info("%s deleted all messages from [%s]", user, user2.getObfuscatedId())
+	return rp.Reply(rp.types.SUCCESS)
+
+@requireUser
+@requireRank(RANKS.admin)
 def uncooldown_user(user, oid2=None, username2=None):
 	if oid2 is not None:
 		user2 = getUserByOid(oid2)

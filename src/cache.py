@@ -46,6 +46,16 @@ class Cache():
 	def getMessage(self, msid):
 		with self.lock:
 			return self.msgs.get(msid, None)
+	def getMessagesByID(self, uid):
+		with self.lock:
+			if uid not in self.idmap.keys():
+				return None
+		return list(filter(lambda x:isinstance(x, int), self.idmap[uid].keys()))
+	def removeMessagesByID(self, uid):
+		with self.lock:
+			if uid not in self.idmap.keys():
+				return None
+		self.idmap[uid] = {}
 	def saveMapping(self, uid, msid, data):
 		with self.lock:
 			self._saveMapping(self.idmap, uid, msid, data)

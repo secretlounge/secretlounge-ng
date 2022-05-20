@@ -21,6 +21,7 @@ HIDE_FORWARD_FROM = set([
 	"AntiForwardedBot", "noforward_bot", "Anonymous_telegram_bot",
 	"Forwards_Cover_Bot", "ForwardsHideBot", "ForwardsCoversBot",
 	"NoForwardsSourceBot", "AntiForwarded_v2_Bot", "ForwardCoverzBot",
+
 ])
 VENUE_PROPS = ("title", "address", "foursquare_id", "foursquare_type", "google_place_id", "google_place_type")
 
@@ -66,8 +67,8 @@ def init(config, _db, _ch):
 	cmds = [
 		"start", "stop", "users", "info", "motd", "toggledebug", "togglekarma",
 		"version", "source", "modhelp", "adminhelp", "modsay", "adminsay", "mod",
-		"admin", "warn", "delete", "remove", "uncooldown", "blacklist", "s", "sign",
-		"tripcode", "t", "tsign"
+		"admin", "warn", "delete", "delete_all", "remove", "uncooldown", "blacklist",
+		"s", "sign", "tripcode", "t", "tsign"
 	]
 	for c in cmds: # maps /<c> to the function cmd_<c>
 		c = c.lower()
@@ -609,7 +610,7 @@ def cmd_admin(ev, arg):
 	arg = arg.lstrip("@")
 	send_answer(ev, core.promote_user(c_user, arg, RANKS.admin), True)
 
-def cmd_warn(ev, delete=False, only_delete=False):
+def cmd_warn(ev, delete=False, only_delete=False, delete_all=False):
 	c_user = UserContainer(ev.from_user)
 
 	if ev.reply_to_message is None:
@@ -620,6 +621,8 @@ def cmd_warn(ev, delete=False, only_delete=False):
 		return send_answer(ev, rp.Reply(rp.types.ERR_NOT_IN_CACHE), True)
 	if only_delete:
 		r = core.delete_message(c_user, reply_msid)
+	elif delete_all:
+		r = core.delete_all_messages(c_user, reply_msid)
 	else:
 		r = core.warn_user(c_user, reply_msid, delete)
 	send_answer(ev, r, True)
@@ -627,6 +630,8 @@ def cmd_warn(ev, delete=False, only_delete=False):
 cmd_delete = lambda ev: cmd_warn(ev, delete=True)
 
 cmd_remove = lambda ev: cmd_warn(ev, only_delete=True)
+
+cmd_delete_all = lambda ev: cmd_warn(ev, delete_all=True)
 
 @takesArgument()
 def cmd_uncooldown(ev, arg):
