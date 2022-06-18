@@ -73,3 +73,7 @@ root folder
 \-- README.md
 \-- secretlounge-ng
 ```
+
+## Notable forks
+
+[CatLounge](https://github.com/CatLounge/catlounge-ng-meow) - has numerous new features including specifying cooldown time
