@@ -2,8 +2,8 @@
 bot_token: "BOT_TOKEN_HERE"
 
 # supported db types: json, sqlite
-# both take a single argument which is the database path
-database: [sqlite, "path/to/secretlounge.db"]
+# both take a single argument which is the database file path
+database: [sqlite, "secretlounge.sqlite"]
 
 # relay contacts
 allow_contacts: false

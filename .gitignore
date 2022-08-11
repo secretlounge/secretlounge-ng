@@ -1,3 +1,4 @@
 config.yaml
 venv
 __pycache__
+*.sqlite

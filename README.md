@@ -1,23 +1,31 @@
 secretlounge-ng
 ---------------
-Rewrite of [secretlounge](https://github.com/6697/secretlounge), a bot to make an anonymous group chat on Telegram.
+
+Rewrite of [secretlounge](https://web.archive.org/web/20200920053736/https://github.com/6697/secretlounge), a bot to make an anonymous group chat on Telegram.
+
+The bot accepts messages, pictures, videos, etc. from any user and relays it to all other active users without revealing the author.
 
 ## Setup
-```
-$ pip3 install -r requirements.txt
-$ cp config.yaml.example config.yaml
-Edit config.yaml with your favorite text editor.
-$ ./secretlounge-ng
+
+```bash
+pip3 install -r requirements.txt
+cp config.yaml.example config.yaml
+# Edit config.yaml with your favorite text editor.
+./secretlounge-ng
 ```
 
+To run the bot in the background use a systemd service (preferred) or screen/tmux.
+
 ## @BotFather Setup
-Message [@BotFather](https://t.me/BotFather) to configure your bot as follows:
+
+Message [@BotFather](https://t.me/BotFather) and configure your bot as follows:
 
 * `/setprivacy`: enabled
 * `/setjoingroups`: disabled
 * `/setcommands`: paste the command list below
 
 ### Command list
+
 ```
 start - Join the chat (start receiving messages)
 stop - Leave the chat (stop receiving messages)
@@ -33,7 +41,7 @@ modhelp - Show commands available to moderators
 adminhelp - Show commands available to admins
 toggledebug - Toggle debug mode (sends back all messages to you)
 togglekarma - Toggle karma notifications
-tripcode - Show or set a tripcode for your messages
+tripcode - Show or set the tripcode for your messages
 ```
 
 ## FAQ
@@ -59,7 +67,7 @@ This can also be used to grant an user higher privileges by exchanging the last 
 
 The `blacklist.py` and `perms.py` script, including advanced functions like blacklist syncing
 (`./util/blacklist.py sync`), support a structure like the following where each bot
-has its' own subdirectory:
+has its own subdirectory:
 
 ```
 root folder
@@ -74,6 +82,36 @@ root folder
 \-- secretlounge-ng
 ```
 
+4. **Is this bot really anonymous?**
+
+When using the source in this repository*¹*, unless you reveal yourself,
+ordinary users in the bot have zero possibilities of discovering your Telegram user.
+
+Mods and admins in the bot can tell the authors of recent messages apart through a pseudo-random
+ID returned by the `/info` command. This ID changes every 24 hours, posts also expire from
+the cache after 24 hours*²* (or if secretlounge-ng is restarted) meaning that they
+become unable to be deleted or their authors determined.
+
+People with access to the server the bot runs on have no direct, but a variety of
+indirect ways to determine who wrote a particular message.
+
+*¹*: It is impossible to ascertain this from afar. You have to trust the bot owner either way.
+
+*²*: Sophisticated attacks are possible to track continously active users over a longer timeframe. It is not expected that a human can perform this.
+
+All of these assessments presume a sufficient user population in the bot so that anyone could blend in.
+
+5. **Why don't polls work?**
+
+Telegram bots are able to create new polls and forward messages (including authorship), but they can't forward the poll itself as with other message types.
+Working around this is possible with some disadvantages, but has not been implemented yet.
+
+6. **Is this code maintained?**
+
+This codebase is in active use [over here](https://t.me/s/secretloungeproject).
+Updates are made either if there's something broken or when the author feels like it.
+
 ## Notable forks
 
-[CatLounge](https://github.com/CatLounge/catlounge-ng-meow) - has numerous new features including specifying cooldown time
+* [CatLounge](https://github.com/CatLounge/catlounge-ng-meow) - has numerous new features including specifying cooldown time
+* [Furry fork](https://github.com/dogmike/secretlounge-ng) - not sure, but there's a bunch of things
