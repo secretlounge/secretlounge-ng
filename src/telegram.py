@@ -67,7 +67,7 @@ def init(config, _db, _ch):
 		"start", "stop", "users", "info", "motd", "toggledebug", "togglekarma",
 		"version", "source", "modhelp", "adminhelp", "modsay", "adminsay", "mod",
 		"admin", "warn", "delete", "remove", "uncooldown", "blacklist", "s", "sign",
-		"tripcode", "t", "tsign"
+		"tripcode", "t", "tsign", "cleanup"
 	]
 	for c in cmds: # maps /<c> to the function cmd_<c>
 		c = c.lower()
@@ -640,6 +640,8 @@ def cmd_warn(ev, delete=False, only_delete=False):
 cmd_delete = lambda ev: cmd_warn(ev, delete=True)
 
 cmd_remove = lambda ev: cmd_warn(ev, only_delete=True)
+
+cmd_cleanup = wrap_core(core.cleanup_messages)
 
 @takesArgument()
 def cmd_uncooldown(ev, arg):

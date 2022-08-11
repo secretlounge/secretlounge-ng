@@ -46,6 +46,10 @@ class Cache():
 	def getMessage(self, msid):
 		with self.lock:
 			return self.msgs.get(msid, None)
+	def iterateMessages(self, functor):
+		with self.lock:
+			for msid, cm in self.msgs.items():
+				functor(msid, cm)
 	def saveMapping(self, uid, msid, data):
 		with self.lock:
 			self._saveMapping(self.idmap, uid, msid, data)

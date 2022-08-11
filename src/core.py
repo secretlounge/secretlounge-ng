@@ -410,6 +410,24 @@ def delete_message(user, msid):
 
 @requireUser
 @requireRank(RANKS.admin)
+def cleanup_messages(user):
+	msids = []
+	def f(msid: int, cm: CachedMessage):
+		if cm.user_id is None:
+			return
+		if 1337 in cm.upvoted: # mark that we've been here before
+			return
+		user2 = db.getUser(id=cm.user_id)
+		if user2.isBlacklisted():
+			msids.append(msid)
+			cm.upvoted.add(1337)
+	ch.iterateMessages(f)
+	logging.info("%s invoked cleanup (matched: %d)", user, len(msids))
+	Sender.delete(msids)
+	return rp.Reply(rp.types.DELETION_QUEUED, count=len(msids))
+
+@requireUser
+@requireRank(RANKS.admin)
 def uncooldown_user(user, oid2=None, username2=None):
 	if oid2 is not None:
 		user2 = getUserByOid(oid2)
