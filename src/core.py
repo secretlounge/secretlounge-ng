@@ -148,13 +148,13 @@ class ScoreKeeper():
 
 class Receiver():
 	@staticmethod
-	def reply(m, msid, who, except_who, reply_to):
+	def reply(m: rp.Reply, msid: int, who, except_who, reply_to: bool):
 		raise NotImplementedError()
 	@staticmethod
-	def delete(msid):
+	def delete(msids: list[int]):
 		raise NotImplementedError()
 	@staticmethod
-	def stop_invoked(who, delete_out):
+	def stop_invoked(who, delete_out: bool):
 		raise NotImplementedError()
 
 class Sender(Receiver): # flawless class hierachy I know...
@@ -165,10 +165,10 @@ class Sender(Receiver): # flawless class hierachy I know...
 		for r in Sender.receivers:
 			r.reply(m, msid, who, except_who, reply_to)
 	@staticmethod
-	def delete(msid):
-		logging.debug("delete(msid=%d)", msid)
+	def delete(msids):
+		logging.debug("delete(msids=%r)", msids)
 		for r in Sender.receivers:
-			r.delete(msid)
+			r.delete(msids)
 	@staticmethod
 	def stop_invoked(who, delete_out=False):
 		logging.debug("stop_invoked(who=%s)", who)
@@ -388,7 +388,7 @@ def warn_user(user, msid, delete=False):
 		if not delete: # allow deleting already warned messages
 			return rp.Reply(rp.types.ERR_ALREADY_WARNED)
 	if delete:
-		Sender.delete(msid)
+		Sender.delete([msid])
 	logging.info("%s warned [%s]%s", user, user2.getObfuscatedId(), delete and " (message deleted)" or "")
 	return rp.Reply(rp.types.SUCCESS)
 
@@ -404,7 +404,7 @@ def delete_message(user, msid):
 
 	user2 = db.getUser(id=cm.user_id)
 	_push_system_message(rp.Reply(rp.types.MESSAGE_DELETED), who=user2, reply_to=msid)
-	Sender.delete(msid)
+	Sender.delete([msid])
 	logging.info("%s deleted a message from [%s]", user, user2.getObfuscatedId())
 	return rp.Reply(rp.types.SUCCESS)
 
@@ -447,7 +447,7 @@ def blacklist_user(user, msid, reason):
 	_push_system_message(
 		rp.Reply(rp.types.ERR_BLACKLISTED, reason=reason, contact=blacklist_contact),
 		who=user2, reply_to=msid)
-	Sender.delete(msid)
+	Sender.delete([msid])
 	logging.info("%s was blacklisted by %s for: %s", user2, user, reason)
 	return rp.Reply(rp.types.SUCCESS)
 
