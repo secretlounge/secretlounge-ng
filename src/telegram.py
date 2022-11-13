@@ -10,17 +10,17 @@ from src.util import MutablePriorityQueue, genTripcode
 from src.globals import *
 
 # module constants
-MEDIA_FILTER_TYPES = ("photo", "animation", "document", "video", "sticker")
+MEDIA_FILTER_TYPES = ("photo", "animation", "document", "video", "video_note", "sticker")
 CAPTIONABLE_TYPES = ("photo", "audio", "animation", "document", "video", "voice")
 HIDE_FORWARD_FROM = set([
-	"anonymize_bot", "AnonFaceBot", "AnonymousForwarderBot", "anonomiserBot",
+	"anonymize_bot", "anonfacebot", "anonymousforwarderbot", "anonomiserbot",
 	"anonymous_forwarder_nashenasbot", "anonymous_forward_bot", "mirroring_bot",
-	"anonymizbot", "ForwardsCoverBot", "anonymousmcjnbot", "MirroringBot",
-	"anonymousforwarder_bot", "anonymousForwardBot", "anonymous_forwarder_bot",
-	"anonymousforwardsbot", "HiddenlyBot", "ForwardCoveredBot", "anonym2bot",
-	"AntiForwardedBot", "noforward_bot", "Anonymous_telegram_bot",
-	"Forwards_Cover_Bot", "ForwardsHideBot", "ForwardsCoversBot",
-	"NoForwardsSourceBot", "AntiForwarded_v2_Bot", "ForwardCoverzBot",
+	"anonymizbot", "forwardscoverbot", "anonymousmcjnbot", "mirroringbot",
+	"anonymousforwarder_bot", "anonymousforwardbot", "anonymous_forwarder_bot",
+	"anonymousforwardsbot", "hiddenlybot", "forwardcoveredbot", "anonym2bot",
+	"antiforwardedbot", "noforward_bot", "anonymous_telegram_bot",
+	"forwards_cover_bot", "forwardshidebot", "forwardscoversbot",
+	"noforwardssourcebot", "antiforwarded_v2_bot", "forwardcoverzbot",
 ])
 VENUE_PROPS = ("title", "address", "foursquare_id", "foursquare_type", "google_place_id", "google_place_type")
 
@@ -333,14 +333,14 @@ def send_thread():
 
 def is_forward(ev):
 	return (ev.forward_from is not None or ev.forward_from_chat is not None
-		or ev.json.get("forward_sender_name") is not None)
+		or ev.forward_sender_name is not None)
 
 def should_hide_forward(ev):
 	# Hide forwards from anonymizing bots that have recently become popular.
 	# The main reason is that the bot API heavily penalizes forwarding and the
 	# 'Forwarded from Anonymize Bot' provides no additional/useful information.
 	if ev.forward_from is not None:
-		return ev.forward_from.username in HIDE_FORWARD_FROM
+		return (ev.forward_from.username or "").lower() in HIDE_FORWARD_FROM
 	return False
 
 def resend_message(chat_id, ev, reply_to=None, force_caption: FormattedMessage=None):
@@ -383,8 +383,8 @@ def resend_message(chat_id, ev, reply_to=None, force_caption: FormattedMessage=N
 	elif ev.content_type == "video_note":
 		return bot.send_video_note(chat_id, ev.video_note.file_id, **kwargs)
 	elif ev.content_type == "location":
-		kwargs["latitude"] = ev.location.latitude
-		kwargs["longitude"] = ev.location.longitude
+		for prop in ("latitude", "longitude", "horizontal_accuracy"):
+			kwargs[prop] = getattr(ev.location, prop)
 		return bot.send_location(chat_id, **kwargs)
 	elif ev.content_type == "venue":
 		kwargs["latitude"] = ev.venue.location.latitude
