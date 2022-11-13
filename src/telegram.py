@@ -476,6 +476,9 @@ def check_telegram_exc(e, user_id):
 		time.sleep(d)
 		return True # retry
 
+	if "VOICE_MESSAGES_FORBIDDEN" in e.result.text:
+		return False
+
 	logging.exception("API exception")
 	return False
 
