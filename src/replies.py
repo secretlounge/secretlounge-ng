@@ -111,7 +111,7 @@ format_strs = {
 	types.KARMA_NOTIFICATION:
 		em( "You've just been given sweet karma! (check /info to see your karma"+
 			" or /toggleKarma to turn these notifications off)" ),
-	types.DM_REQUEST_NOTIFICATION: lambda sender, **_: em( "{sender} has requested contact in response to this message." + 
+	types.DM_REQUEST_NOTIFICATION: lambda username, **_: em( "{username!x} has requested contact in response to this message." + 
 			"\nRun /toggleRequests to turn these notifications off." ),
 	types.DM_REQUEST_ACKNOWLEDGEMENT: em("Your telegram username has been forwarded to this message's author."),
 	types.TRIPCODE_INFO: lambda tripcode, **_:

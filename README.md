@@ -41,6 +41,7 @@ modhelp - Show commands available to moderators
 adminhelp - Show commands available to admins
 toggledebug - Toggle debug mode (sends back all messages to you)
 togglekarma - Toggle karma notifications
+togglerequests - Toggle DM request notifications
 tripcode - Show or set the tripcode for your messages
 ```
 

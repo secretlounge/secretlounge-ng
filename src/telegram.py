@@ -64,10 +64,10 @@ def init(config, _db, _ch):
 	types += ["animation", "audio", "photo", "sticker", "video", "video_note", "voice"]
 
 	cmds = [
-		"start", "stop", "users", "info", "motd", "toggledebug", "togglekarma",
-		"version", "source", "modhelp", "adminhelp", "modsay", "adminsay", "mod",
-		"admin", "warn", "delete", "remove", "uncooldown", "blacklist", "s", "sign",
-		"tripcode", "t", "tsign", "cleanup"
+		"start", "stop", "users", "info", "motd", "toggledebug", "togglekarma", 
+		"togglerequests", "version", "source", "modhelp", "adminhelp", "modsay", 
+		"adminsay", "mod", "admin", "warn", "delete", "remove", "uncooldown", 
+		"blacklist", "s", "sign", "tripcode", "t", "tsign", "cleanup"
 	]
 	for c in cmds: # maps /<c> to the function cmd_<c>
 		c = c.lower()
