@@ -19,7 +19,7 @@ class SystemConfig():
 USER_PROPS = (
 	"id", "username", "realname", "rank", "joined", "left", "lastActive",
 	"cooldownUntil", "blacklistReason", "warnings", "warnExpiry", "karma",
-	"hideKarma", "debugEnabled", "tripcode"
+	"hideKarma", "hideRequests", "debugEnabled", "tripcode"
 )
 
 class User():
@@ -38,6 +38,7 @@ class User():
 		self.warnExpiry = None # datetime?
 		self.karma = None # int
 		self.hideKarma = None # bool
+		self.hideRequests = None # bool
 		self.debugEnabled = None # bool
 		self.tripcode = None # str?
 	def __eq__(self, other):
@@ -53,6 +54,7 @@ class User():
 		self.warnings = 0
 		self.karma = 0
 		self.hideKarma = False
+		self.hideRequests = False
 		self.debugEnabled = False
 	def isJoined(self):
 		return self.left is None
@@ -185,7 +187,7 @@ class JSONDatabase(Database):
 	def _userToDict(user):
 		props = ["id", "username", "realname", "rank", "joined", "left",
 			"lastActive", "cooldownUntil", "blacklistReason", "warnings",
-			"warnExpiry", "karma", "hideKarma", "debugEnabled", "tripcode"]
+			"warnExpiry", "karma", "hideKarma", "hideRequests", "debugEnabled", "tripcode"]
 		d = {}
 		for prop in props:
 			value = getattr(user, prop)
@@ -197,7 +199,7 @@ class JSONDatabase(Database):
 	def _userFromDict(d):
 		if d is None: return None
 		props = ["id", "username", "realname", "rank", "blacklistReason",
-			"warnings", "karma", "hideKarma", "debugEnabled"]
+			"warnings", "karma", "hideKarma", "hideRequests", "debugEnabled"]
 		props_d = [("tripcode", None)]
 		dateprops = ["joined", "left", "lastActive", "cooldownUntil", "warnExpiry"]
 		user = User()
@@ -317,6 +319,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 	`warnExpiry` TIMESTAMP,
 	`karma` INTEGER NOT NULL,
 	`hideKarma` TINYINT NOT NULL,
+	`hideRequests` TINYINT NOT NULL,
 	`debugEnabled` TINYINT NOT NULL,
 	`tripcode` TEXT,
 	PRIMARY KEY (`id`)

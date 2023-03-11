@@ -578,6 +578,7 @@ def cmd_motd(ev, arg):
 
 cmd_toggledebug = wrap_core(core.toggle_debug)
 cmd_togglekarma = wrap_core(core.toggle_karma)
+cmd_togglerequests = wrap_core(core.toggle_requests)
 
 @takesArgument(optional=True)
 def cmd_tripcode(ev, arg):
@@ -679,6 +680,15 @@ def plusone(ev):
 		return send_answer(ev, rp.Reply(rp.types.ERR_NOT_IN_CACHE), True)
 	return send_answer(ev, core.give_karma(c_user, reply_msid), True)
 
+def plusdm(ev):
+	c_user = UserContainer(ev.from_user)
+	if ev.reply_to_message is None:
+		return send_answer(ev, rp.Reply(rp.types.ERR_NO_REPLY), True)
+
+	reply_msid = ch.lookupMapping(ev.from_user.id, data=ev.reply_to_message.message_id)
+	if reply_msid is None:
+		return send_answer(ev, rp.Reply(rp.types.ERR_NOT_IN_CACHE), True)
+	return send_answer(ev, core.request_dm(c_user, reply_msid), True)
 
 def relay(ev):
 	# handle commands and karma giving
@@ -690,6 +700,8 @@ def relay(ev):
 			return
 		elif ev.text.strip() == "+1":
 			return plusone(ev)
+		elif ev.text.strip() == "+dm":
+			return plusdm(ev)
 	# manually handle signing / tripcodes for media since captions don't count for commands
 	if not is_forward(ev) and ev.content_type in CAPTIONABLE_TYPES and (ev.caption or "").startswith("/"):
 		c, arg = split_command(ev.caption)
