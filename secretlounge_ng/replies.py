@@ -6,7 +6,7 @@ from .globals import *
 class NumericEnum(Enum):
 	def __init__(self, names):
 		d = {name: i for i, name in enumerate(names)}
-		super(NumericEnum, self).__init__(d)
+		super().__init__(d)
 
 class CustomFormatter(Formatter):
 	def convert_field(self, value, conversion):
@@ -16,13 +16,13 @@ class CustomFormatter(Formatter):
 			return format_datetime(value)
 		elif conversion == "d": # time[d]elta
 			return format_timedelta(value)
-		return super(CustomFormatter, self).convert_field(value, conversion)
+		return super().convert_field(value, conversion)
 
 # definition of reply class and types
 
 class Reply():
-	def __init__(self, type, **kwargs):
-		self.type = type
+	def __init__(self, type_, **kwargs):
+		self.type = type_
 		self.kwargs = kwargs
 
 types = NumericEnum([

@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 import sys
-import os
 import logging
-from datetime import datetime, timedelta
-from time import sleep
 
 from blacklist import detect_dbs, print_function_help
 
@@ -117,6 +114,6 @@ def main(argv):
 
 	usage(actions)
 	exit(1)
-		
+
 if __name__ == "__main__":
 	main(sys.argv[1:])

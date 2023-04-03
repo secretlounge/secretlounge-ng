@@ -9,16 +9,7 @@ from datetime import datetime, timedelta
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), ".."))
 from secretlounge_ng.globals import *
 from secretlounge_ng.database import User, SystemConfig, JSONDatabase, SQLiteDatabase
-
-def open_db(config):
-	type, args = config["database"][0].lower(), config["database"][1:]
-	if type == "json":
-		return JSONDatabase(*args)
-	elif type == "sqlite":
-		return SQLiteDatabase(*args)
-	else:
-		logging.error("Unknown database type.")
-		exit(1)
+from secretlounge_ng.__main__ import open_db, load_config
 
 def safe_time(n):
 	if n > 2**32:
@@ -30,8 +21,7 @@ def usage():
 	print("Usage: import.py <config file> <original db>")
 
 def main(configpath, importpath):
-	with open(configpath, "r") as f:
-		config = yaml.safe_load(f)
+	config = load_config(configpath)
 
 	logging.basicConfig(format="[%(asctime)s] %(message)s", datefmt="%Y-%m-%d %H:%M", level=logging.INFO)
 

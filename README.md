@@ -7,7 +7,7 @@ The bot accepts messages, pictures, videos, etc. from any user and relays it to 
 
 ## Setup
 
-You will need a server or computer with Python 3 installed and access to the command line.
+You will need a Linux server or computer with Python 3 installed and access to the command line.
 
 ```bash
 pip install -e .

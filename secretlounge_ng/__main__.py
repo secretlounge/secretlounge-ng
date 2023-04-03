@@ -11,7 +11,9 @@ from .database import JSONDatabase, SQLiteDatabase
 from .cache import Cache
 from .util import Scheduler
 
-def start_new_thread(func, join=False, args=(), kwargs={}):
+opts = {}
+
+def start_new_thread(func, join=False, args=(), kwargs=None):
 	t = threading.Thread(target=func, args=args, kwargs=kwargs)
 	if not join:
 		t.daemon = True
@@ -20,7 +22,6 @@ def start_new_thread(func, join=False, args=(), kwargs={}):
 		t.join()
 
 def readopt(name):
-	global opts
 	for e in opts:
 		if e[0] == name:
 			return e[1]
@@ -46,10 +47,10 @@ def load_config(path):
 	return config
 
 def open_db(config):
-	type, args = config["database"][0].lower(), config["database"][1:]
-	if type == "json":
+	type_, args = config["database"][0].lower(), config["database"][1:]
+	if type_ == "json":
 		return JSONDatabase(*args)
-	elif type == "sqlite":
+	elif type_ == "sqlite":
 		path = os.path.split(args[0])
 		if path[0] != '':
 			os.makedirs(path[0], exist_ok=True)

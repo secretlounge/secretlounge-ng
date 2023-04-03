@@ -85,7 +85,8 @@ def _salt(c):
 	return '.'
 
 def genTripcode(tripcode):
-	# doesn't actually match 4chan's algorithm exactly
+	# no 100% match with 4chan but ASCII tripcodes should work
+	# FIXME: we need to replace this as `crypt` is deprecated in py3.11
 	pos = tripcode.find("#")
 	trname = tripcode[:pos]
 	trpass = tripcode[pos+1:]

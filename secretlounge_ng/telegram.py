@@ -3,6 +3,7 @@ import logging
 import time
 import json
 import re
+from functools import partial
 
 from . import core
 from . import replies as rp
@@ -216,9 +217,10 @@ class FormattedMessageBuilder():
 	# insert `content` at `pos`, `html` indicates HTML or plaintext
 	# if `pre` is set content will be inserted *before* existing insertions
 	def insert(self, pos, content, html=False, pre=False):
+		def cat(a, b):
+			return (b + a) if pre else (a + b)
 		i = self.inserts.get(pos)
 		if i is not None:
-			cat = lambda a, b: (b + a) if pre else (a + b)
 			# only turn insert into HTML if strictly necessary
 			if i[0] == html:
 				i = ( i[0], cat(i[1], content) )
@@ -640,9 +642,9 @@ def cmd_warn(ev, delete=False, only_delete=False):
 		r = core.warn_user(c_user, reply_msid, delete)
 	send_answer(ev, r, True)
 
-cmd_delete = lambda ev: cmd_warn(ev, delete=True)
+cmd_delete = partial(cmd_warn, delete=True)
 
-cmd_remove = lambda ev: cmd_warn(ev, only_delete=True)
+cmd_remove = partial(cmd_warn, only_delete=True)
 
 cmd_cleanup = wrap_core(core.cleanup_messages)
 

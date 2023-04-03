@@ -160,7 +160,7 @@ class Database():
 
 class JSONDatabase(Database):
 	def __init__(self, path):
-		super(JSONDatabase, self).__init__()
+		super().__init__()
 		self.path = path
 		self.db = {"systemConfig": None, "users": []}
 		try:
@@ -256,7 +256,7 @@ class JSONDatabase(Database):
 
 class SQLiteDatabase(Database):
 	def __init__(self, path):
-		super(SQLiteDatabase, self).__init__()
+		super().__init__()
 		self.db = sqlite3.connect(path, check_same_thread=False,
 			detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
 		self.db.row_factory = sqlite3.Row
