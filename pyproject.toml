@@ -16,3 +16,6 @@ dependencies = [
 
 [project.urls]
 "Homepage" = "https://github.com/secretlounge/secretlounge-ng"
+
+[tool.setuptools]
+packages = ["secretlounge_ng"]
