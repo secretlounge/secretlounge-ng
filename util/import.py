@@ -7,9 +7,8 @@ import json
 from datetime import datetime, timedelta
 
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), ".."))
-from src.globals import *
-from src.database import User, SystemConfig
-from src.database import JSONDatabase, SQLiteDatabase
+from secretlounge_ng.globals import *
+from secretlounge_ng.database import User, SystemConfig, JSONDatabase, SQLiteDatabase
 
 def open_db(config):
 	type, args = config["database"][0].lower(), config["database"][1:]
@@ -32,7 +31,7 @@ def usage():
 
 def main(configpath, importpath):
 	with open(configpath, "r") as f:
-		config = yaml.load(f)
+		config = yaml.safe_load(f)
 
 	logging.basicConfig(format="[%(asctime)s] %(message)s", datefmt="%Y-%m-%d %H:%M", level=logging.INFO)
 

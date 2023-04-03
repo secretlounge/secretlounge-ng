@@ -7,14 +7,19 @@ The bot accepts messages, pictures, videos, etc. from any user and relays it to 
 
 ## Setup
 
+You will need a server or computer with Python 3 installed and access to the command line.
+
 ```bash
-pip3 install -r requirements.txt
+pip install -e .
 cp config.yaml.example config.yaml
-# Edit config.yaml with your favorite text editor.
+# Edit config.yaml with your favorite text editor
 ./secretlounge-ng
 ```
 
 To run the bot in the background use a systemd service (preferred) or screen/tmux.
+
+Note that you can also install it as a normal Python module and run it from anywhere
+like `python -m secretlounge_ng`, which I won't explain here.
 
 ## @BotFather Setup
 

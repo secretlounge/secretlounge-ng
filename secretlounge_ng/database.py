@@ -6,7 +6,7 @@ from datetime import date, datetime, timedelta, timezone
 from random import randint
 from threading import RLock
 
-from src.globals import *
+from .globals import *
 
 # what's inside the db
 

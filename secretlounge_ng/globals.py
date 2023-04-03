@@ -1,4 +1,4 @@
-from src.util import Enum
+from .util import Enum
 
 # a few utility functions
 def escape_html(s):

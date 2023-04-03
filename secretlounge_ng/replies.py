@@ -1,7 +1,7 @@
 import re
 from string import Formatter
 
-from src.globals import *
+from .globals import *
 
 class NumericEnum(Enum):
 	def __init__(self, names):
@@ -151,7 +151,7 @@ format_strs = {
 		"<b>{active}</b> <i>active</i>, {inactive} <i>inactive and</i> "+
 		"{blacklisted} <i>blacklisted users</i> (<i>total</i>: {total})",
 
-	types.PROGRAM_VERSION: "secretlounge-ng v{version} ~ https://github.com/sfan5/secretlounge-ng",
+	types.PROGRAM_VERSION: "secretlounge-ng v{version} ~ https://github.com/secretlounge/secretlounge-ng",
 	types.HELP_MODERATOR:
 		"<i>Moderators can use the following commands</i>:\n"+
 		"  /modhelp - show this text\n"+

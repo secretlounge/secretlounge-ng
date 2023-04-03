@@ -1,4 +1,7 @@
-config.yaml
-venv
+venv/
 __pycache__
+*.egg-info
+dist/
+
+config.yaml
 *.sqlite

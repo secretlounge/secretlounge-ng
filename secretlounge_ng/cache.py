@@ -3,7 +3,7 @@ import itertools
 from datetime import datetime, timedelta
 from threading import RLock
 
-from src.globals import *
+from .globals import *
 
 class CachedMessage():
 	__slots__ = ('user_id', 'time', 'warned', 'upvoted')

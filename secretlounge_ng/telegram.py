@@ -4,10 +4,10 @@ import time
 import json
 import re
 
-import src.core as core
-import src.replies as rp
-from src.util import MutablePriorityQueue, genTripcode
-from src.globals import *
+from . import core
+from . import replies as rp
+from .util import MutablePriorityQueue, genTripcode
+from .globals import *
 
 # module constants
 MEDIA_FILTER_TYPES = ("photo", "animation", "document", "video", "video_note", "sticker")
