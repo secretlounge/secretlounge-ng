@@ -101,6 +101,7 @@ def ban_user(db, id, reason):
 			"warnings": 0,
 			"karma": 0,
 			"hideKarma": 0,
+			"hideRequests": 0,
 			"debugEnabled": 0,
 		}
 		sql = "INSERT INTO users (" + ( ", ".join(u.keys()) ) + ") VALUES (" + ( ", ".join("?" for _ in u) ) + ")"

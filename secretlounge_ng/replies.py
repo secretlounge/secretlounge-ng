@@ -111,10 +111,16 @@ format_strs = {
 	types.KARMA_NOTIFICATION:
 		em( "You've just been given sweet karma! (check /info to see your karma"+
 			" or /toggleKarma to turn these notifications off)" ),
+<<<<<<< HEAD:secretlounge_ng/replies.py
 	types.DM_REQUEST_NOTIFICATION: lambda id, username, **_: ("<a href=\"tg://user?id={id!x}\">{username!x}</a>"+
 			em(" has requested contact in response to this message."+ 
 			"\nRun /toggleRequests to turn these notifications off." ),
 	types.DM_REQUEST_ACKNOWLEDGEMENT: em("Your username has been forwarded to this message's author."),
+=======
+	types.DM_REQUEST_NOTIFICATION: lambda username, **_: em( "{username!x} has requested contact in response to this message." + 
+			"\nRun /toggleRequests to turn these notifications off." ),
+	types.DM_REQUEST_ACKNOWLEDGEMENT: em("Your telegram username has been forwarded to this message's author."),
+>>>>>>> origin/main:src/replies.py
 	types.TRIPCODE_INFO: lambda tripcode, **_:
 		"<b>tripcode</b>: " + ("<code>{tripcode!x}</code>" if tripcode is not None else "unset"),
 	types.TRIPCODE_SET: em("Tripcode set. It will appear as: ") + "<b>{tripname!x}</b> <code>{tripcode!x}</code>",

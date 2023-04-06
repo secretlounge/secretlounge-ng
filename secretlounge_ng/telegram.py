@@ -69,7 +69,11 @@ def init(config, _db, _ch):
 		"start", "stop", "users", "info", "motd", "toggledebug", "togglekarma", 
 		"togglerequests", "version", "source", "modhelp", "adminhelp", "modsay", 
 		"adminsay", "mod", "admin", "warn", "delete", "remove", "uncooldown", 
+<<<<<<< HEAD:secretlounge_ng/telegram.py
 		"blacklist", "s", "sign", "dm", "tripcode", "t", "tsign", "cleanup"
+=======
+		"blacklist", "s", "sign", "tripcode", "t", "tsign", "cleanup"
+>>>>>>> origin/main:src/telegram.py
 	]
 	for c in cmds: # maps /<c> to the function cmd_<c>
 		c = c.lower()
@@ -683,6 +687,19 @@ def plusone(ev):
 		return send_answer(ev, rp.Reply(rp.types.ERR_NOT_IN_CACHE), True)
 	return send_answer(ev, core.give_karma(c_user, reply_msid), True)
 
+<<<<<<< HEAD:secretlounge_ng/telegram.py
+=======
+def plusdm(ev):
+	c_user = UserContainer(ev.from_user)
+	if ev.reply_to_message is None:
+		return send_answer(ev, rp.Reply(rp.types.ERR_NO_REPLY), True)
+
+	reply_msid = ch.lookupMapping(ev.from_user.id, data=ev.reply_to_message.message_id)
+	if reply_msid is None:
+		return send_answer(ev, rp.Reply(rp.types.ERR_NOT_IN_CACHE), True)
+	return send_answer(ev, core.request_dm(c_user, reply_msid), True)
+
+>>>>>>> origin/main:src/telegram.py
 def relay(ev):
 	# handle commands and karma giving
 	if ev.content_type == "text":
@@ -693,6 +710,8 @@ def relay(ev):
 			return
 		elif ev.text.strip() == "+1":
 			return plusone(ev)
+		elif ev.text.strip() == "+dm":
+			return plusdm(ev)
 	# manually handle signing / tripcodes for media since captions don't count for commands
 	if not is_forward(ev) and ev.content_type in CAPTIONABLE_TYPES and (ev.caption or "").startswith("/"):
 		c, arg = split_command(ev.caption)

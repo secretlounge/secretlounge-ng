@@ -42,8 +42,27 @@ class User():
 	debugEnabled: bool
 	tripcode: Optional[str]
 	def __init__(self):
+<<<<<<< HEAD:secretlounge_ng/database.py
 		for k in USER_PROPS:
 			setattr(self, k, None)
+=======
+		self.id = None # int
+		self.username = None # str?
+		self.realname = None # str
+		self.rank = None # int
+		self.joined = None # datetime
+		self.left = None # datetime?
+		self.lastActive = None # datetime
+		self.cooldownUntil = None # datetime?
+		self.blacklistReason = None # str?
+		self.warnings = None # int
+		self.warnExpiry = None # datetime?
+		self.karma = None # int
+		self.hideKarma = None # bool
+		self.hideRequests = None # bool
+		self.debugEnabled = None # bool
+		self.tripcode = None # str?
+>>>>>>> origin/main:src/database.py
 	def __eq__(self, other):
 		if isinstance(other, User):
 			return self.id == other.id
