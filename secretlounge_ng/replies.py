@@ -41,6 +41,8 @@ types = NumericEnum([
 	"PROMOTED_ADMIN",
 	"KARMA_THANK_YOU",
 	"KARMA_NOTIFICATION",
+	"DM_REQUEST_NOTIFICATION",
+	"DM_REQUEST_ACKNOWLEDGEMENT",
 	"TRIPCODE_INFO",
 	"TRIPCODE_SET",
 
@@ -55,6 +57,7 @@ types = NumericEnum([
 	"ERR_BLACKLISTED",
 	"ERR_ALREADY_UPVOTED",
 	"ERR_UPVOTE_OWN_MESSAGE",
+	"ERR_DM_REQUEST_OWN_MESSAGE",
 	"ERR_SPAMMY",
 	"ERR_SPAMMY_SIGN",
 	"ERR_SIGN_PRIVACY",
@@ -108,6 +111,10 @@ format_strs = {
 	types.KARMA_NOTIFICATION:
 		em( "You've just been given sweet karma! (check /info to see your karma"+
 			" or /toggleKarma to turn these notifications off)" ),
+	types.DM_REQUEST_NOTIFICATION: lambda id, username, **_: ("<a href=\"tg://user?id={id!x}\">{username!x}</a>"+
+			em(" has requested contact in response to this message."+ 
+			"\nRun /toggleRequests to turn these notifications off." ),
+	types.DM_REQUEST_ACKNOWLEDGEMENT: em("Your username has been forwarded to this message's author."),
 	types.TRIPCODE_INFO: lambda tripcode, **_:
 		"<b>tripcode</b>: " + ("<code>{tripcode!x}</code>" if tripcode is not None else "unset"),
 	types.TRIPCODE_SET: em("Tripcode set. It will appear as: ") + "<b>{tripname!x}</b> <code>{tripcode!x}</code>",
@@ -125,6 +132,7 @@ format_strs = {
 		( em("\ncontact:") + " {contact}" if contact else "" ),
 	types.ERR_ALREADY_UPVOTED: em("You have already upvoted this message."),
 	types.ERR_UPVOTE_OWN_MESSAGE: em("You can't upvote your own message."),
+	types.ERR_DM_REQUEST_OWN_MESSAGE: em("You can't request to DM yourself."),
 	types.ERR_SPAMMY: em("Your message has not been sent. Avoid sending messages too fast, try again later."),
 	types.ERR_SPAMMY_SIGN: em("Your message has not been sent. Avoid using /sign too often, try again later."),
 	types.ERR_SIGN_PRIVACY: em("Your account privacy settings prevent usage of the sign feature. Enable linked forwards first."),

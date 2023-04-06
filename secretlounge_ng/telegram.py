@@ -66,10 +66,10 @@ def init(config, _db, _ch):
 	types += ["animation", "audio", "photo", "sticker", "video", "video_note", "voice"]
 
 	cmds = [
-		"start", "stop", "users", "info", "motd", "toggledebug", "togglekarma",
-		"version", "source", "modhelp", "adminhelp", "modsay", "adminsay", "mod",
-		"admin", "warn", "delete", "remove", "uncooldown", "blacklist", "s", "sign",
-		"tripcode", "t", "tsign", "cleanup"
+		"start", "stop", "users", "info", "motd", "toggledebug", "togglekarma", 
+		"togglerequests", "version", "source", "modhelp", "adminhelp", "modsay", 
+		"adminsay", "mod", "admin", "warn", "delete", "remove", "uncooldown", 
+		"blacklist", "s", "sign", "dm", "tripcode", "t", "tsign", "cleanup"
 	]
 	for c in cmds: # maps /<c> to the function cmd_<c>
 		c = c.lower()
@@ -581,6 +581,7 @@ def cmd_motd(ev, arg):
 
 cmd_toggledebug = wrap_core(core.toggle_debug)
 cmd_togglekarma = wrap_core(core.toggle_karma)
+cmd_togglerequests = wrap_core(core.toggle_requests)
 
 @takesArgument(optional=True)
 def cmd_tripcode(ev, arg):
@@ -682,7 +683,6 @@ def plusone(ev):
 		return send_answer(ev, rp.Reply(rp.types.ERR_NOT_IN_CACHE), True)
 	return send_answer(ev, core.give_karma(c_user, reply_msid), True)
 
-
 def relay(ev):
 	# handle commands and karma giving
 	if ev.content_type == "text":
@@ -774,3 +774,13 @@ def cmd_tsign(ev, arg):
 	relay_inner(ev, tripcode=True)
 
 cmd_t = cmd_tsign # alias
+
+def cmd_dm(ev):
+	c_user = UserContainer(ev.from_user)
+	if ev.reply_to_message is None:
+		return send_answer(ev, rp.Reply(rp.types.ERR_NO_REPLY), True)
+
+	reply_msid = ch.lookupMapping(ev.from_user.id, data=ev.reply_to_message.message_id)
+	if reply_msid is None:
+		return send_answer(ev, rp.Reply(rp.types.ERR_NOT_IN_CACHE), True)
+	return send_answer(ev, core.request_dm(c_user, reply_msid), True)
