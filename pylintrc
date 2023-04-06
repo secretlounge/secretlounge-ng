@@ -1,0 +1,27 @@
+[MAIN]
+py-version=3.7
+
+[FORMAT]
+indent-string='\t'
+
+[MESSAGES CONTROL]
+disable=
+	arguments-renamed,
+	consider-iterating-dictionary,
+	consider-using-f-string,
+	consider-using-sys-exit,
+	inconsistent-return-statements,
+	invalid-name,
+	line-too-long,
+	missing-class-docstring,
+	missing-function-docstring,
+	missing-module-docstring,
+	no-else-return,
+	too-few-public-methods,
+	too-many-branches,
+	too-many-instance-attributes,
+	too-many-return-statements,
+	unused-variable,
+	unused-wildcard-import,
+	wildcard-import,
+	wrong-import-order,

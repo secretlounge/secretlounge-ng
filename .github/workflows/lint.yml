@@ -1,0 +1,32 @@
+name: lint
+
+on:
+  push:
+    paths:
+      - '**.py'
+      - 'pyproject.toml'
+      - 'pylintrc'
+  pull_request:
+    paths:
+      - '**.py'
+      - 'pyproject.toml'
+      - 'pylintrc'
+
+jobs:
+
+  pylint:
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.11-slim
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install deps
+        run: |
+          pip install -e .
+          pip install pylint
+
+      - name: Lint
+        run: |
+          for mod in secretlounge_ng util; do
+            pylint --fail-under=0 --fail-on=E "$mod"
+          done

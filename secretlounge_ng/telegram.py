@@ -3,11 +3,13 @@ import logging
 import time
 import json
 import re
+from typing import Optional
+from functools import partial
 
-import src.core as core
-import src.replies as rp
-from src.util import MutablePriorityQueue, genTripcode
-from src.globals import *
+from . import core
+from . import replies as rp
+from .util import MutablePriorityQueue, genTripcode
+from .globals import *
 
 # module constants
 MEDIA_FILTER_TYPES = ("photo", "animation", "document", "video", "video_note", "sticker")
@@ -25,14 +27,14 @@ HIDE_FORWARD_FROM = set([
 VENUE_PROPS = ("title", "address", "foursquare_id", "foursquare_type", "google_place_id", "google_place_type")
 
 # module variables
-bot = None
+bot: telebot.TeleBot = None
 db = None
 ch = None
 message_queue = None
 registered_commands = {}
 
 # settings
-allow_documents = None
+allow_documents: bool = None
 linked_network: dict = None
 
 def init(config, _db, _ch):
@@ -67,7 +69,11 @@ def init(config, _db, _ch):
 		"start", "stop", "users", "info", "motd", "toggledebug", "togglekarma", 
 		"togglerequests", "version", "source", "modhelp", "adminhelp", "modsay", 
 		"adminsay", "mod", "admin", "warn", "delete", "remove", "uncooldown", 
+<<<<<<< HEAD:secretlounge_ng/telegram.py
+		"blacklist", "s", "sign", "dm", "tripcode", "t", "tsign", "cleanup"
+=======
 		"blacklist", "s", "sign", "tripcode", "t", "tsign", "cleanup"
+>>>>>>> origin/main:src/telegram.py
 	]
 	for c in cmds: # maps /<c> to the function cmd_<c>
 		c = c.lower()
@@ -216,9 +222,10 @@ class FormattedMessageBuilder():
 	# insert `content` at `pos`, `html` indicates HTML or plaintext
 	# if `pre` is set content will be inserted *before* existing insertions
 	def insert(self, pos, content, html=False, pre=False):
+		def cat(a, b):
+			return (b + a) if pre else (a + b)
 		i = self.inserts.get(pos)
 		if i is not None:
-			cat = lambda a, b: (b + a) if pre else (a + b)
 			# only turn insert into HTML if strictly necessary
 			if i[0] == html:
 				i = ( i[0], cat(i[1], content) )
@@ -229,16 +236,16 @@ class FormattedMessageBuilder():
 		else:
 			i = (html, content)
 		self.inserts[pos] = i
-	def prepend(self, content, html=False):
+	def prepend(self, content: str, html=False):
 		self.insert(0, content, html, True)
-	def append(self, content, html=False):
+	def append(self, content: str, html=False):
 		self.insert(len(self.text_content), content, html)
-	def enclose(self, pos1, pos2, content_begin, content_end, html=False):
+	def enclose(self, pos1: int, pos2: int, content_begin: str, content_end: str, html=False):
 		self.insert(pos1, content_begin, html)
 		self.insert(pos2, content_end, html, True)
-	def build(self) -> FormattedMessage:
+	def build(self) -> Optional[FormattedMessage]:
 		if len(self.inserts) == 0:
-			return
+			return None
 		html = any(i[0] for i in self.inserts.values())
 		norm = lambda i: i[1] if i[0] == html else escape_html(i[1])
 		s = ""
@@ -343,7 +350,7 @@ def should_hide_forward(ev):
 		return (ev.forward_from.username or "").lower() in HIDE_FORWARD_FROM
 	return False
 
-def resend_message(chat_id, ev, reply_to=None, force_caption: FormattedMessage=None):
+def resend_message(chat_id, ev, reply_to=None, force_caption: Optional[FormattedMessage]=None):
 	if should_hide_forward(ev):
 		pass
 	elif is_forward(ev):
@@ -641,9 +648,9 @@ def cmd_warn(ev, delete=False, only_delete=False):
 		r = core.warn_user(c_user, reply_msid, delete)
 	send_answer(ev, r, True)
 
-cmd_delete = lambda ev: cmd_warn(ev, delete=True)
+cmd_delete = partial(cmd_warn, delete=True)
 
-cmd_remove = lambda ev: cmd_warn(ev, only_delete=True)
+cmd_remove = partial(cmd_warn, only_delete=True)
 
 cmd_cleanup = wrap_core(core.cleanup_messages)
 
@@ -680,6 +687,8 @@ def plusone(ev):
 		return send_answer(ev, rp.Reply(rp.types.ERR_NOT_IN_CACHE), True)
 	return send_answer(ev, core.give_karma(c_user, reply_msid), True)
 
+<<<<<<< HEAD:secretlounge_ng/telegram.py
+=======
 def plusdm(ev):
 	c_user = UserContainer(ev.from_user)
 	if ev.reply_to_message is None:
@@ -690,6 +699,7 @@ def plusdm(ev):
 		return send_answer(ev, rp.Reply(rp.types.ERR_NOT_IN_CACHE), True)
 	return send_answer(ev, core.request_dm(c_user, reply_msid), True)
 
+>>>>>>> origin/main:src/telegram.py
 def relay(ev):
 	# handle commands and karma giving
 	if ev.content_type == "text":
@@ -783,3 +793,13 @@ def cmd_tsign(ev, arg):
 	relay_inner(ev, tripcode=True)
 
 cmd_t = cmd_tsign # alias
+
+def cmd_dm(ev):
+	c_user = UserContainer(ev.from_user)
+	if ev.reply_to_message is None:
+		return send_answer(ev, rp.Reply(rp.types.ERR_NO_REPLY), True)
+
+	reply_msid = ch.lookupMapping(ev.from_user.id, data=ev.reply_to_message.message_id)
+	if reply_msid is None:
+		return send_answer(ev, rp.Reply(rp.types.ERR_NOT_IN_CACHE), True)
+	return send_answer(ev, core.request_dm(c_user, reply_msid), True)

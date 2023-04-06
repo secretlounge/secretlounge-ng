@@ -1,12 +1,12 @@
 import re
 from string import Formatter
 
-from src.globals import *
+from .globals import *
 
 class NumericEnum(Enum):
 	def __init__(self, names):
 		d = {name: i for i, name in enumerate(names)}
-		super(NumericEnum, self).__init__(d)
+		super().__init__(d)
 
 class CustomFormatter(Formatter):
 	def convert_field(self, value, conversion):
@@ -16,13 +16,13 @@ class CustomFormatter(Formatter):
 			return format_datetime(value)
 		elif conversion == "d": # time[d]elta
 			return format_timedelta(value)
-		return super(CustomFormatter, self).convert_field(value, conversion)
+		return super().convert_field(value, conversion)
 
 # definition of reply class and types
 
 class Reply():
-	def __init__(self, type, **kwargs):
-		self.type = type
+	def __init__(self, type_, **kwargs):
+		self.type = type_
 		self.kwargs = kwargs
 
 types = NumericEnum([
@@ -111,9 +111,16 @@ format_strs = {
 	types.KARMA_NOTIFICATION:
 		em( "You've just been given sweet karma! (check /info to see your karma"+
 			" or /toggleKarma to turn these notifications off)" ),
+<<<<<<< HEAD:secretlounge_ng/replies.py
+	types.DM_REQUEST_NOTIFICATION: lambda id, username, **_: ("<a href=\"tg://user?id={id!x}\">{username!x}</a>"+
+			em(" has requested contact in response to this message."+ 
+			"\nRun /toggleRequests to turn these notifications off." ),
+	types.DM_REQUEST_ACKNOWLEDGEMENT: em("Your username has been forwarded to this message's author."),
+=======
 	types.DM_REQUEST_NOTIFICATION: lambda username, **_: em( "{username!x} has requested contact in response to this message." + 
 			"\nRun /toggleRequests to turn these notifications off." ),
 	types.DM_REQUEST_ACKNOWLEDGEMENT: em("Your telegram username has been forwarded to this message's author."),
+>>>>>>> origin/main:src/replies.py
 	types.TRIPCODE_INFO: lambda tripcode, **_:
 		"<b>tripcode</b>: " + ("<code>{tripcode!x}</code>" if tripcode is not None else "unset"),
 	types.TRIPCODE_SET: em("Tripcode set. It will appear as: ") + "<b>{tripname!x}</b> <code>{tripcode!x}</code>",
@@ -158,7 +165,7 @@ format_strs = {
 		"<b>{active}</b> <i>active</i>, {inactive} <i>inactive and</i> "+
 		"{blacklisted} <i>blacklisted users</i> (<i>total</i>: {total})",
 
-	types.PROGRAM_VERSION: "secretlounge-ng v{version} ~ https://github.com/sfan5/secretlounge-ng",
+	types.PROGRAM_VERSION: "secretlounge-ng v{version} ~ https://github.com/secretlounge/secretlounge-ng",
 	types.HELP_MODERATOR:
 		"<i>Moderators can use the following commands</i>:\n"+
 		"  /modhelp - show this text\n"+
