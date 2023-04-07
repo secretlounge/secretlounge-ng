@@ -111,7 +111,7 @@ format_strs = {
 	types.KARMA_NOTIFICATION:
 		em( "You've just been given sweet karma! (check /info to see your karma"+
 			" or /toggleKarma to turn these notifications off)" ),
-	types.DM_REQUEST_NOTIFICATION: lambda id, username, **_: ("<a href=\"tg://user?id={id!x}\">{username!x}</a>"+
+	types.DM_REQUEST_NOTIFICATION: lambda id, username, **_: ("<a href=\"tg://user?id={id!x}\">{username!x}</a>")+
 			em(" has requested contact in response to this message."+ 
 			"\nRun /toggleRequests to turn these notifications off." ),
 	types.DM_REQUEST_ACKNOWLEDGEMENT: em("Your username has been forwarded to this message's author."),
