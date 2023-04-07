@@ -50,7 +50,6 @@ def main(configpath, importpath):
 			u.warnExpiry = safe_time(j["warnUpdated"] // 1000) + timedelta(hours=WARN_EXPIRE_HOURS)
 		u.karma = j.get("karma", 0)
 		u.hideKarma = j.get("hideKarma", False)
-		u.hideRequests = j.get("hideRequests", False)
 		u.debugEnabled = j.get("debug", False)
 
 		if u.id in had_ids:
