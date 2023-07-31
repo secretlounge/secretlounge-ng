@@ -151,7 +151,7 @@ format_strs = {
 		( cooldown and "yes, until {cooldown!t}" or "no" ),
 	types.USER_INFO_MOD: lambda cooldown, **_:
 		"<b>id</b>: {id}, <b>username</b>: anonymous, <b>rank</b>: n/a, "+
-		"<b>karma</b>: {karma}\n"+
+		"<b>karma bracket</b>: {karma}\n"+
 		"<b>cooldown</b>: "+
 		( cooldown and "yes, until {cooldown!t}" or "no" ),
 	types.USERS_INFO: "<b>{count}</b> <i>users</i>",
