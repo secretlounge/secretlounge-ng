@@ -693,8 +693,6 @@ def relay(ev):
 			return
 		elif ev.text.strip() == "+1":
 			return plusone(ev)
-		elif ev.text.strip() == "+dm":
-			return plusdm(ev)
 	# manually handle signing / tripcodes for media since captions don't count for commands
 	if not is_forward(ev) and ev.content_type in CAPTIONABLE_TYPES and (ev.caption or "").startswith("/"):
 		c, arg = split_command(ev.caption)
