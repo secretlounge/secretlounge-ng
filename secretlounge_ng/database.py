@@ -20,7 +20,7 @@ class SystemConfig():
 USER_PROPS = (
 	"id", "username", "realname", "rank", "joined", "left", "lastActive",
 	"cooldownUntil", "blacklistReason", "warnings", "warnExpiry", "karma",
-	"hideKarma", "debugEnabled", "tripcode"
+	"hideKarma", "hideRequests", "debugEnabled", "tripcode"
 )
 
 class User():
@@ -38,6 +38,7 @@ class User():
 	warnExpiry: Optional[datetime]
 	karma: int
 	hideKarma: bool
+	hideRequests: bool
 	debugEnabled: bool
 	tripcode: Optional[str]
 	def __init__(self):
@@ -56,6 +57,7 @@ class User():
 		self.warnings = 0
 		self.karma = 0
 		self.hideKarma = False
+		self.hideRequests = False
 		self.debugEnabled = False
 	def isJoined(self):
 		return self.left is None
@@ -191,7 +193,7 @@ class JSONDatabase(Database):
 	def _userToDict(user):
 		props = ["id", "username", "realname", "rank", "joined", "left",
 			"lastActive", "cooldownUntil", "blacklistReason", "warnings",
-			"warnExpiry", "karma", "hideKarma", "debugEnabled", "tripcode"]
+			"warnExpiry", "karma", "hideKarma", "hideRequests", "debugEnabled", "tripcode"]
 		d = {}
 		for prop in props:
 			value = getattr(user, prop)
@@ -203,7 +205,7 @@ class JSONDatabase(Database):
 	def _userFromDict(d):
 		if d is None: return None
 		props = ["id", "username", "realname", "rank", "blacklistReason",
-			"warnings", "karma", "hideKarma", "debugEnabled"]
+			"warnings", "karma", "hideKarma", "hideRequests", "debugEnabled"]
 		props_d = [("tripcode", None)]
 		dateprops = ["joined", "left", "lastActive", "cooldownUntil", "warnExpiry"]
 		user = User()
@@ -323,6 +325,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 	`warnExpiry` TIMESTAMP,
 	`karma` INTEGER NOT NULL,
 	`hideKarma` TINYINT NOT NULL,
+	`hideRequests` TINYINT NOT NULL,
 	`debugEnabled` TINYINT NOT NULL,
 	`tripcode` TEXT,
 	PRIMARY KEY (`id`)
@@ -331,6 +334,8 @@ CREATE TABLE IF NOT EXISTS `users` (
 			# migration
 			if not row_exists("users", "tripcode"):
 				self.db.execute("ALTER TABLE `users` ADD `tripcode` TEXT")
+			if not row_exists("users", "hideRequests"):
+				self.db.execute("ALTER TABLE `users` ADD `hideRequests` TINYINT NOT NULL")
 	def getUser(self, *, id=None):
 		if id is None:
 			raise ValueError()
