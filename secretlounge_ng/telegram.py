@@ -6,10 +6,10 @@ import re
 from typing import Optional
 from functools import partial
 
-from . import core
-from . import replies as rp
-from .util import MutablePriorityQueue, genTripcode
-from .globals import *
+from secretlounge_ng import core
+from secretlounge_ng import replies as rp
+from secretlounge_ng.util import MutablePriorityQueue, genTripcode
+from secretlounge_ng.globals import *
 
 # module constants
 MEDIA_FILTER_TYPES = ("photo", "animation", "document", "video", "video_note", "sticker")

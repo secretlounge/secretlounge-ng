@@ -1,7 +1,7 @@
 import re
 from string import Formatter
 
-from .globals import *
+from secretlounge_ng.globals import *
 
 class NumericEnum(Enum):
 	def __init__(self, names):

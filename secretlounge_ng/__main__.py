@@ -5,11 +5,12 @@ import sys
 import os
 import getopt
 
-from . import core, telegram
-from .globals import *
-from .database import JSONDatabase, SQLiteDatabase
-from .cache import Cache
-from .util import Scheduler
+from secretlounge_ng import core, telegram
+from secretlounge_ng.globals import *
+from secretlounge_ng.database import JSONDatabase, SQLiteDatabase
+from secretlounge_ng.cache import Cache
+from secretlounge_ng.util import Scheduler
+from secretlounge_ng.core import logger
 
 opts = {}
 
@@ -56,7 +57,7 @@ def open_db(config):
 			os.makedirs(path[0], exist_ok=True)
 		return SQLiteDatabase(os.path.join(*path))
 	else:
-		logging.error("Unknown database type.")
+		logger.error("Unknown database type.")
 		exit(1)
 
 def main():
@@ -71,18 +72,18 @@ def main():
 	if len(args) > 0 or readopt("-h") is not None or readopt("--help") is not None:
 		usage()
 		exit(0)
-	loglevel = logging.INFO
+	loglevel = logger.setLevel(logging.INFO)
 	if readopt("-q") is not None:
-		loglevel = logging.WARNING
+		loglevel = logger.setLevel(logging.WARNING)
 	elif readopt("-d") is not None:
-		loglevel = logging.DEBUG
+		loglevel = logger.setLevel(logging.DEBUG)
 	configpath = readopt("-c") or "./config.yaml"
 
 	# Begin actual startup
 	config = load_config(configpath)
 
-	logging.basicConfig(format="%(levelname)-7s [%(asctime)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S", level=loglevel)
-	logging.info("secretlounge-ng v%s starting up", VERSION)
+	##logging.basicConfig(format="%(levelname)-7s [%(asctime)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S", level=loglevel)
+	logger.info("secretlounge-ng v%s starting up", VERSION)
 
 	# Create and initialize various classes
 	db = open_db(config)
@@ -104,7 +105,7 @@ def main():
 	try:
 		start_new_thread(telegram.run, join=True)
 	except KeyboardInterrupt:
-		logging.info("Interrupted, exiting")
+		logger.info("Interrupted, exiting")
 		db.close()
 		os._exit(1)
 

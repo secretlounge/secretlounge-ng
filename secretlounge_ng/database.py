@@ -7,7 +7,7 @@ from random import randint
 from threading import RLock
 from typing import Optional, Generator
 
-from .globals import *
+from secretlounge_ng.globals import *
 
 # what's inside the db
 

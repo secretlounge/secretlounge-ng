@@ -1,13 +1,15 @@
-import logging
+#import logging
 from datetime import datetime, timedelta
 from threading import Lock
 from importlib import import_module
 
-from . import replies as rp
-from .globals import *
-from .database import User, SystemConfig
-from .cache import CachedMessage
-from .util import genTripcode
+from secretlounge_ng import replies as rp
+from secretlounge_ng.globals import *
+from secretlounge_ng.database import User, SystemConfig
+from secretlounge_ng.cache import CachedMessage
+from secretlounge_ng.util import genTripcode
+
+
 
 db = None
 ch = None
