@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from threading import RLock
 from typing import Optional, Sequence, Set
 
-from secretlounge_ng.globals import *
+from secretlounge_ng_remix.globals import *
 
 class CachedMessage():
 	__slots__ = ('user_id', 'time', 'warned', 'upvoted')

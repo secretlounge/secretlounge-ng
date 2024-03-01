@@ -5,12 +5,13 @@ import sys
 import os
 import getopt
 
-from secretlounge_ng import core, telegram
-from secretlounge_ng.globals import *
-from secretlounge_ng.database import JSONDatabase, SQLiteDatabase
-from secretlounge_ng.cache import Cache
-from secretlounge_ng.util import Scheduler
-from secretlounge_ng.core import logger
+from secretlounge_ng_remix import core, telegram
+from secretlounge_ng_remix.globals import *
+from secretlounge_ng_remix.database import JSONDatabase, SQLiteDatabase
+from secretlounge_ng_remix.cache import Cache
+from secretlounge_ng_remix.util import Scheduler
+from secretlounge_ng_remix.core import logger
+
 
 opts = {}
 

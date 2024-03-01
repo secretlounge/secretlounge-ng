@@ -1,4 +1,4 @@
-from secretlounge_ng.util import Enum
+from secretlounge_ng_remix.util import Enum
 
 # a few utility functions
 def escape_html(s):

@@ -7,9 +7,9 @@ import json
 from datetime import datetime, timedelta
 
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), ".."))
-from secretlounge_ng.globals import *
-from secretlounge_ng.database import User, SystemConfig, JSONDatabase, SQLiteDatabase
-from secretlounge_ng.__main__ import open_db, load_config
+from secretlounge_ng_remix.globals import *
+from secretlounge_ng_remix.database import User, SystemConfig, JSONDatabase, SQLiteDatabase
+from secretlounge_ng_remix.__main__ import open_db, load_config
 
 def safe_time(n):
 	if n > 2**32:
