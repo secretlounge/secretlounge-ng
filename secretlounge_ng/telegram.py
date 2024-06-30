@@ -366,6 +366,8 @@ def resend_message(chat_id, ev: TMessage, reply_to=None, force_caption: Optional
 				kwargs["parse_mode"] = "HTML"
 		else:
 			kwargs["caption"] = ev.caption
+		if ev.show_caption_above_media:
+			kwargs["show_caption_above_media"] = True
 
 	# re-send message based on content type
 	if ev.content_type == "text":
@@ -398,7 +400,7 @@ def resend_message(chat_id, ev: TMessage, reply_to=None, force_caption: Optional
 			kwargs[prop] = getattr(ev.venue, prop)
 		return bot.send_venue(chat_id, **kwargs)
 	elif ev.content_type == "contact":
-		for prop in ("phone_number", "first_name", "last_name"):
+		for prop in ("phone_number", "first_name", "last_name", "vcard"):
 			kwargs[prop] = getattr(ev.contact, prop)
 		return bot.send_contact(chat_id, **kwargs)
 	elif ev.content_type == "sticker":

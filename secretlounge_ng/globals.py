@@ -26,15 +26,18 @@ def format_timedelta(d):
 
 ## for debugging ##
 def dump(obj, name=None, r=False):
-	name = "" if name is None else (name + ".")
-	for e, ev in ((e, getattr(obj, e)) for e in dir(obj)):
-		if e.startswith("_") or ev is None:
+	name = (name + ".") if name else ""
+	for k in dir(obj):
+		if k.startswith("_") or isinstance(getattr(obj.__class__, k, None), property):
 			continue
-		if r and ev.__class__.__name__[0].isupper():
-			print("%s%s (%s)" % (name, e, ev.__class__.__name__))
-			dump(ev, name + e, r)
+		v = getattr(obj, k)
+		if v is None:
+			continue
+		if r and v.__class__.__name__[0].isupper():
+			print("%s%s: %s" % (name, k, v.__class__.__name__))
+			dump(v, name + k, r)
 		else:
-			print("%s%s = %r" % (name, e, ev))
+			print("%s%s = %r" % (name, k, v))
 
 # Program version
 VERSION = "1.8"
