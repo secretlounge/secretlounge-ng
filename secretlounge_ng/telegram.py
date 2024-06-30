@@ -76,20 +76,19 @@ def init(config: dict, _db, _ch):
 	for c in cmds: # maps /<c> to the function cmd_<c>
 		c = c.lower()
 		registered_commands[c] = globals()["cmd_" + c]
-	set_handler(relay, content_types=types)
 
-def set_handler(func, *args, **kwargs):
+	@bot.message_handler(content_types=types)
 	def wrapper(*args, **kwargs):
 		try:
-			func(*args, **kwargs)
+			relay(*args, **kwargs)
 		except Exception as e:
 			logging.exception("Exception raised in event handler")
-	bot.message_handler(*args, **kwargs)(wrapper)
 
 def run():
+	assert not bot.threaded
 	while True:
 		try:
-			bot.polling(none_stop=True, long_polling_timeout=45)
+			bot.polling(non_stop=True, long_polling_timeout=49)
 		except Exception as e:
 			# you're not supposed to call .polling() more than once but I'm left with no choice
 			logging.warning("%s while polling Telegram, retrying.", type(e).__name__)
@@ -185,8 +184,7 @@ def calc_spam_score(ev: TMessage):
 		return 999
 
 	s = SCORE_BASE_MESSAGE
-	if (ev.forward_from is not None or ev.forward_from_chat is not None
-		or ev.json.get("forward_sender_name") is not None):
+	if is_forward(ev):
 		s = SCORE_BASE_FORWARD
 
 	if ev.content_type == "sticker":
@@ -337,16 +335,18 @@ def send_thread():
 # Message sending (functions)
 
 def is_forward(ev: TMessage):
-	return (ev.forward_from is not None or ev.forward_from_chat is not None
-		or ev.forward_sender_name is not None)
+	return ev.forward_origin is not None
 
 def should_hide_forward(ev: TMessage):
 	# Hide forwards from anonymizing bots that have recently become popular.
 	# The main reason is that the bot API heavily penalizes forwarding and the
 	# 'Forwarded from Anonymize Bot' provides no additional/useful information.
-	if ev.forward_from is not None:
-		return (ev.forward_from.username or "").lower() in HIDE_FORWARD_FROM
+	if isinstance(ev.forward_origin, telebot.types.MessageOriginUser):
+		return (ev.forward_origin.sender_user.username or "").lower() in HIDE_FORWARD_FROM
 	return False
+
+def reply_parameters(message_id: int) -> telebot.types.ReplyParameters:
+	return telebot.types.ReplyParameters(message_id, allow_sending_without_reply=True)
 
 def resend_message(chat_id, ev: TMessage, reply_to=None, force_caption: Optional[FormattedMessage]=None):
 	if should_hide_forward(ev):
@@ -357,8 +357,7 @@ def resend_message(chat_id, ev: TMessage, reply_to=None, force_caption: Optional
 
 	kwargs = {}
 	if reply_to is not None:
-		kwargs["reply_to_message_id"] = reply_to
-		kwargs["allow_sending_without_reply"] = True
+		kwargs["reply_parameters"] = reply_parameters(reply_to)
 	if ev.content_type in CAPTIONABLE_TYPES:
 		if force_caption is not None:
 			kwargs["caption"] = force_caption.content
@@ -414,16 +413,15 @@ def send_to_single_inner(chat_id, ev, reply_to=None, force_caption=None):
 	if isinstance(ev, rp.Reply):
 		kwargs2 = {}
 		if reply_to is not None:
-			kwargs2["reply_to_message_id"] = reply_to
-			kwargs2["allow_sending_without_reply"] = True
+			kwargs2["reply_parameters"] = reply_parameters(reply_to)
 		if ev.type == rp.types.CUSTOM:
-			kwargs2["disable_web_page_preview"] = True
-		return bot.send_message(chat_id, rp.formatForTelegram(ev), parse_mode="HTML", **kwargs2)
+			kwargs2["link_preview_options"] = telebot.types.LinkPreviewOptions(is_disabled=True)
+		kwargs2["parse_mode"] = "HTML"
+		return bot.send_message(chat_id, rp.formatForTelegram(ev), **kwargs2)
 	elif isinstance(ev, FormattedMessage):
 		kwargs2 = {}
 		if reply_to is not None:
-			kwargs2["reply_to_message_id"] = reply_to
-			kwargs2["allow_sending_without_reply"] = True
+			kwargs2["reply_parameters"] = reply_parameters(reply_to)
 		if ev.html:
 			kwargs2["parse_mode"] = "HTML"
 		return bot.send_message(chat_id, ev.content, **kwargs2)
