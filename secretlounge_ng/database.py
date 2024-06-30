@@ -3,7 +3,6 @@ import os
 import json
 import sqlite3
 from datetime import date, datetime, timedelta, timezone
-from random import randint
 from threading import RLock
 from typing import Optional, Generator
 

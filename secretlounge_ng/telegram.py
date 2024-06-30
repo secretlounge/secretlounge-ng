@@ -26,6 +26,8 @@ HIDE_FORWARD_FROM = set([
 ])
 VENUE_PROPS = ("title", "address", "foursquare_id", "foursquare_type", "google_place_id", "google_place_type")
 
+TMessage = telebot.types.Message
+
 # module variables
 bot: telebot.TeleBot = None
 db = None
@@ -37,7 +39,7 @@ registered_commands = {}
 allow_documents: bool = None
 linked_network: dict = None
 
-def init(config, _db, _ch):
+def init(config: dict, _db, _ch):
 	global bot, db, ch, message_queue, allow_documents, linked_network
 	if config["bot_token"] == "":
 		logging.error("No telegram token specified.")
@@ -111,16 +113,16 @@ def register_tasks(sched):
 			logging.warning("Failed to deliver %d messages before they expired from cache.", n)
 	sched.register(task, hours=6) # (1/4) * cache duration
 
-# Wraps a telegram user in a consistent class (used by core.py)
-class UserContainer():
-	def __init__(self, u):
+# Wraps a telegram user in a consistent class
+class UserContainer(core.IUserContainer):
+	def __init__(self, u: telebot.types.User):
 		self.id = u.id
 		self.username = u.username
 		self.realname = u.first_name
 		if u.last_name is not None:
 			self.realname += " " + u.last_name
 
-def split_command(text):
+def split_command(text: str):
 	if " " not in text:
 		return text[1:].lower(), ""
 	pos = text.find(" ")
@@ -128,7 +130,7 @@ def split_command(text):
 
 def takesArgument(optional=False):
 	def f(func):
-		def wrap(ev):
+		def wrap(ev: TMessage):
 			_, arg = split_command(ev.text)
 			if arg == "" and not optional:
 				return
@@ -142,7 +144,7 @@ def wrap_core(func, reply_to=False):
 		send_answer(ev, m, reply_to=reply_to)
 	return f
 
-def send_answer(ev, m, reply_to=False):
+def send_answer(ev: TMessage, m, reply_to=False):
 	if m is None:
 		return
 	elif isinstance(m, list):
@@ -178,7 +180,7 @@ def allow_message_text(text):
 	return True
 
 # determine spam score for message `ev`
-def calc_spam_score(ev):
+def calc_spam_score(ev: TMessage):
 	if not allow_message_text(ev.text) or not allow_message_text(ev.caption):
 		return 999
 
@@ -258,7 +260,7 @@ class FormattedMessageBuilder():
 
 # Append inline URLs from the message `ev` to `fmt` so they are preserved even
 # if the original formatting is stripped
-def formatter_replace_links(ev, fmt: FormattedMessageBuilder):
+def formatter_replace_links(ev: TMessage, fmt: FormattedMessageBuilder):
 	entities = ev.caption_entities or ev.entities
 	if entities is None:
 		return
@@ -334,11 +336,11 @@ def send_thread():
 
 # Message sending (functions)
 
-def is_forward(ev):
+def is_forward(ev: TMessage):
 	return (ev.forward_from is not None or ev.forward_from_chat is not None
 		or ev.forward_sender_name is not None)
 
-def should_hide_forward(ev):
+def should_hide_forward(ev: TMessage):
 	# Hide forwards from anonymizing bots that have recently become popular.
 	# The main reason is that the bot API heavily penalizes forwarding and the
 	# 'Forwarded from Anonymize Bot' provides no additional/useful information.
@@ -346,7 +348,7 @@ def should_hide_forward(ev):
 		return (ev.forward_from.username or "").lower() in HIDE_FORWARD_FROM
 	return False
 
-def resend_message(chat_id, ev, reply_to=None, force_caption: Optional[FormattedMessage]=None):
+def resend_message(chat_id, ev: TMessage, reply_to=None, force_caption: Optional[FormattedMessage]=None):
 	if should_hide_forward(ev):
 		pass
 	elif is_forward(ev):
@@ -628,7 +630,7 @@ def cmd_admin(ev, arg):
 	arg = arg.lstrip("@")
 	send_answer(ev, core.promote_user(c_user, arg, RANKS.admin), True)
 
-def cmd_warn(ev, delete=False, only_delete=False):
+def cmd_warn(ev: TMessage, delete=False, only_delete=False):
 	c_user = UserContainer(ev.from_user)
 
 	if ev.reply_to_message is None:
@@ -662,7 +664,7 @@ def cmd_uncooldown(ev, arg):
 	send_answer(ev, core.uncooldown_user(c_user, oid, username), True)
 
 @takesArgument(optional=True)
-def cmd_blacklist(ev, arg):
+def cmd_blacklist(ev: TMessage, arg):
 	c_user = UserContainer(ev.from_user)
 	if ev.reply_to_message is None:
 		return send_answer(ev, rp.Reply(rp.types.ERR_NO_REPLY), True)
@@ -672,7 +674,7 @@ def cmd_blacklist(ev, arg):
 		return send_answer(ev, rp.Reply(rp.types.ERR_NOT_IN_CACHE), True)
 	return send_answer(ev, core.blacklist_user(c_user, reply_msid, arg), True)
 
-def plusone(ev):
+def plusone(ev: TMessage):
 	c_user = UserContainer(ev.from_user)
 	if ev.reply_to_message is None:
 		return send_answer(ev, rp.Reply(rp.types.ERR_NO_REPLY), True)
@@ -683,7 +685,7 @@ def plusone(ev):
 	return send_answer(ev, core.give_karma(c_user, reply_msid), True)
 
 
-def relay(ev):
+def relay(ev: TMessage):
 	# handle commands and karma giving
 	if ev.content_type == "text":
 		if ev.text.startswith("/"):
@@ -706,7 +708,7 @@ def relay(ev):
 # relay the message `ev` to other users in the chat
 # `caption_text` can be a FormattedMessage that overrides the caption of media
 # `signed` and `tripcode` indicate if the message is signed or tripcoded respectively
-def relay_inner(ev, *, caption_text=None, signed=False, tripcode=False):
+def relay_inner(ev: TMessage, *, caption_text=None, signed=False, tripcode=False):
 	is_media = is_forward(ev) or ev.content_type in MEDIA_FILTER_TYPES
 	msid = core.prepare_user_message(UserContainer(ev.from_user), calc_spam_score(ev),
 		is_media=is_media, signed=signed, tripcode=tripcode)
@@ -762,14 +764,14 @@ def relay_inner(ev, *, caption_text=None, signed=False, tripcode=False):
 			reply_msid=reply_msid, force_caption=force_caption)
 
 @takesArgument()
-def cmd_sign(ev, arg):
+def cmd_sign(ev: TMessage, arg):
 	ev.text = arg
 	relay_inner(ev, signed=True)
 
 cmd_s = cmd_sign # alias
 
 @takesArgument()
-def cmd_tsign(ev, arg):
+def cmd_tsign(ev: TMessage, arg):
 	ev.text = arg
 	relay_inner(ev, tripcode=True)
 
