@@ -14,6 +14,7 @@ from .globals import *
 # module constants
 MEDIA_FILTER_TYPES = ("photo", "animation", "document", "video", "video_note", "sticker")
 CAPTIONABLE_TYPES = ("photo", "audio", "animation", "document", "video", "voice")
+COPYABLE_TYPES = ("story", "location", "venue", "contact", "video_note")
 HIDE_FORWARD_FROM = set([
 	"anonymize_bot", "anonfacebot", "anonymousforwarderbot", "anonomiserbot",
 	"anonymous_forwarder_nashenasbot", "anonymous_forward_bot", "mirroring_bot",
@@ -24,7 +25,8 @@ HIDE_FORWARD_FROM = set([
 	"forwards_cover_bot", "forwardshidebot", "forwardscoversbot",
 	"noforwardssourcebot", "antiforwarded_v2_bot", "forwardcoverzbot",
 ])
-VENUE_PROPS = ("title", "address", "foursquare_id", "foursquare_type", "google_place_id", "google_place_type")
+
+assert len(set(CAPTIONABLE_TYPES).intersection(COPYABLE_TYPES)) == 0
 
 TMessage = telebot.types.Message
 
@@ -60,7 +62,7 @@ def init(config: dict, _db, _ch):
 		logging.error("Wrong type for 'linked_network'")
 		exit(1)
 
-	types = ["text", "location", "venue"]
+	types = ["text", "location", "venue", "story"]
 	if allow_contacts:
 		types += ["contact"]
 	if allow_documents:
@@ -386,22 +388,8 @@ def resend_message(chat_id, ev: TMessage, reply_to=None, force_caption: Optional
 		return bot.send_video(chat_id, ev.video.file_id, **kwargs)
 	elif ev.content_type == "voice":
 		return bot.send_voice(chat_id, ev.voice.file_id, **kwargs)
-	elif ev.content_type == "video_note":
-		return bot.send_video_note(chat_id, ev.video_note.file_id, **kwargs)
-	elif ev.content_type == "location":
-		for prop in ("latitude", "longitude", "horizontal_accuracy"):
-			kwargs[prop] = getattr(ev.location, prop)
-		return bot.send_location(chat_id, **kwargs)
-	elif ev.content_type == "venue":
-		kwargs["latitude"] = ev.venue.location.latitude
-		kwargs["longitude"] = ev.venue.location.longitude
-		for prop in VENUE_PROPS:
-			kwargs[prop] = getattr(ev.venue, prop)
-		return bot.send_venue(chat_id, **kwargs)
-	elif ev.content_type == "contact":
-		for prop in ("phone_number", "first_name", "last_name", "vcard"):
-			kwargs[prop] = getattr(ev.contact, prop)
-		return bot.send_contact(chat_id, **kwargs)
+	elif ev.content_type in COPYABLE_TYPES:
+		return bot.copy_message(chat_id, ev.chat.id, ev.message_id)
 	elif ev.content_type == "sticker":
 		return bot.send_sticker(chat_id, ev.sticker.file_id, **kwargs)
 	else:
