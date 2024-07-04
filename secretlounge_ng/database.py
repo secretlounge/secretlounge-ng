@@ -13,8 +13,10 @@ from .globals import *
 class SystemConfig():
 	def __init__(self):
 		self.motd = None
+		self.privacy = None
 	def defaults(self):
 		self.motd = ""
+		self.privacy = ""
 
 USER_PROPS = (
 	"id", "username", "realname", "rank", "joined", "left", "lastActive",
@@ -179,20 +181,18 @@ class JSONDatabase(Database):
 		return
 	@staticmethod
 	def _systemConfigToDict(config):
-		return {"motd": config.motd}
+		return {"motd": config.motd, "privacy": config.privacy}
 	@staticmethod
 	def _systemConfigFromDict(d):
 		if d is None: return None
 		config = SystemConfig()
 		config.motd = d["motd"]
+		config.privacy = d.get("privacy")
 		return config
 	@staticmethod
 	def _userToDict(user):
-		props = ["id", "username", "realname", "rank", "joined", "left",
-			"lastActive", "cooldownUntil", "blacklistReason", "warnings",
-			"warnExpiry", "karma", "hideKarma", "debugEnabled", "tripcode"]
 		d = {}
-		for prop in props:
+		for prop in USER_PROPS:
 			value = getattr(user, prop)
 			if isinstance(value, datetime):
 				value = int(value.replace(tzinfo=timezone.utc).timestamp())
@@ -203,12 +203,13 @@ class JSONDatabase(Database):
 		if d is None: return None
 		props = ["id", "username", "realname", "rank", "blacklistReason",
 			"warnings", "karma", "hideKarma", "debugEnabled"]
-		props_d = [("tripcode", None)]
+		props_d = {"tripcode": None}
 		dateprops = ["joined", "left", "lastActive", "cooldownUntil", "warnExpiry"]
+		assert set(props).union(props_d.keys()).union(dateprops) == set(USER_PROPS)
 		user = User()
 		for prop in props:
 			setattr(user, prop, d[prop])
-		for prop, default in props_d:
+		for prop, default in props_d.items():
 			setattr(user, prop, d.get(prop, default))
 		for prop in dateprops:
 			if d[prop] is not None:
@@ -277,12 +278,13 @@ class SQLiteDatabase(Database):
 			self.db.close()
 	@staticmethod
 	def _systemConfigToDict(config):
-		return {"motd": config.motd}
+		return {"motd": config.motd, "privacy": config.privacy}
 	@staticmethod
 	def _systemConfigFromDict(d):
 		if len(d) == 0: return None
 		config = SystemConfig()
 		config.motd = d["motd"]
+		config.privacy = d.get("privacy")
 		return config
 	@staticmethod
 	def _userToDict(user):

@@ -41,6 +41,7 @@ s - Alias of sign
 tsign - Sign a message with your tripcode
 t - Alias of tsign
 motd - Show the welcome message
+privacy - Show privacy policy
 version - Get version & source code of this bot
 modhelp - Show commands available to moderators
 adminhelp - Show commands available to admins

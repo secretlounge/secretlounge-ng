@@ -73,7 +73,7 @@ def init(config: dict, _db, _ch):
 		"start", "stop", "users", "info", "motd", "toggledebug", "togglekarma",
 		"version", "source", "modhelp", "adminhelp", "modsay", "adminsay", "mod",
 		"admin", "warn", "delete", "remove", "uncooldown", "blacklist", "s", "sign",
-		"tripcode", "t", "tsign", "cleanup"
+		"tripcode", "t", "tsign", "cleanup", "privacy"
 	]
 	for c in cmds: # maps /<c> to the function cmd_<c>
 		c = c.lower()
@@ -563,13 +563,22 @@ def cmd_info(ev):
 	return send_answer(ev, core.get_info_mod(c_user, reply_msid), True)
 
 @takesArgument(optional=True)
-def cmd_motd(ev, arg):
+def cmd_motd(ev: TMessage, arg):
 	c_user = UserContainer(ev.from_user)
 
-	if arg == "":
-		send_answer(ev, core.get_motd(c_user), reply_to=True)
-	else:
-		send_answer(ev, core.set_motd(c_user, arg), reply_to=True)
+	m = core.set_system_text(c_user, "motd", arg) if arg else None
+	if not m:
+		m = core.get_system_text(c_user, "motd")
+	send_answer(ev, m, reply_to=True)
+
+@takesArgument(optional=True)
+def cmd_privacy(ev: TMessage, arg):
+	c_user = UserContainer(ev.from_user)
+
+	m = core.set_system_text(c_user, "privacy", arg) if arg else None
+	if not m:
+		m = core.get_system_text(c_user, "privacy")
+	send_answer(ev, m, reply_to=True)
 
 cmd_toggledebug = wrap_core(core.toggle_debug)
 cmd_togglekarma = wrap_core(core.toggle_karma)
