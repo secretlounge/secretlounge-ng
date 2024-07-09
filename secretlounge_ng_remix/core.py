@@ -9,6 +9,54 @@ from .database import User, SystemConfig
 from .cache import CachedMessage
 from .util import genTripcode
 
+##pengus fucky log splitter
+import sys
+
+# Create a filter that allows only ERROR levels
+class ErrorFilter(logging.Filter):
+    def filter(self, record):
+        return record.levelno == logging.ERROR
+
+# Create a filter that excludes ERROR levels
+class ExcludeErrorFilter(logging.Filter):
+    def filter(self, record):
+        return record.levelno != logging.ERROR
+
+# Create a logger
+logger = logging.getLogger(__name__)
+
+# Set the logger's level to the lowest level you want to log
+logger.setLevel(logging.INFO)
+
+# Create handlers
+stdout_handler = logging.StreamHandler(sys.stdout)
+stderr_handler = logging.StreamHandler(sys.stderr)
+
+# Set levels for handlers
+stdout_handler.setLevel(logging.INFO)
+stderr_handler.setLevel(logging.ERROR)
+
+# Add the filters to the handlers
+stdout_handler.addFilter(ExcludeErrorFilter())
+stderr_handler.addFilter(ErrorFilter())
+
+# Create formatters and add them to the handlers
+# stdout_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+# stderr_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+stdout_format = logging.Formatter('%(levelname)s: %(name)s - [%(asctime)s] %(message)s')
+stderr_format = logging.Formatter('%(levelname)s: %(name)s - [%(asctime)s] %(message)s')
+
+stdout_handler.setFormatter(stdout_format)
+stderr_handler.setFormatter(stderr_format)
+
+# Add the handlers to the logger
+logger.addHandler(stdout_handler)
+logger.addHandler(stderr_handler)
+
+# # Test the logger
+# logger.info("This is an info message")
+# logger.warning("This is a warning message")
+# logger.error("This is an error message")
 
 db = None
 ch = None
