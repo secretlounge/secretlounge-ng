@@ -304,6 +304,7 @@ def get_system_text(user: User, key: str):
 		return rp.Reply(rp.types.CUSTOM, text=v)
 
 @requireUser
+@requireRank(RANKS.admin)
 def set_system_text(user: User, key: str, arg: str):
 	if key not in ("motd", "privacy"):
 		raise ValueError()
