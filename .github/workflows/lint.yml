@@ -6,18 +6,26 @@ on:
       - '**.py'
       - 'pyproject.toml'
       - 'pylintrc'
+      - '.github/workflows/**.yml'
   pull_request:
     paths:
       - '**.py'
       - 'pyproject.toml'
       - 'pylintrc'
+      - '.github/workflows/**.yml'
 
 jobs:
 
   pylint:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # minimum + latest
+        ver: ['3.8', '3.12']
     container:
-      image: python:3.11-slim
+      image: python:${{ matrix.ver }}-slim
+    name: "pylint (Python ${{ matrix.ver }})"
     steps:
       - uses: actions/checkout@v3
       - name: Install deps
