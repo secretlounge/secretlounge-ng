@@ -4,7 +4,10 @@ import logging
 from queue import PriorityQueue
 from threading import Lock
 from datetime import timedelta
-from crypt import crypt
+try:
+	from crypt import crypt
+except ImportError:
+	from crypt_r import crypt
 
 class Scheduler():
 	def __init__(self):
@@ -86,10 +89,7 @@ def _salt(c):
 
 def genTripcode(tripcode):
 	# no 100% match with 4chan but ASCII tripcodes should work
-	# FIXME: we need to replace this as `crypt` is deprecated in py3.11
-	pos = tripcode.find("#")
-	trname = tripcode[:pos]
-	trpass = tripcode[pos+1:]
+	trname, _, trpass = tripcode.partition("#")
 
 	salt = (trpass[:8] + 'H.')[1:3]
 	salt = "".join(_salt(c) for c in salt)

@@ -12,6 +12,7 @@ requires-python = ">=3.8"
 dependencies = [
   "pyTelegramBotAPI>=4.19.0",
   "pyYAML>=3.12",
+  'crypt-r; python_version>"3.11"',
 ]
 
 [project.urls]
