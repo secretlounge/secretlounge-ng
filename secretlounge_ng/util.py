@@ -77,18 +77,21 @@ class Enum():
 	def values(self):
 		return self._m.values()
 
+## tripcodes ##
+# good ref: <https://namelessrumia.heliohost.org/w/doku.php?id=tripcode>
+# this code isn't a 100% match with 4chan but ASCII ones work
+
 def _salt(c):
 	c = ord(c)
 	if 58 <= c <= 64: # ':' - '@' maps to 'A' - 'G'
 		return chr(c + 7)
 	elif 91 <= c <= 96: # '[' - '`' maps to 'a' - 'f'
 		return chr(c + 6)
-	elif 46 <= c <= 122: # '.' - 'Z' stays
+	elif 46 <= c <= 122: # '.' - 'z' stays
 		return chr(c)
 	return '.'
 
 def genTripcode(tripcode):
-	# no 100% match with 4chan but ASCII tripcodes should work
 	trname, _, trpass = tripcode.partition("#")
 
 	salt = (trpass[:8] + 'H.')[1:3]
@@ -97,3 +100,5 @@ def genTripcode(tripcode):
 	trip_final = crypt(trpass[:8], salt)
 
 	return trname, "!" + trip_final[-10:]
+
+assert genTripcode("#*Tp0tp8[")[1] == "!LLLLLLLLL."
