@@ -24,7 +24,7 @@ jobs:
         # minimum + latest
         ver: ['3.8', '3.12']
     container:
-      image: python:${{ matrix.ver }}-slim
+      image: python:${{ matrix.ver }}
     name: "pylint (Python ${{ matrix.ver }})"
     steps:
       - uses: actions/checkout@v3
