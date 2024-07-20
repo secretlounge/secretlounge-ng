@@ -24,6 +24,21 @@ def format_timedelta(d):
 			return "%d%c" % (d // cmp, char)
 	return "%ds" % d.total_seconds()
 
+# 32-bit FNV-1a
+def fnv32a(int_parts, byte_parts) -> int:
+	h = 0x811c9dc5
+	p = 0x01000193
+	for i in int_parts:
+		i = abs(i)
+		# trivial little endian encoding
+		while i != 0:
+			h = ((h ^ (i & 0xff)) * p) & 0xffffffff
+			i >>= 8
+	for bs in byte_parts:
+		for b in bs:
+			h = ((h ^ b) * p) & 0xffffffff
+	return h
+
 ## for debugging ##
 def dump(obj, name=None, r=False):
 	name = (name + ".") if name else ""

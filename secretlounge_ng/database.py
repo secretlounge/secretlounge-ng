@@ -24,6 +24,8 @@ USER_PROPS = (
 	"hideKarma", "debugEnabled", "tripcode"
 )
 
+ID_ALPHA = "0123456789abcdefghijklmnopqrstuv"
+
 class User():
 	__slots__ = USER_PROPS
 	id: int
@@ -66,10 +68,9 @@ class User():
 		return self.rank < 0
 	def getObfuscatedId(self):
 		salt = date.today().toordinal()
-		if salt & 0xff == 0: salt >>= 8 # zero bits are bad for hashing
-		value = (self.id * salt) & 0xffffff
-		alpha = "0123456789abcdefghijklmnopqrstuv"
-		return ''.join(alpha[n%32] for n in (value, value>>5, value>>10, value>>15))
+		value = fnv32a([self.id, salt], [])
+		# stringify 20 bits
+		return ''.join(ID_ALPHA[n%32] for n in (value, value>>5, value>>10, value>>15))
 	def getObfuscatedKarma(self):
 		for cutoff in (100, 50, 10):
 			if abs(self.karma) >= cutoff:
