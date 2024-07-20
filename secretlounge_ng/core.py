@@ -48,6 +48,9 @@ def init(config: dict, _db, _ch):
 	if config.get("locale"):
 		rp.localization = import_module("..replies_" + config["locale"], __name__).localization
 
+	if config.get("secret_salt"):
+		User.setSalt(bytes.fromhex(config["secret_salt"]))
+
 	# initialize db if empty
 	if db.getSystemConfig() is None:
 		c = SystemConfig()

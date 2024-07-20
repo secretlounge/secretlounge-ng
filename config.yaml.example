@@ -5,6 +5,11 @@ bot_token: "BOT_TOKEN_HERE"
 # both take a single argument which is the database file path
 database: [sqlite, "secretlounge.sqlite"]
 
+# salt used for obfuscating user IDs (optional)
+# Needs to be a hexadecimal string, use e.g. `openssl rand -hex 6` to generate.
+# It is recommended to set this. Reusing it between different bots is allowed.
+#secret_salt: ""
+
 # relay contacts
 allow_contacts: false
 # relay arbitrary documents/files (GIFs always work)

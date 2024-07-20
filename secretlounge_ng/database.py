@@ -28,6 +28,8 @@ ID_ALPHA = "0123456789abcdefghijklmnopqrstuv"
 
 class User():
 	__slots__ = USER_PROPS
+	global_salt = b""
+
 	id: int
 	username: Optional[str]
 	realname: str
@@ -43,6 +45,11 @@ class User():
 	hideKarma: bool
 	debugEnabled: bool
 	tripcode: Optional[str]
+
+	@staticmethod
+	def setSalt(salt):
+		assert all(isinstance(v, int) for v in salt)
+		User.global_salt = salt
 	def __init__(self):
 		for k in USER_PROPS:
 			setattr(self, k, None)
@@ -68,7 +75,7 @@ class User():
 		return self.rank < 0
 	def getObfuscatedId(self):
 		salt = date.today().toordinal()
-		value = fnv32a([self.id, salt], [])
+		value = fnv32a([self.id, salt], [User.global_salt])
 		# stringify 20 bits
 		return ''.join(ID_ALPHA[n%32] for n in (value, value>>5, value>>10, value>>15))
 	def getObfuscatedKarma(self):
