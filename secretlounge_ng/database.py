@@ -393,4 +393,5 @@ CREATE TABLE IF NOT EXISTS `users` (
 		sql = "REPLACE INTO system_config(`name`, `value`) VALUES (?, ?)"
 		with self.lock:
 			for k, v in d.items():
-				self.db.execute(sql, (k, v))
+				if v is not None:
+					self.db.execute(sql, (k, v))
