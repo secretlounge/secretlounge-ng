@@ -130,10 +130,12 @@ class ModificationContext():
 	def __enter__(self):
 		return self.obj
 	def __exit__(self, exc_type, *_):
-		if exc_type is None:
-			self.func(self.obj)
-		if self.lock is not None:
-			self.lock.release()
+		try:
+			if exc_type is None:
+				self.func(self.obj)
+		finally:
+			if self.lock is not None:
+				self.lock.release()
 
 class Database():
 	def __init__(self):
