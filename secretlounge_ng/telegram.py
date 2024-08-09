@@ -62,12 +62,14 @@ def init(config: dict, _db, _ch):
 		logging.error("Wrong type for 'linked_network'")
 		exit(1)
 
-	types = ["text", "location", "venue", "story"]
+	types = [
+		"text", "location", "venue", "story", "animation", "audio", "photo",
+		"sticker", "video", "video_note", "voice", "poll"
+	]
 	if allow_contacts:
 		types += ["contact"]
 	if allow_documents:
 		types += ["document"]
-	types += ["animation", "audio", "photo", "sticker", "video", "video_note", "voice"]
 
 	cmds = [
 		"start", "stop", "users", "info", "motd", "toggledebug", "togglekarma",
@@ -392,6 +394,9 @@ def resend_message(chat_id, ev: TMessage, reply_to=None, force_caption: Optional
 		return bot.copy_message(chat_id, ev.chat.id, ev.message_id)
 	elif ev.content_type == "sticker":
 		return bot.send_sticker(chat_id, ev.sticker.file_id, **kwargs)
+	elif ev.content_type == "poll":
+		# we generally shouldn't get here, but if we do ignore silently
+		return
 	else:
 		raise NotImplementedError("content_type = %s" % ev.content_type)
 
@@ -708,6 +713,9 @@ def relay(ev: TMessage):
 # `caption_text` can be a FormattedMessage that overrides the caption of media
 # `signed` and `tripcode` indicate if the message is signed or tripcoded respectively
 def relay_inner(ev: TMessage, *, caption_text=None, signed=False, tripcode=False):
+	if not is_forward(ev) and ev.content_type == "poll":
+		return send_answer(ev, rp.Reply(rp.types.ERR_POLLS_UNSUPPORTED))
+
 	is_media = is_forward(ev) or ev.content_type in MEDIA_FILTER_TYPES
 	msid = core.prepare_user_message(UserContainer(ev.from_user), calc_spam_score(ev),
 		is_media=is_media, signed=signed, tripcode=tripcode)
