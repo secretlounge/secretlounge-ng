@@ -18,6 +18,9 @@ allow_documents: true
 # allow mods to remove message without issuing a cooldown
 allow_remove_command: false
 
+# enable upvoting by reacting with thumbs-up to a message
+message_reaction_upvote: true
+
 # enable signing messages using /sign or /tsign as well as setting a tripcode
 enable_signing: false
 # limit usage of /sign to once in every interval (seconds)

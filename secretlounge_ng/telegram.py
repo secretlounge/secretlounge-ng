@@ -38,13 +38,12 @@ message_queue = None
 registered_commands = {}
 
 # settings
-allow_documents: bool = None
 linked_network: dict = None
 
 def init(config: dict, _db, _ch):
-	global bot, db, ch, message_queue, allow_documents, linked_network
-	if config["bot_token"] == "":
-		logging.error("No telegram token specified.")
+	global bot, db, ch, message_queue, linked_network
+	if not config.get("bot_token") or ":" not in config["bot_token"]:
+		logging.error("No Telegram bot token specified")
 		exit(1)
 
 	logging.getLogger("urllib3").setLevel(logging.WARNING) # very noisy with debug otherwise
@@ -61,6 +60,7 @@ def init(config: dict, _db, _ch):
 	if linked_network is not None and not isinstance(linked_network, dict):
 		logging.error("Wrong type for 'linked_network'")
 		exit(1)
+	message_reaction_upvote = config.get("message_reaction_upvote", True)
 
 	types = [
 		"text", "location", "venue", "story", "animation", "audio", "photo",
@@ -81,18 +81,26 @@ def init(config: dict, _db, _ch):
 		c = c.lower()
 		registered_commands[c] = globals()["cmd_" + c]
 
-	@bot.message_handler(content_types=types, chat_types=["private"])
-	def wrapper(*args, **kwargs):
+	def wrap(func, *args, **kwargs):
 		try:
-			relay(*args, **kwargs)
+			func(*args, **kwargs)
 		except Exception as e:
-			logging.exception("Exception raised in event handler")
+			logging.exception("Exception raised in event handler %r", func)
+
+	bot.message_handler(
+		content_types=types, chat_types=["private"]
+	)(partial(wrap, relay))
+	if message_reaction_upvote:
+		bot.message_reaction_handler()(partial(wrap, message_reaction))
 
 def run():
 	assert not bot.threaded
 	while True:
 		try:
-			bot.polling(non_stop=True, long_polling_timeout=49)
+			bot.polling(
+				non_stop=True, long_polling_timeout=49,
+				allowed_updates=["message", "message_reaction"]
+			)
 		except Exception as e:
 			# you're not supposed to call .polling() more than once but I'm left with no choice
 			logging.warning("%s while polling Telegram, retrying.", type(e).__name__)
@@ -783,3 +791,17 @@ def cmd_tsign(ev: TMessage, arg):
 	relay_inner(ev, tripcode=True)
 
 cmd_t = cmd_tsign # alias
+
+def message_reaction(ev: telebot.types.MessageReactionUpdated):
+	if ev.chat.type != "private" or ev.user is None:
+		return
+	c_user = UserContainer(ev.user)
+	# treat a :+1: reaction as an upvote
+	match = lambda r: r.type == "emoji" and "\U0001F44D" in r.emoji
+	if not any(match(r) for r in ev.old_reaction) and any(match(r) for r in ev.new_reaction):
+		# make up a Message so the reply code can work as usual
+		fake_ev = telebot.types.Message(ev.message_id, ev.user, 0, ev.chat, "dummy", {}, "")
+		reply_msid = ch.lookupMapping(ev.chat.id, data=ev.message_id)
+		if reply_msid is None:
+			return send_answer(fake_ev, rp.Reply(rp.types.ERR_NOT_IN_CACHE), True)
+		return send_answer(fake_ev, core.give_karma(c_user, reply_msid), True)
