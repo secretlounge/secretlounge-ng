@@ -81,7 +81,7 @@ def init(config: dict, _db, _ch):
 		c = c.lower()
 		registered_commands[c] = globals()["cmd_" + c]
 
-	@bot.message_handler(content_types=types)
+	@bot.message_handler(content_types=types, chat_types=["private"])
 	def wrapper(*args, **kwargs):
 		try:
 			relay(*args, **kwargs)
