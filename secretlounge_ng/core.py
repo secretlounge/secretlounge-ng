@@ -77,7 +77,7 @@ def updateUserFromEvent(user, c_user: IUserContainer):
 	user.lastActive = datetime.now()
 
 def getUserByName(username):
-	username = username.lower()
+	username = username.lstrip("@").lower()
 	# there *should* only be a single joined user with a given username
 	for user in db.iterateUsers():
 		if not user.isJoined():
