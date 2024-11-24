@@ -21,7 +21,7 @@ class SystemConfig():
 USER_PROPS = (
 	"id", "username", "realname", "rank", "joined", "left", "lastActive",
 	"cooldownUntil", "blacklistReason", "warnings", "warnExpiry", "karma",
-	"hideKarma", "debugEnabled", "tripcode"
+	"hideKarma", "debugEnabled", "tripcode", "toggleTripcode"
 )
 
 ID_ALPHA = "0123456789abcdefghijklmnopqrstuv"
@@ -45,6 +45,7 @@ class User():
 	hideKarma: bool
 	debugEnabled: bool
 	tripcode: Optional[str]
+	toggleTripcode: bool
 
 	@staticmethod
 	def setSalt(salt):
@@ -66,6 +67,7 @@ class User():
 		self.warnings = 0
 		self.karma = 0
 		self.hideKarma = False
+		self.toggleTripcode = False
 		self.debugEnabled = False
 	def isJoined(self):
 		return self.left is None
@@ -212,7 +214,7 @@ class JSONDatabase(Database):
 	def _userFromDict(d):
 		if d is None: return None
 		props = ["id", "username", "realname", "rank", "blacklistReason",
-			"warnings", "karma", "hideKarma", "debugEnabled"]
+			"warnings", "karma", "hideKarma", "debugEnabled", "toggleTripcode"]
 		props_d = {"tripcode": None}
 		dateprops = ["joined", "left", "lastActive", "cooldownUntil", "warnExpiry"]
 		assert set(props).union(props_d.keys()).union(dateprops) == set(USER_PROPS)
@@ -336,12 +338,15 @@ CREATE TABLE IF NOT EXISTS `users` (
 	`hideKarma` TINYINT NOT NULL,
 	`debugEnabled` TINYINT NOT NULL,
 	`tripcode` TEXT,
+	`toggleTripcode` TINYINT NOT NULL,
 	PRIMARY KEY (`id`)
 );
 			""".strip())
 			# migration
 			if not row_exists("users", "tripcode"):
 				self.db.execute("ALTER TABLE `users` ADD `tripcode` TEXT")
+		if not row_exists("users", "toggleTripcode"):
+				self.db.execute("ALTER TABLE `users` ADD `toggleTripcode` TINYINT NOT NULL DEFAULT 0")
 	def getUser(self, *, id=None):
 		if id is None:
 			raise ValueError()

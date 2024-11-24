@@ -16,13 +16,18 @@ allow_contacts: false
 allow_documents: true
 
 # allow mods to remove message without issuing a cooldown
-allow_remove_command: false
+allow_remove_command: true
+
+# enable toggling tripcode for messages.
+# If enabled, tripcodes can be toggle on/off using /toggletripcode.
+# Otherwise to add a tripcode, messages must always be prefixed with /t
+enable_tripcode_toggle: true
 
 # enable upvoting by reacting with thumbs-up to a message
 message_reaction_upvote: true
 
 # enable signing messages using /sign or /tsign as well as setting a tripcode
-enable_signing: false
+enable_signing: true
 # limit usage of /sign to once in every interval (seconds)
 # defaults to 600 if not specified, set to 0 to disable
 #sign_limit_interval: 600

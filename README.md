@@ -1,5 +1,4 @@
-secretlounge-ng
----------------
+# secretlounge-ng
 
 Rewrite of [secretlounge](https://web.archive.org/web/20200920053736/https://github.com/6697/secretlounge), a bot to make an anonymous group chat on Telegram.
 
@@ -13,7 +12,7 @@ You will need a Linux server or computer with Python 3 installed and access to t
 pip3 install -e .
 cp config.yaml.example config.yaml
 # Edit config.yaml with your favorite text editor
-./secretlounge-ng
+python3 ./secretlounge-ng
 ```
 
 To run the bot in the background use a systemd service (preferred) or screen/tmux.
@@ -21,7 +20,7 @@ To run the bot in the background use a systemd service (preferred) or screen/tmu
 Note that you can also install it as a normal Python module and run it from anywhere
 like `python3 -m secretlounge_ng`, which I won't explain here.
 
-## @BotFather Setup
+## BotFather Setup
 
 Message [@BotFather](https://t.me/BotFather) and configure your bot as follows:
 
@@ -31,7 +30,7 @@ Message [@BotFather](https://t.me/BotFather) and configure your bot as follows:
 
 ### Command list
 
-```
+```text
 start - Join the chat (start receiving messages)
 stop - Leave the chat (stop receiving messages)
 users - Find out how many users are in the chat
@@ -48,6 +47,7 @@ adminhelp - Show commands available to admins
 toggledebug - Toggle debug mode (sends back all messages to you)
 togglekarma - Toggle karma notifications
 tripcode - Show or set the tripcode for your messages
+toggletripcode - Toggle autmatic tripcode for your messages
 ```
 
 ## FAQ
@@ -75,7 +75,7 @@ The `blacklist.py` and `perms.py` script, including advanced functions like blac
 (`./util/blacklist.py sync`), support a structure like the following where each bot
 has its own subdirectory:
 
-```
+```text
 root folder
 \-- bot1
   \-- db.sqlite
@@ -114,10 +114,11 @@ Working around this is possible with some disadvantages, but has not been implem
 
 6. **Is this code maintained?**
 
-This codebase is in active use [over here](https://t.me/s/secretloungeproject).
+This (upstream) codebase is in active use [over here](https://t.me/s/secretloungeproject).
 Updates are made either if there's something broken or when the author feels like it.
 
 ## Notable forks
 
 * [CatLounge](https://github.com/CatLounge/catlounge-ng-meow) - has numerous new features including specifying cooldown time
 * [Furry fork](https://github.com/dogmike/secretlounge-ng) - not sure, but there's a bunch of things
+* [Nameless fork](https://github.com/NanashiTheNameless/secretlounge-ng) - Closes a bunch of the PRs while trying to stay close to upstream
