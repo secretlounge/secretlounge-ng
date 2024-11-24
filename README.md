@@ -47,7 +47,7 @@ adminhelp - Show commands available to admins
 toggledebug - Toggle debug mode (sends back all messages to you)
 togglekarma - Toggle karma notifications
 tripcode - Show or set the tripcode for your messages
-toggletripcode - Toggle autmatic tripcode for your messages
+toggletripcode - Toggle automatic tripcode for your messages
 ```
 
 ## FAQ
@@ -59,7 +59,7 @@ If you have a name you can use `./util/blacklist.py find` to search your bot's d
 
 You can then run `./util/blacklist.py unban 12345678` to remove the ban.
 
-2. **How do I demote somone I promoted to mod/admin at some point?**
+2. **How do I demote someone I promoted to mod/admin at some point?**
 
 If you already have an User ID in mind, proceed below.
 Otherwise you can either use the find utility like explained above or run
@@ -103,7 +103,7 @@ indirect ways to determine who wrote a particular message.
 
 *¹*: It is impossible to ascertain this from afar. You have to trust the bot owner either way.
 
-*²*: Sophisticated attacks are possible to track continously active users over a longer timeframe. It is not expected that a human can perform this.
+*²*: Sophisticated attacks are possible to track continuously active users over a longer timeframe. It is not expected that a human can perform this.
 
 All of these assessments presume a sufficient user population in the bot so that anyone could blend in.
 

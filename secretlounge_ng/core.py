@@ -172,7 +172,7 @@ class Receiver():
 	def stop_invoked(who, delete_out: bool):
 		raise NotImplementedError()
 
-class Sender(Receiver): # flawless class hierachy I know...
+class Sender(Receiver): # flawless class hierarchy I know...
 	receivers = []
 	@staticmethod
 	def reply(m, msid, who, except_who, reply_to):

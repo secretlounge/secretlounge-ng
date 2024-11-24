@@ -148,7 +148,7 @@ def sync(d):
 				a, b = ban_user(db, id, reason)
 				stat1 += a; stat2 += b
 			if stat1 + stat2 > 0:
-				logging.info("Transferred ban of user id %d orginated from %s (b:%d p:%d)", id, from_name, stat1, stat2)
+				logging.info("Transferred ban of user id %d originated from %s (b:%d p:%d)", id, from_name, stat1, stat2)
 		# Zzz..
 		last_update = now
 		sleep(interval)
