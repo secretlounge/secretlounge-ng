@@ -51,6 +51,7 @@ def main(configpath, importpath):
 		u.karma = j.get("karma", 0)
 		u.hideKarma = j.get("hideKarma", False)
 		u.debugEnabled = j.get("debug", False)
+		u.toggleTripcode = j.get("toggleTripcode", False)
 
 		if u.id in had_ids:
 			logging.warning("%s is duplicate, dropping the second one", u)

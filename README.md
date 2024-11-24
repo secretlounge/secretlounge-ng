@@ -1,5 +1,6 @@
-secretlounge-ng
----------------
+# secretlounge-ng
+
+[![lint](https://github.com/secretlounge/secretlounge-ng/actions/workflows/lint.yml/badge.svg)](https://github.com/secretlounge/secretlounge-ng/actions/workflows/lint.yml)
 
 Rewrite of [secretlounge](https://web.archive.org/web/20200920053736/https://github.com/6697/secretlounge), a bot to make an anonymous group chat on Telegram.
 
@@ -13,7 +14,7 @@ You will need a Linux server or computer with Python 3 installed and access to t
 pip3 install -e .
 cp config.yaml.example config.yaml
 # Edit config.yaml with your favorite text editor
-./secretlounge-ng
+python3 ./secretlounge-ng
 ```
 
 To run the bot in the background use a systemd service (preferred) or screen/tmux.
@@ -21,7 +22,7 @@ To run the bot in the background use a systemd service (preferred) or screen/tmu
 Note that you can also install it as a normal Python module and run it from anywhere
 like `python3 -m secretlounge_ng`, which I won't explain here.
 
-## @BotFather Setup
+## BotFather Setup
 
 Message [@BotFather](https://t.me/BotFather) and configure your bot as follows:
 
@@ -31,7 +32,7 @@ Message [@BotFather](https://t.me/BotFather) and configure your bot as follows:
 
 ### Command list
 
-```
+```text
 start - Join the chat (start receiving messages)
 stop - Leave the chat (stop receiving messages)
 users - Find out how many users are in the chat
@@ -48,6 +49,7 @@ adminhelp - Show commands available to admins
 toggledebug - Toggle debug mode (sends back all messages to you)
 togglekarma - Toggle karma notifications
 tripcode - Show or set the tripcode for your messages
+toggletripcode - Toggle automatic tripcode for your messages
 ```
 
 ## FAQ
@@ -59,7 +61,7 @@ If you have a name you can use `./util/blacklist.py find` to search your bot's d
 
 You can then run `./util/blacklist.py unban 12345678` to remove the ban.
 
-2. **How do I demote somone I promoted to mod/admin at some point?**
+2. **How do I demote someone I promoted to mod/admin at some point?**
 
 If you already have an User ID in mind, proceed below.
 Otherwise you can either use the find utility like explained above or run
@@ -75,7 +77,7 @@ The `blacklist.py` and `perms.py` script, including advanced functions like blac
 (`./util/blacklist.py sync`), support a structure like the following where each bot
 has its own subdirectory:
 
-```
+```text
 root folder
 \-- bot1
   \-- db.sqlite
@@ -103,7 +105,7 @@ indirect ways to determine who wrote a particular message.
 
 *¹*: It is impossible to ascertain this from afar. You have to trust the bot owner either way.
 
-*²*: Sophisticated attacks are possible to track continously active users over a longer timeframe. It is not expected that a human can perform this.
+*²*: Sophisticated attacks are possible to track continuously active users over a longer timeframe. It is not expected that a human can perform this.
 
 All of these assessments presume a sufficient user population in the bot so that anyone could blend in.
 
@@ -114,7 +116,7 @@ Working around this is possible with some disadvantages, but has not been implem
 
 6. **Is this code maintained?**
 
-This codebase is in active use [over here](https://t.me/s/secretloungeproject).
+This (upstream) codebase is in active use [over here](https://t.me/s/secretloungeproject).
 Updates are made either if there's something broken or when the author feels like it.
 
 ## Notable forks
