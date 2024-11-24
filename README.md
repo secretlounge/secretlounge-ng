@@ -1,5 +1,7 @@
 # secretlounge-ng
 
+[![lint](https://github.com/NanashiTheNameless/secretlounge-ng/actions/workflows/lint.yml/badge.svg)](https://github.com/NanashiTheNameless/secretlounge-ng/actions/workflows/lint.yml)
+
 Rewrite of [secretlounge](https://web.archive.org/web/20200920053736/https://github.com/6697/secretlounge), a bot to make an anonymous group chat on Telegram.
 
 The bot accepts messages, pictures, videos, etc. from any user and relays it to all other active users without revealing the author.
