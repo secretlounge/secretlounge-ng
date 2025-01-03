@@ -1,7 +1,7 @@
 secretlounge-ng
 ---------------
 
-Rewrite of [secretlounge](https://web.archive.org/web/20200920053736/https://github.com/6697/secretlounge), a bot to make an anonymous group chat on Telegram.
+A rewrite of [secretlounge](https://web.archive.org/web/20200920053736/https://github.com/6697/secretlounge), a bot to make an anonymous group chat on Telegram.
 
 The bot accepts messages, pictures, videos, etc. from any user and relays it to all other active users without revealing the author.
 
@@ -59,7 +59,7 @@ If you have a name you can use `./util/blacklist.py find` to search your bot's d
 
 You can then run `./util/blacklist.py unban 12345678` to remove the ban.
 
-2. **How do I demote somone I promoted to mod/admin at some point?**
+2. **How do I demote someone I promoted to mod/admin at some point?**
 
 If you already have an User ID in mind, proceed below.
 Otherwise you can either use the find utility like explained above or run
@@ -72,7 +72,7 @@ This can also be used to grant an user higher privileges by exchanging the last 
 3. **What is the suggested setup to run multiple bots?**
 
 The `blacklist.py` and `perms.py` script, including advanced functions like blacklist syncing
-(`./util/blacklist.py sync`), support a structure like the following where each bot
+(`./util/blacklist.py sync`), support a structure as follows where each bot
 has its own subdirectory:
 
 ```
@@ -93,23 +93,26 @@ root folder
 When using the source in this repository*¹*, unless you reveal yourself,
 ordinary users in the bot have zero possibilities of discovering your Telegram user.
 
-Mods and admins in the bot can tell the authors of recent messages apart through a pseudo-random
-ID returned by the `/info` command. This ID changes every 24 hours, posts also expire from
-the cache after 24 hours*²* (or if secretlounge-ng is restarted) meaning that they
-become unable to be deleted or their authors determined.
+Mods and admins in the bot can not see your Telegram user, instead they can tell authors
+of recent messages apart through a pseudo-random ID returned by the `/info` command.
+This ID changes every 24 hours, messages also expire from the cache after 24 hours *²*
+(or if secretlounge-ng is restarted) meaning that they become unable to be deleted
+or their authors determined.
 
 People with access to the server the bot runs on have no direct, but a variety of
 indirect ways to determine who wrote a particular message.
 
 *¹*: It is impossible to ascertain this from afar. You have to trust the bot owner either way.
 
-*²*: Sophisticated attacks are possible to track continously active users over a longer timeframe. It is not expected that a human can perform this.
+*²*: If you say something identifiable every 24 hours, you can reasonably be tracked for longer periods.
+This quickly becomes infeasible to perform by hand with larger message volumes and user populations.
 
 All of these assessments presume a sufficient user population in the bot so that anyone could blend in.
 
 5. **Why don't polls work?**
 
-Telegram bots are able to create new polls and forward messages (including authorship), but they can't forward the poll itself as with other message types.
+Telegram bots are able to create new polls and forward messages (including authorship),
+but they can't forward the poll itself as with other message types.
 Working around this is possible with some disadvantages, but has not been implemented yet.
 
 6. **Is this code maintained?**
