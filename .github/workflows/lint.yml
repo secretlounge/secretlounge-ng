@@ -22,7 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         # minimum + latest
-        ver: ['3.8', '3.12']
+        ver: ['3.8', '3.13']
     container:
       image: python:${{ matrix.ver }}
     name: "pylint (Python ${{ matrix.ver }})"
