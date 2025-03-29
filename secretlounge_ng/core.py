@@ -213,12 +213,20 @@ def user_join(c_user: IUserContainer):
 			with db.modifyUser(id=user.id) as user:
 				updateUserFromEvent(user, c_user)
 			return err
+
 		# user rejoins
+		absenceTime = datetime.now() - user.left
 		with db.modifyUser(id=user.id) as user:
 			updateUserFromEvent(user, c_user)
 			user.setLeft(False)
 		logging.info("%s rejoined chat", user)
-		return rp.Reply(rp.types.CHAT_JOIN)
+		ret = [rp.Reply(rp.types.CHAT_JOIN)]
+
+		motd = db.getSystemConfig().motd
+		if motd and absenceTime / timedelta(days=1) >= MOTD_REMIND_DAYS:
+			ret.append(rp.Reply(rp.types.CUSTOM, text=motd))
+
+		return ret
 
 	# create new user
 	user = User()
@@ -233,7 +241,7 @@ def user_join(c_user: IUserContainer):
 	ret = [rp.Reply(rp.types.CHAT_JOIN)]
 
 	motd = db.getSystemConfig().motd
-	if motd != "":
+	if motd:
 		ret.append(rp.Reply(rp.types.CUSTOM, text=motd))
 
 	return ret
