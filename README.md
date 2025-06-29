@@ -95,7 +95,7 @@ ordinary users in the bot have zero possibilities of discovering your Telegram u
 
 Mods and admins in the bot can not see your Telegram user, instead they can tell authors
 of recent messages apart through a pseudo-random ID returned by the `/info` command.
-This ID changes every 24 hours, messages also expire from the cache after 24 hours *²*
+This ID changes every 24 hours, messages also expire from the cache after 30 hours *²*
 (or if secretlounge-ng is restarted) meaning that they become unable to be deleted
 or their authors determined.
 

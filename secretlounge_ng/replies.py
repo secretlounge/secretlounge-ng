@@ -115,7 +115,7 @@ format_strs = {
 
 	types.ERR_COMMAND_DISABLED: em("This command has been disabled."),
 	types.ERR_NO_REPLY: em("You need to reply to a message to use this command."),
-	types.ERR_NOT_IN_CACHE: em("Message not found in cache... (24h passed or bot was restarted)"),
+	types.ERR_NOT_IN_CACHE: em("Message not found in cache... (" + str(MESSAGE_EXPIRE_HOURS) + "h passed or bot was restarted)"),
 	types.ERR_NO_USER: em("No user found by that name!"),
 	types.ERR_NO_USER_BY_ID: em("No user found by that id! Note that all ids rotate every 24 hours."),
 	types.ERR_COOLDOWN: em("Your cooldown expires at {until!t}"),

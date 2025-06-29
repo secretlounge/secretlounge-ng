@@ -18,7 +18,7 @@ class CachedMessage():
 		self.warned = False # was the user warned for this message?
 		self.upvoted = set() # user ids that have given this message karma
 	def isExpired(self):
-		return datetime.now() >= self.time + timedelta(hours=24)
+		return datetime.now() >= self.time + timedelta(hours=MESSAGE_EXPIRE_HOURS)
 	def hasUpvoted(self, user):
 		return user.id in self.upvoted
 	def addUpvote(self, user):
