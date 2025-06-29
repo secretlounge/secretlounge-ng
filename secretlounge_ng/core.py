@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timedelta
 from threading import Lock
 from importlib import import_module
-from typing import Optional
+from typing import Optional, Dict
 
 from . import replies as rp
 from .globals import *
@@ -15,14 +15,14 @@ from .util import genTripcode
 db = None
 ch = None
 spam_scores = None
-sign_last_used = {} # uid -> datetime
+sign_last_used: Dict[int, datetime] = {}
 
 # settings
 
 blacklist_contact: str = None
 enable_signing: bool = None
 allow_remove_command: bool = None
-media_limit_period: Optional[timedelta]  = None
+media_limit_period: Optional[timedelta] = None
 sign_interval: timedelta = None
 
 class IUserContainer():
@@ -171,7 +171,7 @@ class Receiver():
 	def stop_invoked(who, delete_out: bool):
 		raise NotImplementedError()
 
-class Sender(Receiver): # flawless class hierachy I know...
+class Sender(Receiver): # flawless class hierarchy I know...
 	receivers = []
 	@staticmethod
 	def reply(m, msid, who, except_who, reply_to):

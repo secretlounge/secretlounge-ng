@@ -2,7 +2,7 @@ import logging
 import itertools
 from datetime import datetime, timedelta
 from threading import RLock
-from typing import Optional, Sequence, Set
+from typing import Optional, Sequence, Set, Iterator, Dict
 
 from .globals import *
 
@@ -14,9 +14,9 @@ class CachedMessage():
 	upvoted: Set[int]
 	def __init__(self, user_id=None):
 		self.user_id = user_id # who has sent this message
-		self.time = datetime.now() # when was this message seen?
+		self.time = datetime.now() # when was this message created?
 		self.warned = False # was the user warned for this message?
-		self.upvoted = set() # set of users that have given this message karma
+		self.upvoted = set() # user ids that have given this message karma
 	def isExpired(self):
 		return datetime.now() >= self.time + timedelta(hours=24)
 	def hasUpvoted(self, user):
@@ -25,23 +25,15 @@ class CachedMessage():
 		self.upvoted.add(user.id)
 
 class Cache():
+	lock: RLock
+	counter: Iterator[int]
+	msgs: Dict[int, CachedMessage]
+	idmap: Dict[int, Dict[int, object]]
 	def __init__(self):
 		self.lock = RLock()
 		self.counter = itertools.count()
 		self.msgs = {} # dict(msid -> CachedMessage)
 		self.idmap = {} # dict(uid -> dict(msid -> opaque))
-	def _saveMapping(self, x, uid, msid, data):
-		if uid not in x.keys():
-			x[uid] = {}
-		x[uid][msid] = data
-	def _lookupMapping(self, x, uid, msid, data):
-		if uid not in x.keys():
-			return None
-		if msid is not None:
-			return x[uid].get(msid, None)
-		# data is not None
-		gen = ( msid for msid, _data in x[uid].items() if _data == data )
-		return next(gen, None)
 
 	def assignMessageId(self, cm: CachedMessage) -> int:
 		with self.lock:
@@ -55,18 +47,32 @@ class Cache():
 		with self.lock:
 			for msid, cm in self.msgs.items():
 				functor(msid, cm)
-	def saveMapping(self, uid: int, msid: int, data):
+
+	# get user-specific mapping by key
+	def getMapping(self, uid: int, msid: int) -> object:
 		with self.lock:
-			self._saveMapping(self.idmap, uid, msid, data)
-	def lookupMapping(self, uid, *, msid: Optional[int]=None, data=None):
-		if msid is None and data is None:
-			raise ValueError()
+			t = self.idmap.get(uid, None)
+			if t is not None:
+				return t.get(msid, None)
+	# save user-specific mapping
+	def saveMapping(self, uid: int, msid: int, data: object):
 		with self.lock:
-			return self._lookupMapping(self.idmap, uid, msid, data)
+			if uid not in self.idmap.keys():
+				self.idmap[uid] = {}
+			self.idmap[uid][msid] = data
+	# find user-specific mapping by value (linear search)
+	def findMapping(self, uid: int, data: object) -> Optional[int]:
+		with self.lock:
+			t = self.idmap.get(uid, None)
+			if t is not None:
+				gen = (msid for msid, _data in t.items() if _data == data)
+				return next(gen, None)
+	# delete all user-specific mappings by key
 	def deleteMappings(self, msid: int):
 		with self.lock:
 			for d in self.idmap.values():
 				d.pop(msid, None)
+
 	def expire(self) -> Sequence[int]:
 		ids = set()
 		with self.lock:

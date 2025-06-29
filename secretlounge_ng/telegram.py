@@ -227,6 +227,7 @@ class FormattedMessageBuilder():
 		self.inserts = {}
 	def get_text(self):
 		return self.text_content
+
 	# insert `content` at `pos`, `html` indicates HTML or plaintext
 	# if `pre` is set content will be inserted *before* existing insertions
 	def insert(self, pos, content, html=False, pre=False):
@@ -251,8 +252,12 @@ class FormattedMessageBuilder():
 	def enclose(self, pos1: int, pos2: int, content_begin: str, content_end: str, html=False):
 		self.insert(pos1, content_begin, html)
 		self.insert(pos2, content_end, html, True)
-	def build(self) -> Optional[FormattedMessage]:
+
+	# build message, will consume all inserts
+	def build(self, force=False) -> Optional[FormattedMessage]:
 		if len(self.inserts) == 0:
+			if force:
+				return FormattedMessage(False, self.text_content)
 			return None
 		html = any(i[0] for i in self.inserts.values())
 		norm = lambda i: i[1] if i[0] == html else escape_html(i[1])
@@ -439,7 +444,7 @@ def send_to_single(ev, msid, user, *, reply_msid=None, force_caption=None):
 	# set reply_to_message_id if applicable
 	reply_to = None
 	if reply_msid is not None:
-		reply_to = ch.lookupMapping(user.id, msid=reply_msid)
+		reply_to = ch.getMapping(user.id, reply_msid)
 
 	user_id = user.id
 	def f():
@@ -509,6 +514,7 @@ class MyReceiver(core.Receiver):
 			if user == except_who and not user.debugEnabled:
 				continue
 			send_to_single(m, msid, user, reply_msid=reply_msid)
+
 	@staticmethod
 	def delete(msids):
 		msids_set = set(msids)
@@ -530,7 +536,7 @@ class MyReceiver(core.Receiver):
 			for j, msid in enumerate(msids):
 				if user.id == msids_owner[j] and not user.debugEnabled:
 					continue
-				id = ch.lookupMapping(user.id, msid=msid)
+				id = ch.getMapping(user.id, msid)
 				if id is None:
 					continue
 				user_id = user.id
@@ -541,6 +547,7 @@ class MyReceiver(core.Receiver):
 		# drop the mappings for this message so the id doesn't end up used e.g. for replies
 		for msid in msids_set:
 			ch.deleteMappings(msid)
+
 	@staticmethod
 	def stop_invoked(user, delete_out):
 		# delete pending messages to be delivered *to* the user
@@ -570,7 +577,7 @@ def cmd_info(ev):
 	if ev.reply_to_message is None:
 		return send_answer(ev, core.get_info(c_user), True)
 
-	reply_msid = ch.lookupMapping(ev.from_user.id, data=ev.reply_to_message.message_id)
+	reply_msid = ch.findMapping(ev.from_user.id, ev.reply_to_message.message_id)
 	if reply_msid is None:
 		return send_answer(ev, rp.Reply(rp.types.ERR_NOT_IN_CACHE), True)
 	return send_answer(ev, core.get_info_mod(c_user, reply_msid), True)
@@ -648,7 +655,7 @@ def cmd_warn(ev: TMessage, delete=False, only_delete=False):
 	if ev.reply_to_message is None:
 		return send_answer(ev, rp.Reply(rp.types.ERR_NO_REPLY), True)
 
-	reply_msid = ch.lookupMapping(ev.from_user.id, data=ev.reply_to_message.message_id)
+	reply_msid = ch.findMapping(ev.from_user.id, ev.reply_to_message.message_id)
 	if reply_msid is None:
 		return send_answer(ev, rp.Reply(rp.types.ERR_NOT_IN_CACHE), True)
 	if only_delete:
@@ -681,7 +688,7 @@ def cmd_blacklist(ev: TMessage, arg):
 	if ev.reply_to_message is None:
 		return send_answer(ev, rp.Reply(rp.types.ERR_NO_REPLY), True)
 
-	reply_msid = ch.lookupMapping(ev.from_user.id, data=ev.reply_to_message.message_id)
+	reply_msid = ch.findMapping(ev.from_user.id, ev.reply_to_message.message_id)
 	if reply_msid is None:
 		return send_answer(ev, rp.Reply(rp.types.ERR_NOT_IN_CACHE), True)
 	return send_answer(ev, core.blacklist_user(c_user, reply_msid, arg), True)
@@ -691,7 +698,7 @@ def plusone(ev: TMessage):
 	if ev.reply_to_message is None:
 		return send_answer(ev, rp.Reply(rp.types.ERR_NO_REPLY), True)
 
-	reply_msid = ch.lookupMapping(ev.from_user.id, data=ev.reply_to_message.message_id)
+	reply_msid = ch.findMapping(ev.from_user.id, ev.reply_to_message.message_id)
 	if reply_msid is None:
 		return send_answer(ev, rp.Reply(rp.types.ERR_NOT_IN_CACHE), True)
 	return send_answer(ev, core.give_karma(c_user, reply_msid), True)
@@ -762,7 +769,7 @@ def relay_inner(ev: TMessage, *, caption_text=None, signed=False, tripcode=False
 	# find out which message is being replied to
 	reply_msid = None
 	if ev.reply_to_message is not None:
-		reply_msid = ch.lookupMapping(ev.from_user.id, data=ev.reply_to_message.message_id)
+		reply_msid = ch.findMapping(ev.from_user.id, ev.reply_to_message.message_id)
 		if reply_msid is None:
 			logging.warning("Message replied to not found in cache")
 
@@ -801,7 +808,7 @@ def message_reaction(ev: telebot.types.MessageReactionUpdated):
 	if not any(match(r) for r in ev.old_reaction) and any(match(r) for r in ev.new_reaction):
 		# make up a Message so the reply code can work as usual
 		fake_ev = telebot.types.Message(ev.message_id, ev.user, 0, ev.chat, "dummy", {}, "")
-		reply_msid = ch.lookupMapping(ev.chat.id, data=ev.message_id)
+		reply_msid = ch.findMapping(ev.chat.id, ev.message_id)
 		if reply_msid is None:
 			return send_answer(fake_ev, rp.Reply(rp.types.ERR_NOT_IN_CACHE), True)
 		return send_answer(fake_ev, core.give_karma(c_user, reply_msid), True)

@@ -8,7 +8,7 @@ from typing import Optional, Generator
 
 from .globals import *
 
-# what's inside the db
+# what's inside the database
 
 class SystemConfig():
 	def __init__(self):
