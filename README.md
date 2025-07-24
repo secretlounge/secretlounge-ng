@@ -65,9 +65,9 @@ If you already have an User ID in mind, proceed below.
 Otherwise you can either use the find utility like explained above or run
 `./util/perms.py list` to list all users with elevated rank.
 
-Simply run `./util/perms.py set 12345678 user` to remove the users' privileges.
+Simply run `./util/perms.py set 12345678 user` to reset this users privileges.
 
-This can also be used to grant an user higher privileges by exchanging the last argument with "*mod*" or "*admin*".
+You can also grant an user higher privileges by exchanging the last argument with "*mod*" or "*admin*".
 
 3. **What is the suggested setup to run multiple bots?**
 
@@ -95,7 +95,7 @@ ordinary users in the bot have zero possibilities of discovering your Telegram u
 
 Mods and admins in the bot can not see your Telegram user, instead they can tell authors
 of recent messages apart through a pseudo-random ID returned by the `/info` command.
-This ID changes every 24 hours, messages also expire from the cache after 30 hours *²*
+This ID changes every 24 hours, messages also expire from the cache after 30 hours*²*
 (or if secretlounge-ng is restarted) meaning that they become unable to be deleted
 or their authors determined.
 
@@ -104,7 +104,7 @@ indirect ways to determine who wrote a particular message.
 
 *¹*: It is impossible to ascertain this from afar. You have to trust the bot owner either way.
 
-*²*: If you say something identifiable every 24 hours, you can reasonably be tracked for longer periods.
+*²*: If you say something identifiable every 30 hours, you can reasonably be tracked for longer periods.
 This quickly becomes infeasible to perform by hand with larger message volumes and user populations.
 
 All of these assessments presume a sufficient user population in the bot so that anyone could blend in.
