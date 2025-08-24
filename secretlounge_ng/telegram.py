@@ -24,9 +24,13 @@ HIDE_FORWARD_FROM = set([
 	"antiforwardedbot", "noforward_bot", "anonymous_telegram_bot",
 	"forwards_cover_bot", "forwardshidebot", "forwardscoversbot",
 	"noforwardssourcebot", "antiforwarded_v2_bot", "forwardcoverzbot",
+	"captionremove_bot", "caption_remove_bot", "nocaption_bot",
+	"captionsremovebot", "captionremover_bot", "forwardcoversrobot",
+	"v2forwardscoverbot", "album_collector_bot",
 ])
 
 assert len(set(CAPTIONABLE_TYPES).intersection(COPYABLE_TYPES)) == 0
+assert not any(any(c.isupper() for c in s) for s in HIDE_FORWARD_FROM)
 
 TMessage = telebot.types.Message
 
