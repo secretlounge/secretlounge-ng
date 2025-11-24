@@ -98,7 +98,7 @@ format_strs = {
 	types.USER_NOT_IN_CHAT: em("You're not in the chat yet. Use /start to join!"),
 	types.GIVEN_COOLDOWN: lambda deleted, reason, **_:
 		em( "You've been handed a cooldown of {duration!d} for this message"+
-			(deleted and " (message also deleted)" or "")+
+			(deleted and " (message also deleted)." or ".")+
 			(reason and " Reason: {reason!x}") or ""),
 	types.MESSAGE_DELETED: lambda reason, **_:
 		em( "Your message has been deleted. No cooldown has been "
