@@ -415,7 +415,7 @@ def warn_user(user: User, msid, delete=False, reason: str = ""):
 			return rp.Reply(rp.types.ERR_ALREADY_WARNED)
 	if delete:
 		Sender.delete([msid])
-	logging.info("%s warned [%s]%s", user, user2.getObfuscatedId(), delete and " (message deleted)" or "")
+	logging.info("%s warned [%s]%s reason: %s", user, user2.getObfuscatedId(), delete and " (message deleted)" or "", reason)
 	return rp.Reply(rp.types.SUCCESS)
 
 @requireUser
@@ -431,7 +431,7 @@ def delete_message(user: User, msid, reason: str = ""):
 	user2 = db.getUser(id=cm.user_id)
 	_push_system_message(rp.Reply(rp.types.MESSAGE_DELETED, reason=reason), who=user2, reply_to=msid)
 	Sender.delete([msid])
-	logging.info("%s deleted a message from [%s]", user, user2.getObfuscatedId())
+	logging.info("%s deleted a message from [%s] reason: %s", user, user2.getObfuscatedId(), reason)
 	return rp.Reply(rp.types.SUCCESS)
 
 @requireUser
