@@ -96,12 +96,14 @@ format_strs = {
 	types.CHAT_LEAVE: em("You left the chat!"),
 	types.USER_IN_CHAT: em("You're already in the chat."),
 	types.USER_NOT_IN_CHAT: em("You're not in the chat yet. Use /start to join!"),
-	types.GIVEN_COOLDOWN: lambda deleted, **_:
+	types.GIVEN_COOLDOWN: lambda deleted, reason, **_:
 		em( "You've been handed a cooldown of {duration!d} for this message"+
-			(deleted and " (message also deleted)" or "") ),
-	types.MESSAGE_DELETED:
+			(deleted and " (message also deleted)." or ".")+
+			(reason and " Reason: {reason!x}") or ""),
+	types.MESSAGE_DELETED: lambda reason, **_:
 		em( "Your message has been deleted. No cooldown has been "
-			"given this time, but refrain from posting it again." ),
+			"given this time, but refrain from posting it again."+
+			(reason and " Reason: {reason!x}") or ""),
 	types.DELETION_QUEUED: em("{count} messages matched, deletion was queued."),
 	types.PROMOTED_MOD: em("You've been promoted to moderator, run /modhelp for a list of commands."),
 	types.PROMOTED_ADMIN: em("You've been promoted to admin, run /adminhelp for a list of commands."),

@@ -652,7 +652,8 @@ def cmd_admin(ev, arg):
 	arg = arg.lstrip("@")
 	send_answer(ev, core.promote_user(c_user, arg, RANKS.admin), True)
 
-def cmd_warn(ev: TMessage, delete=False, only_delete=False):
+@takesArgument(optional=True)
+def cmd_warn(ev: TMessage, arg):
 	c_user = UserContainer(ev.from_user)
 
 	if ev.reply_to_message is None:
@@ -661,15 +662,33 @@ def cmd_warn(ev: TMessage, delete=False, only_delete=False):
 	reply_msid = ch.findMapping(ev.from_user.id, ev.reply_to_message.message_id)
 	if reply_msid is None:
 		return send_answer(ev, rp.Reply(rp.types.ERR_NOT_IN_CACHE), True)
-	if only_delete:
-		r = core.delete_message(c_user, reply_msid)
-	else:
-		r = core.warn_user(c_user, reply_msid, delete)
+	r = core.warn_user(c_user, reply_msid, delete=False, reason=arg)
 	send_answer(ev, r, True)
 
-cmd_delete = partial(cmd_warn, delete=True)
+@takesArgument(optional=True)
+def cmd_delete(ev: TMessage, arg):
+	c_user = UserContainer(ev.from_user)
 
-cmd_remove = partial(cmd_warn, only_delete=True)
+	if ev.reply_to_message is None:
+		return send_answer(ev, rp.Reply(rp.types.ERR_NO_REPLY), True)
+
+	reply_msid = ch.findMapping(ev.from_user.id, ev.reply_to_message.message_id)
+	if reply_msid is None:
+		return send_answer(ev, rp.Reply(rp.types.ERR_NOT_IN_CACHE), True)
+	r = core.warn_user(c_user, reply_msid, delete=True, reason=arg)
+
+@takesArgument(optional=True)
+def cmd_remove(ev: TMessage, arg):
+	c_user = UserContainer(ev.from_user)
+
+	if ev.reply_to_message is None:
+		return send_answer(ev, rp.Reply(rp.types.ERR_NO_REPLY), True)
+
+	reply_msid = ch.findMapping(ev.from_user.id, ev.reply_to_message.message_id)
+	if reply_msid is None:
+		return send_answer(ev, rp.Reply(rp.types.ERR_NOT_IN_CACHE), True)
+	r = core.delete_message(c_user, reply_msid, reason=arg)
+	send_answer(ev, r, True)
 
 cmd_cleanup = wrap_core(core.cleanup_messages)
 
