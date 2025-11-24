@@ -396,7 +396,7 @@ def send_admin_message(user: User, arg: str):
 
 @requireUser
 @requireRank(RANKS.mod)
-def warn_user(user: User, msid, delete=False):
+def warn_user(user: User, msid, delete=False, reason: str = ""):
 	cm = ch.getMessage(msid)
 	if cm is None or cm.user_id is None:
 		return rp.Reply(rp.types.ERR_NOT_IN_CACHE)
@@ -406,7 +406,7 @@ def warn_user(user: User, msid, delete=False):
 			d = user2.addWarning()
 			user2.karma -= KARMA_WARN_PENALTY
 		_push_system_message(
-			rp.Reply(rp.types.GIVEN_COOLDOWN, duration=d, deleted=delete),
+			rp.Reply(rp.types.GIVEN_COOLDOWN, duration=d, deleted=delete, reason=reason),
 			who=user2, reply_to=msid)
 		cm.warned = True
 	else:
@@ -420,7 +420,7 @@ def warn_user(user: User, msid, delete=False):
 
 @requireUser
 @requireRank(RANKS.mod)
-def delete_message(user: User, msid):
+def delete_message(user: User, msid, reason: str = ""):
 	if not allow_remove_command:
 		return rp.Reply(rp.types.ERR_COMMAND_DISABLED)
 
@@ -429,7 +429,7 @@ def delete_message(user: User, msid):
 		return rp.Reply(rp.types.ERR_NOT_IN_CACHE)
 
 	user2 = db.getUser(id=cm.user_id)
-	_push_system_message(rp.Reply(rp.types.MESSAGE_DELETED), who=user2, reply_to=msid)
+	_push_system_message(rp.Reply(rp.types.MESSAGE_DELETED, reason=reason), who=user2, reply_to=msid)
 	Sender.delete([msid])
 	logging.info("%s deleted a message from [%s]", user, user2.getObfuscatedId())
 	return rp.Reply(rp.types.SUCCESS)
