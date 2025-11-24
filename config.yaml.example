@@ -27,6 +27,13 @@ enable_signing: false
 # defaults to 600 if not specified, set to 0 to disable
 #sign_limit_interval: 600
 
+# enable karma-based signing
+enable_sign_min_karma: false
+# minimum (inclusive) required amount of karma to allow signing
+# at 0, only users with negative karma (cooldowns?) won't be allowed to sign
+# this setting does not do anything if enable_sign_min_karma is false
+sign_min_karma: 0
+
 # point of contact shown to blacklisted users (optional)
 #blacklist_contact: http://t.me/invite/something
 

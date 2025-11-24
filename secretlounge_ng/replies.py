@@ -62,6 +62,7 @@ types = NumericEnum([
 	"ERR_NO_TRIPCODE",
 	"ERR_MEDIA_LIMIT",
 	"ERR_POLLS_UNSUPPORTED",
+	"ERR_LOW_KARMA",
 
 	"USER_INFO",
 	"USER_INFO_MOD",
@@ -135,6 +136,7 @@ format_strs = {
 	types.ERR_NO_TRIPCODE: em("You don't have a tripcode set."),
 	types.ERR_MEDIA_LIMIT: em("You can't send media or forward messages at this time, try again later."),
 	types.ERR_POLLS_UNSUPPORTED: em("Your message has not been sent. Polls are not supported, sorry."),
+	types.ERR_LOW_KARMA: em("You don't have the minimum amount of karma required to sign."),
 
 	types.USER_INFO: lambda warnings, cooldown, **_:
 		"<b>id</b>: {id}, <b>username</b>: {username!x}, <b>rank</b>: {rank_i} ({rank})\n"+

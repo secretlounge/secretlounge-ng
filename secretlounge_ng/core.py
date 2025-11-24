@@ -33,13 +33,15 @@ class IUserContainer():
 		raise NotImplementedError()
 
 def init(config: dict, _db, _ch):
-	global db, ch, spam_scores, blacklist_contact, enable_signing, allow_remove_command, media_limit_period, sign_interval
+	global db, ch, spam_scores, blacklist_contact, enable_signing, allow_remove_command, media_limit_period, sign_interval, enable_sign_min_karma, sign_min_karma
 	db = _db
 	ch = _ch
 	spam_scores = ScoreKeeper()
 
 	blacklist_contact = config.get("blacklist_contact", "")
 	enable_signing = config["enable_signing"]
+	enable_sign_min_karma = config["enable_sign_min_karma"]
+	sign_min_karma = config["sign_min_karma"]
 	allow_remove_command = config["allow_remove_command"]
 	if "media_limit_period" in config.keys():
 		media_limit_period = timedelta(hours=int(config["media_limit_period"]))
@@ -537,6 +539,10 @@ def prepare_user_message(user: User, msg_score: int, *, is_media=False, signed=F
 		if last_used and (datetime.now() - last_used) < sign_interval:
 			return rp.Reply(rp.types.ERR_SPAMMY_SIGN)
 		sign_last_used[user.id] = datetime.now()
+
+	# enforce karma requirement
+	if signed and (enable_sign_min_karma and user.karma < sign_min_karma):
+		return rp.Reply(rp.types.ERR_LOW_KARMA)
 
 	return ch.assignMessageId(CachedMessage(user.id))
 
