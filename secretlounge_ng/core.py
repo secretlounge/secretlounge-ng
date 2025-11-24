@@ -24,6 +24,8 @@ enable_signing: bool = None
 allow_remove_command: bool = None
 media_limit_period: Optional[timedelta] = None
 sign_interval: timedelta = None
+enable_sign_min_karma: bool = None
+sign_min_karma: int = 0
 
 class IUserContainer():
 	id: int
